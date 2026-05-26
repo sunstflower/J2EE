@@ -1,0 +1,6 @@
+{
+  "name": "@mac-proxy-client/web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "React UI for mac-proxy-client"
+}

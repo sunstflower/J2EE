@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+
+# Node
+node_modules/
+dist/
+build/
+.vite/
+
+# Java
+target/
+out/
+*.class
+.gradle/
+
+# Local runtime
+logs/
+tmp/
+*.log
+
+# Environment
+.env
+.env.*

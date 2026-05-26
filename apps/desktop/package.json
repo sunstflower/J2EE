@@ -1,0 +1,6 @@
+{
+  "name": "@mac-proxy-client/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Electron shell for mac-proxy-client"
+}

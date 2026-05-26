@@ -1,0 +1,12 @@
+{
+  "name": "mac-proxy-client",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Monorepo for a macOS proxy client with Electron, React, and Spring Boot.",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "docs:check": "echo \"Documentation-first initialization: no automated checks yet.\""
+  }
+}
