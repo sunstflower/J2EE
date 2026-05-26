@@ -39,6 +39,23 @@ export type AppSettings = {
   logLevel: string;
 };
 
+export type RuntimeSummary = {
+  backendStatus: string;
+  coreStatus: string;
+  systemProxyStatus: string;
+  subscriptionCount: number;
+  logLevel: string;
+};
+
+export type CoreStatus = {
+  state: string;
+  configuredPath: string;
+  binaryExists: boolean;
+  lastAction: string;
+  lastStartedAt: string;
+  lastError: string;
+};
+
 export type ApiSuccessResponse<T> = {
   success: true;
   data: T;

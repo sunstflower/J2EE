@@ -13,6 +13,8 @@ Current contents:
 - application shell with overview, proxies, subscriptions, and settings placeholders
 - settings panel now reads and writes real local API data
 - subscriptions panel now reads and writes real local API data
+- overview runtime cards now read real local API runtime summary data
+- overview core manager panel now reads and drives real local API core lifecycle endpoints
 
 Real local API mode can be enabled later with:
 

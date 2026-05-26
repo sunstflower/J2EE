@@ -9,6 +9,7 @@ Current contents:
 - health endpoint scaffold
 - dashboard endpoint scaffold for frontend startup state
 - session metadata endpoint and bearer token interceptor skeleton
+- core lifecycle abstraction endpoints for status/start/stop/reload
 - MyBatis and SQLite dependencies
 - test scaffold
 

@@ -9,6 +9,9 @@ spring:
       mode: never
 
 app:
+  core:
+    clash-meta:
+      path: ${APP_CORE_CLASH_META_PATH:}
   session:
     token: ${APP_SESSION_TOKEN:dev-session-token}
 
