@@ -7,6 +7,10 @@
     "apps/*"
   ],
   "scripts": {
-    "docs:check": "echo \"Documentation-first initialization: no automated checks yet.\""
+    "dev:web": "npm run dev --workspace @mac-proxy-client/web",
+    "build:web": "npm run build --workspace @mac-proxy-client/web",
+    "dev:desktop": "npm run dev --workspace @mac-proxy-client/desktop",
+    "build:desktop": "npm run build --workspace @mac-proxy-client/desktop",
+    "docs:check": "echo \"Documentation-first initialization: no automated doc checks yet.\""
   }
 }

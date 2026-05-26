@@ -2,5 +2,13 @@
   "name": "@mac-proxy-client/desktop",
   "private": true,
   "version": "0.1.0",
-  "description": "Electron shell for mac-proxy-client"
+  "description": "Electron shell for mac-proxy-client",
+  "main": "src/main/main.js",
+  "scripts": {
+    "dev": "electron .",
+    "build": "echo \"Desktop packaging is not configured yet.\""
+  },
+  "devDependencies": {
+    "electron": "^37.2.0"
+  }
 }

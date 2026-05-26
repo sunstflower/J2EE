@@ -10,7 +10,7 @@ This repository is initialized for architecture scheme 2:
 - Persistence: MyBatis + SQLite
 - Proxy dataplane: bundled Clash.Meta core
 
-This phase is documentation-first. The repository is intentionally initialized without business implementation so the architecture, boundaries, and contributor workflow are stable before coding starts.
+This repository now includes formal scaffolds for the desktop shell, web UI, and local API. Business features are still intentionally minimal so the architecture, boundaries, and contributor workflow remain stable before deeper implementation starts.
 
 ## Locked Decisions
 
@@ -65,10 +65,10 @@ The application runs as three cooperating local processes:
 ```text
 mac-proxy-client/
   apps/
-    desktop/        # Electron shell
-    web/            # React UI
+    desktop/        # Electron shell scaffold
+    web/            # React + Vite UI scaffold
   services/
-    local-api/      # Spring Boot + MyBatis local backend
+    local-api/      # Spring Boot + MyBatis local backend scaffold
   docs/
     api-draft.md
     architecture.md
@@ -77,6 +77,22 @@ mac-proxy-client/
     runtime.md
   scripts/          # Development helper scripts
 ```
+
+## Scaffold Status
+
+Current scaffolds:
+
+- `apps/desktop`: Electron main process, preload entry, renderer fallback page
+- `apps/web`: React 19 + Vite + TypeScript
+- `services/local-api`: Spring Boot 3 + MyBatis + SQLite starter setup
+
+Not implemented yet:
+
+- Clash.Meta process integration
+- session token validation
+- subscription persistence
+- desktop-to-backend bootstrap wiring
+- packaged desktop distribution
 
 ## Planned Module Boundaries
 
@@ -90,6 +106,7 @@ Responsibilities:
 - Surface notifications and simple runtime status
 - Coordinate window open/close behavior
 - Handle desktop-only capabilities that should not live in React
+- Provide renderer bootstrap context for backend port and session token
 
 ### apps/web
 
@@ -127,6 +144,7 @@ Supporting packages can be added later when the project needs them, but the base
 - Establish architecture documents
 - Create repository skeleton
 - Define contributor rules
+- Initialize formal scaffolds for Electron, React, and Spring Boot
 
 ### Phase 1: Local API MVP
 
@@ -207,9 +225,43 @@ Bundling Clash.Meta with the installation package gives the project a predictabl
 - [docs/runtime.md](./docs/runtime.md)
 - [AGENTS.md](./AGENTS.md)
 
+## Local Development
+
+Install workspace dependencies:
+
+```bash
+npm install
+```
+
+Run the web scaffold:
+
+```bash
+npm run dev:web
+```
+
+Run the desktop scaffold:
+
+```bash
+npm run dev:desktop
+```
+
+Run the local API scaffold:
+
+```bash
+cd services/local-api
+mvn spring-boot:run
+```
+
+Verify the backend scaffold:
+
+```bash
+cd services/local-api
+mvn test
+```
+
 ## Next Recommended Work
 
-1. Lock the first API response envelope and auth header convention
-2. Lock the exact macOS packaged and development runtime paths
-3. Decide whether Electron starts with preload plus IPC from the first scaffold
-4. Create minimal build scaffolding for Electron, React, and Spring Boot
+1. Wire Electron startup to the Spring Boot process and runtime parameter passing
+2. Implement session token validation in the local API
+3. Add the first persisted settings and subscription tables
+4. Introduce Clash.Meta binary discovery and runtime config generation
