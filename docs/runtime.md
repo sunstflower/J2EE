@@ -108,6 +108,11 @@ The startup flow should be:
 8. Electron creates the renderer connection context
 9. React uses only the connection context supplied by Electron
 
+Current development scaffold:
+
+- Spring Boot emits `LOCAL_API_READY port=<port>` on `ApplicationReadyEvent`
+- Electron parses that stdout line as the source of truth for the bound port
+
 ## Recommended Launch Parameters
 
 Electron should pass explicit runtime values to Spring Boot instead of relying on hardcoded conventions.
@@ -145,6 +150,7 @@ Current scaffold status:
 - Frontend real-API mode reads:
   - `VITE_LOCAL_API_BASE_URL`
   - `VITE_LOCAL_API_SESSION_TOKEN`
+- Electron development shell now starts Spring Boot, generates a session token, parses the bound port from startup logs, and exposes both values to the renderer preload bridge
 
 ## Local API Binding
 

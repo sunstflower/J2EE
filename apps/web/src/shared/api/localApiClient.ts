@@ -1,3 +1,5 @@
+import { getDesktopRuntime } from "../runtime/desktopRuntime";
+
 type RequestOptions = {
   method?: string;
   body?: unknown;
@@ -5,11 +7,13 @@ type RequestOptions = {
 };
 
 function resolveBaseUrl() {
-  return import.meta.env.VITE_LOCAL_API_BASE_URL || "/api/v1";
+  const desktopRuntime = getDesktopRuntime();
+  return desktopRuntime?.localApiBaseUrl || import.meta.env.VITE_LOCAL_API_BASE_URL || "/api/v1";
 }
 
 function resolveSessionToken() {
-  return import.meta.env.VITE_LOCAL_API_SESSION_TOKEN;
+  const desktopRuntime = getDesktopRuntime();
+  return desktopRuntime?.localApiSessionToken || import.meta.env.VITE_LOCAL_API_SESSION_TOKEN;
 }
 
 export class LocalApiClient {
