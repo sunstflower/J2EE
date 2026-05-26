@@ -8,7 +8,9 @@ Current contents:
 - Vite configuration
 - TypeScript configuration
 - Tailwind CSS v4 via the Vite plugin
-- placeholder shell UI
+- frontend split into `features`, `shared`, and mock `data` modules
+- local API client placeholder plus mock-backed dashboard service boundary
+- application shell with overview, proxies, subscriptions, and settings placeholders
 
 Planned responsibilities:
 
