@@ -8,16 +8,28 @@ This repository is initialized for architecture scheme 2:
 - Frontend: React
 - Local backend: Spring Boot
 - Persistence: MyBatis + SQLite
-- Proxy dataplane: external core process such as Clash.Meta or sing-box
+- Proxy dataplane: bundled Clash.Meta core
 
 This phase is documentation-first. The repository is intentionally initialized without business implementation so the architecture, boundaries, and contributor workflow are stable before coding starts.
+
+## Locked Decisions
+
+The following design decisions are now fixed for the first implementation:
+
+- Proxy core: `Clash.Meta`
+- Proxy mode: `system proxy` only
+- Core distribution: bundled with the desktop application
+- Core owner: `services/local-api` managed by Spring Boot
+- Backend layering: `Controller / Service / DAO`
+- Persistence: `SQLite` with `MyBatis`
+- Local API access: random localhost port + session token
 
 ## Goals
 
 - Provide a macOS-first proxy client similar in product shape to Clash clients
 - Keep Java responsible for control-plane logic, not proxy protocol implementation
 - Expose local RESTful APIs for UI orchestration and runtime control
-- Support future system proxy mode, TUN mode, subscription management, and policy routing
+- Support system proxy mode, subscription management, policy routing, and runtime management around Clash.Meta
 
 ## Non-Goals For Initialization
 
@@ -25,6 +37,7 @@ This phase is documentation-first. The repository is intentionally initialized w
 - No production-ready UI yet
 - No packaged desktop app yet
 - No full build scripts yet
+- No TUN mode work in the first implementation
 
 ## Proposed Architecture
 
@@ -37,11 +50,13 @@ The application runs as three cooperating local processes:
 
 2. Local API process
    - Spring Boot service bound to localhost only
+   - Uses a random local port and a session token for desktop-to-backend access
    - Provides RESTful APIs for config management, runtime state, subscription sync, and core lifecycle
    - Uses MyBatis with SQLite for local persistence
 
 3. Proxy core process
-   - External executable, not reimplemented in Java
+   - Bundled `Clash.Meta` executable, not reimplemented in Java
+   - Managed only by the local API service
    - Receives generated runtime config from the local API
    - Handles real traffic forwarding
 
@@ -55,8 +70,11 @@ mac-proxy-client/
   services/
     local-api/      # Spring Boot + MyBatis local backend
   docs/
+    api-draft.md
     architecture.md
+    decisions.md
     roadmap.md
+    runtime.md
   scripts/          # Development helper scripts
 ```
 
@@ -67,6 +85,7 @@ mac-proxy-client/
 Responsibilities:
 
 - Launch local backend on app startup
+- Bundle and ship Clash.Meta with the app package
 - Provide tray/menu integration
 - Surface notifications and simple runtime status
 - Coordinate window open/close behavior
@@ -87,18 +106,19 @@ Responsibilities:
 Responsibilities:
 
 - Expose localhost-only RESTful APIs
+- Require a session token for UI-facing local API calls
 - Manage runtime configuration generation
-- Control proxy core process lifecycle
+- Control Clash.Meta process lifecycle
 - Persist application config and subscription data
 - Offer health and diagnostics endpoints
 
-Suggested package layering later:
+Required package layering later:
 
-- `api`
-- `application`
-- `domain`
-- `infrastructure`
-- `integration`
+- `controller`
+- `service`
+- `dao`
+
+Supporting packages can be added later when the project needs them, but the baseline service design should stay aligned with the `Controller / Service / DAO` structure.
 
 ## Initial Development Phases
 
@@ -113,11 +133,13 @@ Suggested package layering later:
 - Health endpoint
 - App config persistence
 - Subscription entity and CRUD
-- Proxy core process abstraction
+- Clash.Meta process abstraction
+- Runtime config generation for Clash.Meta
 
 ### Phase 2: Desktop Shell MVP
 
 - Launch local API from Electron
+- Bundle Clash.Meta and expose its installation path to the local API
 - Basic tray integration
 - Backend connectivity status
 - Open local React UI
@@ -128,10 +150,12 @@ Suggested package layering later:
 - Subscription refresh flow
 - Node selection and policy groups
 - Runtime logs panel
+- Core lifecycle diagnostics
 
-### Phase 4: Advanced Networking
+### Phase 4: Packaging And Security
 
-- TUN mode validation on macOS
+- App packaging strategy
+- Core bundle validation and versioning
 - Permission and entitlement strategy
 - Secure credential storage via Keychain
 
@@ -143,7 +167,7 @@ Electron is selected for the first implementation because it lowers desktop inte
 
 ### Why Spring Boot
 
-Spring Boot provides a stable control-plane service layer, testable REST boundaries, and a clean place to isolate system integration logic without forcing desktop-specific concerns into the UI.
+Spring Boot provides a stable control-plane service layer, testable REST boundaries, and a clean place to isolate system integration logic without forcing desktop-specific concerns into the UI. It is also the only process responsible for managing Clash.Meta.
 
 ### Why SQLite
 
@@ -151,25 +175,41 @@ This is a local-first desktop application. SQLite keeps deployment simple and ma
 
 ### Why External Proxy Core
 
-The proxy protocol dataplane is a separate concern with significant complexity and security risk. This project should integrate a mature core instead of reimplementing transport logic in Java.
+The proxy protocol dataplane is a separate concern with significant complexity and security risk. This project integrates a mature core instead of reimplementing transport logic in Java.
+
+### Why Clash.Meta
+
+Clash.Meta is selected because the product goal is a Clash-like macOS client, and Clash.Meta aligns well with the expected configuration model, rule groups, and operator workflow.
+
+### Why System Proxy Only
+
+The first implementation is intentionally limited to `system proxy` mode. This keeps the initial networking model practical on macOS and avoids early expansion into TUN-specific privilege, entitlement, and lifecycle complexity.
+
+### Why Bundle The Core
+
+Bundling Clash.Meta with the installation package gives the project a predictable runtime surface, avoids first-run download dependencies, and keeps version compatibility under repository control.
 
 ## macOS-Specific Constraints To Validate Early
 
 - System proxy toggle behavior and rollback
 - Localhost port allocation and conflict detection
+- Session token generation and secure in-memory handoff
 - Process relaunch and crash recovery
-- TUN and network extension requirements
+- Bundled core executable permissions and path resolution
 - App signing, entitlements, and notarization path
 
 ## Documentation Index
 
 - [docs/architecture.md](./docs/architecture.md)
+- [docs/api-draft.md](./docs/api-draft.md)
+- [docs/decisions.md](./docs/decisions.md)
 - [docs/roadmap.md](./docs/roadmap.md)
+- [docs/runtime.md](./docs/runtime.md)
 - [AGENTS.md](./AGENTS.md)
 
 ## Next Recommended Work
 
-1. Lock the architecture vocabulary and runtime boundaries
-2. Define REST resources and request/response conventions
-3. Create minimal build scaffolding for Electron, React, and Spring Boot
-4. Add a local development bootstrap flow
+1. Lock the first API response envelope and auth header convention
+2. Lock the exact macOS packaged and development runtime paths
+3. Decide whether Electron starts with preload plus IPC from the first scaffold
+4. Create minimal build scaffolding for Electron, React, and Spring Boot

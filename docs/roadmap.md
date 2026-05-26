@@ -12,6 +12,8 @@
 - Add React project scaffold
 - Add Electron project scaffold
 - Define local API contract draft
+- Define bundled Clash.Meta asset layout
+- Define random port and session token bootstrap flow
 
 ## Phase 2
 
@@ -19,22 +21,24 @@
 - Expose health endpoint
 - Display backend connectivity in UI
 - Persist basic app configuration
+- Verify Clash.Meta launch path and process supervision
+- Verify random port discovery and token handoff
 
 ## Phase 3
 
 - Add subscription management
 - Add proxy node management
 - Add runtime status view
-- Add proxy core lifecycle abstraction
+- Add Clash.Meta lifecycle abstraction
+- Add system proxy control flow
 
 ## Phase 4
 
-- Add system proxy controls
 - Add log and diagnostics view
 - Add crash recovery strategy
+- Add packaged core version checks
 
 ## Phase 5
 
-- Validate TUN mode approach on macOS
 - Integrate Keychain-backed secrets
 - Prepare signing and packaging path

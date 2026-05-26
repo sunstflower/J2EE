@@ -12,6 +12,15 @@ This repository hosts a macOS local proxy client with the following shape:
 
 The repository is currently in documentation-first initialization. Prefer architectural clarity over premature implementation.
 
+The following decisions are fixed unless explicitly revised by the project owner:
+
+- Proxy core is `Clash.Meta`
+- First implementation supports `system proxy` only
+- Clash.Meta is bundled with the installation package
+- `services/local-api` is the sole owner of the core lifecycle
+- Backend baseline layering is `Controller / Service / DAO`
+- Local API access uses a random localhost port plus a session token
+
 ## Working Rules
 
 1. Do not implement proxy protocols in this repository.
@@ -20,6 +29,8 @@ The repository is currently in documentation-first initialization. Prefer archit
 4. Prefer SQLite for local persistence unless a concrete requirement invalidates it.
 5. Do not add cloud dependencies by default. This project is local-first.
 6. Any macOS-specific privileged behavior must be documented before it is implemented.
+7. Do not introduce TUN mode work unless the project owner explicitly reopens that decision.
+8. Do not add alternate proxy core integrations unless the project owner explicitly reopens that decision.
 
 ## Architecture Guardrails
 
@@ -27,6 +38,7 @@ The repository is currently in documentation-first initialization. Prefer archit
 
 - Owns tray/menu bar, notifications, app lifecycle, and startup behavior
 - May launch and monitor the local backend
+- Ships the bundled Clash.Meta executable as an application asset
 - Must not absorb backend domain logic
 
 ### Web UI
@@ -37,9 +49,11 @@ The repository is currently in documentation-first initialization. Prefer archit
 
 ### Local API
 
-- Owns config persistence, runtime orchestration, and integration with the proxy core
-- Should generate runtime config artifacts for the external core
+- Owns config persistence, runtime orchestration, and integration with the bundled Clash.Meta core
+- Should generate runtime config artifacts for Clash.Meta
 - Must isolate command execution and process management behind explicit abstractions
+- Is the only process allowed to start, stop, reload, or inspect Clash.Meta
+- Must validate a session token on UI-facing local API access
 
 ## Documentation Requirements
 
@@ -57,6 +71,7 @@ At minimum, keep these files aligned:
 - `README.md`
 - `AGENTS.md`
 - `docs/architecture.md`
+- `docs/decisions.md`
 - `docs/roadmap.md`
 
 ## Implementation Guidelines
@@ -69,14 +84,10 @@ At minimum, keep these files aligned:
 
 ### Backend
 
-- Use layered packages when code begins:
-  - `api`
-  - `application`
-  - `domain`
-  - `infrastructure`
-  - `integration`
-- Keep MyBatis mappers and SQL close to infrastructure concerns
+- Use `Controller / Service / DAO` as the baseline layering when code begins
+- Keep MyBatis mappers and SQL close to DAO concerns
 - Separate runtime state from persisted configuration
+- Put Clash.Meta process management behind services instead of controllers
 
 ### Frontend
 
@@ -89,6 +100,7 @@ At minimum, keep these files aligned:
 - Desktop startup should fail clearly if the backend is unavailable
 - Process management must include health checks and predictable shutdown
 - Do not silently restart privileged operations without surfacing status
+- Do not move Clash.Meta lifecycle management into Electron
 
 ## Security Baseline
 
@@ -96,6 +108,8 @@ At minimum, keep these files aligned:
 2. Plan for Keychain-backed secret storage on macOS
 3. Expose only localhost services during development
 4. Document every shell command or OS integration that affects networking
+5. Treat bundled executable integrity and version compatibility as a documented concern
+6. Do not replace random port plus session token with a weaker local API access pattern without explicit approval
 
 ## Definition Of Ready
 
@@ -106,6 +120,7 @@ Before implementing a feature, confirm:
 3. Whether it needs privileged macOS behavior
 4. Whether it changes persisted data, runtime state, or both
 5. Which documents need updates
+6. Whether it changes Clash.Meta startup, config generation, or packaging assumptions
 
 ## Definition Of Done
 
