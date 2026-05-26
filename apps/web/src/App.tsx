@@ -19,7 +19,7 @@ function renderView(activeView: ViewId, state: NonNullable<ReturnType<typeof use
   }
 
   if (activeView === "subscriptions") {
-    return <SubscriptionsPanel subscriptions={state.subscriptions} />;
+    return <SubscriptionsPanel />;
   }
 
   return <SettingsPanel />;

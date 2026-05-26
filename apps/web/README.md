@@ -11,6 +11,8 @@ Current contents:
 - frontend split into `features`, `shared`, and mock `data` modules
 - local API client placeholder plus mock-backed dashboard service boundary
 - application shell with overview, proxies, subscriptions, and settings placeholders
+- settings panel now reads and writes real local API data
+- subscriptions panel now reads and writes real local API data
 
 Real local API mode can be enabled later with:
 

@@ -31,8 +31,8 @@ public class DashboardService {
                         new ProxyGroupResponse("Streaming", "SG-02 Singapore", "Rule-based")
                 ),
                 List.of(
-                        new SubscriptionResponse("Primary feed", "Healthy", "5 min ago"),
-                        new SubscriptionResponse("Fallback nodes", "Pending", "Not synced yet")
+                        new SubscriptionResponse(1L, "Primary feed", "https://example.com/primary", true, "Healthy", "5 min ago"),
+                        new SubscriptionResponse(2L, "Fallback nodes", "https://example.com/fallback", false, "Pending", "Not synced yet")
                 )
         );
     }

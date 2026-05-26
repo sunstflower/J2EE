@@ -18,8 +18,22 @@ const mockDashboardState: DashboardState = {
     { name: "Streaming", active: "SG-02 Singapore", policy: "Rule-based" }
   ],
   subscriptions: [
-    { name: "Primary feed", status: "Healthy", lastSync: "5 min ago" },
-    { name: "Fallback nodes", status: "Pending", lastSync: "Not synced yet" }
+    {
+      id: 1,
+      name: "Primary feed",
+      sourceUrl: "https://example.com/primary",
+      enabled: true,
+      status: "Healthy",
+      lastSync: "5 min ago"
+    },
+    {
+      id: 2,
+      name: "Fallback nodes",
+      sourceUrl: "https://example.com/fallback",
+      enabled: false,
+      status: "Pending",
+      lastSync: "Not synced yet"
+    }
   ]
 };
 

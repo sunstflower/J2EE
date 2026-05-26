@@ -1,25 +1,116 @@
+import { useEffect, useState } from "react";
+import { useSettingsState } from "../settings/useSettingsState";
+import type { AppSettings } from "../../shared/types";
+
 export function SettingsPanel() {
+  const { data, loading, saving, error, save } = useSettingsState();
+  const [draft, setDraft] = useState<AppSettings | null>(null);
+
+  useEffect(() => {
+    if (data) {
+      setDraft(data);
+    }
+  }, [data]);
+
+  if (loading || !draft) {
+    return (
+      <section className="rounded-[30px] border border-white/60 bg-white/75 p-8 shadow-[0_28px_70px_rgba(26,57,92,0.10)] backdrop-blur-xl">
+        <p className="text-sm text-slate-600">Loading settings...</p>
+      </section>
+    );
+  }
+
   return (
     <section className="rounded-[30px] border border-white/60 bg-white/75 p-8 shadow-[0_28px_70px_rgba(26,57,92,0.10)] backdrop-blur-xl">
-      <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Application settings</p>
-      <h2 className="mb-6 text-3xl font-semibold tracking-tight text-slate-950">Backend-driven settings surface.</h2>
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Application settings</p>
+          <h2 className="text-3xl font-semibold tracking-tight text-slate-950">First real local-api backed settings surface.</h2>
+        </div>
+        <button
+          className="rounded-full border border-slate-200 bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={saving}
+          onClick={() => save(draft)}
+          type="button"
+        >
+          {saving ? "Saving..." : "Save settings"}
+        </button>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-[24px] border border-slate-200 bg-slate-50/75 p-6">
-          <p className="text-sm text-slate-500">Connectivity</p>
-          <h3 className="mt-2 text-lg font-semibold text-slate-950">Local API session</h3>
-          <p className="mt-3 text-sm leading-7 text-slate-700">
-            Random localhost port plus session token will be surfaced from Electron, not discovered by the renderer directly.
-          </p>
-        </div>
-        <div className="rounded-[24px] border border-slate-200 bg-slate-50/75 p-6">
-          <p className="text-sm text-slate-500">Runtime files</p>
-          <h3 className="mt-2 text-lg font-semibold text-slate-950">Writable application directory</h3>
-          <p className="mt-3 text-sm leading-7 text-slate-700">
-            Clash.Meta configs, logs, and state will live outside bundled assets, aligned with the runtime documentation.
-          </p>
-        </div>
+        <label className="rounded-[24px] border border-slate-200 bg-slate-50/75 p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm text-slate-500">Network behavior</p>
+              <h3 className="mt-2 text-lg font-semibold text-slate-950">System proxy enabled</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-700">
+                Controls whether the application considers system proxy mode enabled in persisted settings.
+              </p>
+            </div>
+            <input
+              checked={draft.systemProxyEnabled}
+              className="mt-1 h-5 w-5"
+              onChange={(event) =>
+                setDraft((current) =>
+                  current ? { ...current, systemProxyEnabled: event.target.checked } : current
+                )
+              }
+              type="checkbox"
+            />
+          </div>
+        </label>
+
+        <label className="rounded-[24px] border border-slate-200 bg-slate-50/75 p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm text-slate-500">Desktop startup</p>
+              <h3 className="mt-2 text-lg font-semibold text-slate-950">Launch at login</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-700">
+                Persists whether the application should later request launch-at-login behavior.
+              </p>
+            </div>
+            <input
+              checked={draft.launchAtLogin}
+              className="mt-1 h-5 w-5"
+              onChange={(event) =>
+                setDraft((current) =>
+                  current ? { ...current, launchAtLogin: event.target.checked } : current
+                )
+              }
+              type="checkbox"
+            />
+          </div>
+        </label>
       </div>
+
+      <div className="mt-4 rounded-[24px] border border-slate-200 bg-slate-50/75 p-6">
+        <p className="text-sm text-slate-500">Diagnostics</p>
+        <h3 className="mt-2 text-lg font-semibold text-slate-950">Log level</h3>
+        <p className="mt-3 text-sm leading-7 text-slate-700">
+          Stored locally for future runtime logging controls.
+        </p>
+
+        <select
+          className="mt-4 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900"
+          onChange={(event) =>
+            setDraft((current) =>
+              current ? { ...current, logLevel: event.target.value } : current
+            )
+          }
+          value={draft.logLevel}
+        >
+          <option value="DEBUG">DEBUG</option>
+          <option value="INFO">INFO</option>
+          <option value="WARN">WARN</option>
+          <option value="ERROR">ERROR</option>
+        </select>
+      </div>
+
+      {error ? (
+        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          {error}
+        </div>
+      ) : null}
     </section>
   );
 }

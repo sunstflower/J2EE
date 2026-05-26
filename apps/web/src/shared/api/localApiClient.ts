@@ -37,6 +37,10 @@ export class LocalApiClient {
     return this.request<T>(path, { method: "PUT", body });
   }
 
+  async delete<T>(path: string): Promise<T> {
+    return this.request<T>(path, { method: "DELETE" });
+  }
+
   private async request<T>(path: string, options: RequestOptions): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       method: options.method ?? "GET",

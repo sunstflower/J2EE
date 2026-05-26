@@ -1,40 +1,111 @@
-import type { Subscription } from "../../shared/types";
+import { useState } from "react";
+import { useSubscriptionsState } from "../subscriptions/useSubscriptionsState";
 
-type SubscriptionsPanelProps = {
-  subscriptions: Subscription[];
-};
+export function SubscriptionsPanel() {
+  const { data, loading, saving, error, create, update, remove } = useSubscriptionsState();
+  const [name, setName] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
 
-export function SubscriptionsPanel({ subscriptions }: SubscriptionsPanelProps) {
+  if (loading) {
+    return (
+      <section className="rounded-[30px] border border-white/60 bg-white/75 p-8 shadow-[0_28px_70px_rgba(26,57,92,0.10)] backdrop-blur-xl">
+        <p className="text-sm text-slate-600">Loading subscriptions...</p>
+      </section>
+    );
+  }
+
   return (
     <section className="rounded-[30px] border border-white/60 bg-white/75 p-8 shadow-[0_28px_70px_rgba(26,57,92,0.10)] backdrop-blur-xl">
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Subscription sources</p>
           <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
-            Import flow placeholders for the local API contract.
+            First real local-api backed subscription list.
           </h2>
         </div>
-        <button className="rounded-full border border-slate-200 bg-slate-900 px-4 py-2 text-sm font-medium text-white">
-          Refresh all
+        <button
+          className="rounded-full border border-slate-200 bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={saving || !name.trim() || !sourceUrl.trim()}
+          onClick={() => {
+            create({
+              name: name.trim(),
+              sourceUrl: sourceUrl.trim(),
+              enabled: true
+            });
+            setName("");
+            setSourceUrl("");
+          }}
+          type="button"
+        >
+          Add subscription
         </button>
       </div>
 
+      <div className="mb-5 grid gap-4 lg:grid-cols-[1fr_1.6fr]">
+        <input
+          className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900"
+          onChange={(event) => setName(event.target.value)}
+          placeholder="Subscription name"
+          value={name}
+        />
+        <input
+          className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900"
+          onChange={(event) => setSourceUrl(event.target.value)}
+          placeholder="https://example.com/subscription"
+          value={sourceUrl}
+        />
+      </div>
+
       <div className="space-y-4">
-        {subscriptions.map((subscription) => (
+        {data.map((subscription) => (
           <article
-            key={subscription.name}
-            className="flex flex-col gap-4 rounded-[24px] border border-slate-200 bg-slate-50/75 p-5 md:flex-row md:items-center md:justify-between"
+            key={subscription.id}
+            className="flex flex-col gap-4 rounded-[24px] border border-slate-200 bg-slate-50/75 p-5"
           >
-            <div>
-              <h3 className="text-lg font-semibold text-slate-950">{subscription.name}</h3>
-              <p className="mt-1 text-sm text-slate-500">Last sync: {subscription.lastSync}</p>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <h3 className="text-lg font-semibold text-slate-950">{subscription.name}</h3>
+                <p className="mt-1 truncate text-sm text-slate-500">{subscription.sourceUrl}</p>
+                <p className="mt-1 text-sm text-slate-500">Last sync: {subscription.lastSync}</p>
+              </div>
+              <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm text-emerald-800">
+                {subscription.status}
+              </span>
             </div>
-            <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm text-emerald-800">
-              {subscription.status}
-            </span>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800"
+                disabled={saving}
+                onClick={() =>
+                  update(subscription.id, {
+                    name: subscription.name,
+                    sourceUrl: subscription.sourceUrl,
+                    enabled: !subscription.enabled
+                  })
+                }
+                type="button"
+              >
+                {subscription.enabled ? "Disable" : "Enable"}
+              </button>
+              <button
+                className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700"
+                disabled={saving}
+                onClick={() => remove(subscription.id)}
+                type="button"
+              >
+                Delete
+              </button>
+            </div>
           </article>
         ))}
       </div>
+
+      {error ? (
+        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          {error}
+        </div>
+      ) : null}
     </section>
   );
 }

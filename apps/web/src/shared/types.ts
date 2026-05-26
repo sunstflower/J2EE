@@ -18,7 +18,10 @@ export type ProxyGroup = {
 };
 
 export type Subscription = {
+  id: number;
   name: string;
+  sourceUrl: string;
+  enabled: boolean;
   status: string;
   lastSync: string;
 };
@@ -28,6 +31,12 @@ export type DashboardState = {
   metrics: Metric[];
   proxyGroups: ProxyGroup[];
   subscriptions: Subscription[];
+};
+
+export type AppSettings = {
+  systemProxyEnabled: boolean;
+  launchAtLogin: boolean;
+  logLevel: string;
 };
 
 export type ApiSuccessResponse<T> = {

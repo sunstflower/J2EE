@@ -1,6 +1,6 @@
 package com.sunsetflower.macproxy.localapi.service.dto;
 
-public record SubscriptionResponse(
+public record SubscriptionRecord(
         long id,
         String name,
         String sourceUrl,
