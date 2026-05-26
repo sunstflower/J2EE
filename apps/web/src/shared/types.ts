@@ -29,3 +29,8 @@ export type DashboardState = {
   proxyGroups: ProxyGroup[];
   subscriptions: Subscription[];
 };
+
+export type ApiSuccessResponse<T> = {
+  success: true;
+  data: T;
+};

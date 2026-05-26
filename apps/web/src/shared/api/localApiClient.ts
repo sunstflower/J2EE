@@ -4,13 +4,21 @@ type RequestOptions = {
   headers?: Record<string, string>;
 };
 
+function resolveBaseUrl() {
+  return import.meta.env.VITE_LOCAL_API_BASE_URL || "/api/v1";
+}
+
+function resolveSessionToken() {
+  return import.meta.env.VITE_LOCAL_API_SESSION_TOKEN;
+}
+
 export class LocalApiClient {
   private readonly baseUrl: string;
   private readonly sessionToken?: string;
 
   constructor(options?: { baseUrl?: string; sessionToken?: string }) {
-    this.baseUrl = options?.baseUrl ?? "/api/v1";
-    this.sessionToken = options?.sessionToken;
+    this.baseUrl = options?.baseUrl ?? resolveBaseUrl();
+    this.sessionToken = options?.sessionToken ?? resolveSessionToken();
   }
 
   async get<T>(path: string): Promise<T> {

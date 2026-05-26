@@ -138,6 +138,14 @@ Recommended transport options for later implementation:
 
 Either is acceptable. The project should pick one and keep it consistent.
 
+Current scaffold status:
+
+- Backend interceptor expects `Authorization: Bearer <token>`
+- Development token defaults from `APP_SESSION_TOKEN`
+- Frontend real-API mode reads:
+  - `VITE_LOCAL_API_BASE_URL`
+  - `VITE_LOCAL_API_SESSION_TOKEN`
+
 ## Local API Binding
 
 Rules:

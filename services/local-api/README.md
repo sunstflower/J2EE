@@ -7,6 +7,8 @@ Current contents:
 - Spring Boot application entry
 - `Controller / Service / DAO` package baseline
 - health endpoint scaffold
+- dashboard endpoint scaffold for frontend startup state
+- session metadata endpoint and bearer token interceptor skeleton
 - MyBatis and SQLite dependencies
 - test scaffold
 

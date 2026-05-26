@@ -1,5 +1,5 @@
 import { LocalApiClient } from "../../shared/api/localApiClient";
-import type { DashboardState } from "../../shared/types";
+import type { ApiSuccessResponse, DashboardState } from "../../shared/types";
 import { getMockDashboardState } from "./mockDashboardService";
 
 export type DashboardService = {
@@ -10,7 +10,8 @@ class LocalApiDashboardService implements DashboardService {
   constructor(private readonly client: LocalApiClient) {}
 
   async getDashboardState(): Promise<DashboardState> {
-    return this.client.get<DashboardState>("/dashboard");
+    const response = await this.client.get<ApiSuccessResponse<DashboardState>>("/dashboard");
+    return response.data;
   }
 }
 

@@ -2,6 +2,10 @@ spring:
   application:
     name: local-api
 
+app:
+  session:
+    token: ${APP_SESSION_TOKEN:dev-session-token}
+
 server:
   port: 0
   address: 127.0.0.1
