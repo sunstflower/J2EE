@@ -1,85 +1,29 @@
-:root {
-  font-family: "Avenir Next", "SF Pro Display", sans-serif;
-  color: #16314b;
-  background:
-    radial-gradient(circle at top left, rgba(255, 196, 87, 0.22), transparent 24%),
-    radial-gradient(circle at top right, rgba(58, 151, 255, 0.18), transparent 28%),
-    linear-gradient(180deg, #f7fbff 0%, #ebf1f8 100%);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Avenir Next", "SF Pro Display", "Segoe UI", sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
+  html {
+    font-family: var(--font-sans);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-#root {
-  min-height: 100vh;
-}
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+  }
 
-.app-shell {
-  width: min(1120px, calc(100vw - 48px));
-  margin: 0 auto;
-  padding: 72px 0 96px;
-}
-
-.hero {
-  max-width: 720px;
-  margin-bottom: 40px;
-}
-
-.eyebrow {
-  margin: 0 0 12px;
-  color: #30577f;
-  font-size: 0.84rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.hero h1 {
-  margin: 0 0 18px;
-  font-size: clamp(2.6rem, 5vw, 4.5rem);
-  line-height: 1.05;
-}
-
-.lead {
-  margin: 0;
-  font-size: 1.05rem;
-  line-height: 1.7;
-  color: #355170;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  padding: 28px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(52, 90, 132, 0.08);
-  box-shadow: 0 24px 48px rgba(26, 57, 92, 0.08);
-  backdrop-filter: blur(10px);
-}
-
-.card h2 {
-  margin: 0 0 10px;
-  font-size: 1.2rem;
-}
-
-.card p {
-  margin: 0;
-  line-height: 1.7;
-  color: #44627f;
+  #root {
+    min-height: 100vh;
+  }
 }

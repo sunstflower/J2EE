@@ -83,7 +83,7 @@ mac-proxy-client/
 Current scaffolds:
 
 - `apps/desktop`: Electron main process, preload entry, renderer fallback page
-- `apps/web`: React 19 + Vite + TypeScript
+- `apps/web`: React 19 + Vite + TypeScript + Tailwind CSS v4
 - `services/local-api`: Spring Boot 3 + MyBatis + SQLite starter setup
 
 Not implemented yet:
