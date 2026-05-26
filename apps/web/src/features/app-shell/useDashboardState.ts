@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { subscribeDesktopRuntime } from "../../shared/runtime/desktopRuntime";
 import type { DashboardState } from "../../shared/types";
 import { createDashboardService } from "./dashboardService";
 
@@ -9,7 +10,6 @@ type DashboardLoadState = {
 };
 
 export function useDashboardState() {
-  const service = useMemo(() => createDashboardService(), []);
   const [state, setState] = useState<DashboardLoadState>({
     data: null,
     loading: true,
@@ -18,8 +18,11 @@ export function useDashboardState() {
 
   useEffect(() => {
     let active = true;
+    let loaded = false;
 
-    async function load() {
+    async function loadFromCurrentRuntime() {
+      const service = createDashboardService();
+
       try {
         const data = await service.getDashboardState();
 
@@ -32,6 +35,7 @@ export function useDashboardState() {
           loading: false,
           error: null
         });
+        loaded = true;
       } catch (error) {
         if (!active) {
           return;
@@ -45,12 +49,25 @@ export function useDashboardState() {
       }
     }
 
-    load();
+    const unsubscribe = subscribeDesktopRuntime((runtime) => {
+      if (loaded && runtime.localApiBaseUrl && runtime.localApiSessionToken) {
+        return;
+      }
+
+      setState((current) => ({
+        ...current,
+        loading: true,
+        error: null
+      }));
+
+      loadFromCurrentRuntime();
+    });
 
     return () => {
       active = false;
+      unsubscribe();
     };
-  }, [service]);
+  }, []);
 
   return state;
 }

@@ -14,6 +14,7 @@ Current startup contract:
 - Electron launches `mvn spring-boot:run` in development
 - Spring Boot emits `LOCAL_API_READY port=<port>` when ready
 - Electron parses that line and forwards `baseUrl + sessionToken` to the renderer
+- renderer can subscribe to runtime updates from preload instead of assuming they exist on first paint
 
 Planned responsibilities:
 

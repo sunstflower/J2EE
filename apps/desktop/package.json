@@ -6,6 +6,7 @@
   "main": "src/main/main.js",
   "scripts": {
     "dev": "electron .",
+    "dev:web": "MAC_PROXY_RENDERER_URL=http://127.0.0.1:5173 electron .",
     "build": "echo \"Desktop packaging is not configured yet.\""
   },
   "devDependencies": {
