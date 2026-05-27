@@ -128,6 +128,9 @@ The current repository state already includes:
 - Electron Builder packaging that embeds the web build, Spring Boot jar, and bundled Clash.Meta binary into the desktop app
 - packaged desktop runtime storage now lives under Electron `userData` and must remain writable outside packaged assets
 - the Vite renderer dev server is expected to stay on `127.0.0.1:5173` with a strict port check, so desktop development should fail loudly on port conflicts instead of silently drifting
+- Clash.Meta mixed and controller ports are runtime-assigned, so contributors must not hardcode `7890` or `9090` in new backend or frontend logic
+- before Clash.Meta starts, its runtime ports should remain unset rather than exposing fake defaults, and UI state should render that as unknown or unallocated
+- direct local-api debug sessions should use absolute runtime-root and Clash.Meta binary paths to avoid cwd-sensitive path resolution mistakes
 
 Contributors should extend these behaviors instead of reintroducing mock startup assumptions in new code or docs.
 

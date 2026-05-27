@@ -112,6 +112,8 @@ Already initialized:
 - Desktop tray icon loading now prefers packaged state-specific PNG assets, using `macos-template-*` files on macOS and default colored assets elsewhere, then falls back to generated vector icons when assets are missing
 - The repository now defines a canonical bundled-core vendor/import flow into `runtime-assets/clash-meta/bin/clash-meta`
 - Electron Builder packaging scaffold now collects the web build, Spring Boot jar, and bundled Clash.Meta binary into desktop `extraResources`
+- Clash.Meta runtime ports are now allocated dynamically at start time, and system proxy targeting follows the current mixed port instead of assuming `7890`
+- Before Clash.Meta starts, its mixed/controller ports are intentionally unset, so backend and frontend logic must treat `0` as "not allocated yet" instead of falling back to historical defaults
 - Runtime root and Clash.Meta path can be injected explicitly through environment variables
 
 ## Planned Module Boundaries
@@ -321,6 +323,8 @@ Run the local API scaffold:
 cd services/local-api
 mvn spring-boot:run
 ```
+
+When running the local API directly for debugging, prefer absolute paths for `APP_RUNTIME_ROOT` and `APP_CORE_CLASH_META_PATH` so they do not drift with the service working directory.
 
 Verify the backend scaffold:
 

@@ -75,6 +75,8 @@ export type CoreStatus = {
   state: string;
   configuredPath: string;
   binaryExists: boolean;
+  mixedPort: number;
+  controllerPort: number;
   lastAction: string;
   lastStartedAt: string;
   lastError: string;

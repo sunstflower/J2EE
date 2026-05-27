@@ -25,7 +25,6 @@ public class SystemProxyService {
     private static final String CAPABILITY_AVAILABLE = "AVAILABLE";
     private static final String CAPABILITY_UNAVAILABLE = "UNAVAILABLE";
     private static final String TARGET_HOST = "127.0.0.1";
-    private static final int TARGET_PORT = 7890;
     private static final List<String> PREFERRED_SERVICE_TOKENS = List.of(
             "wi-fi",
             "ethernet",
@@ -79,6 +78,7 @@ public class SystemProxyService {
         );
         String capability = resolveCapability(availableServices, targetServices);
         boolean applied = CAPABILITY_AVAILABLE.equals(capability) && proxiesMatchTarget(targetServices);
+        int targetPort = coreManagerService.getEffectiveMixedPort();
         boolean recommendationPending = isRecommendationPending(
                 settings.systemProxyScope(),
                 confirmedServices,
@@ -99,7 +99,7 @@ public class SystemProxyService {
                 activeServices,
                 recommendationPending,
                 TARGET_HOST,
-                TARGET_PORT,
+                targetPort,
                 targetServices.size(),
                 targetServices,
                 lastAction,
@@ -167,10 +167,11 @@ public class SystemProxyService {
     }
 
     private void applyEnabledState(List<String> services) throws IOException, InterruptedException {
+        String targetPort = String.valueOf(coreManagerService.getEffectiveMixedPort());
         for (String service : services) {
-            runNetworkSetup(service, "-setwebproxy", TARGET_HOST, String.valueOf(TARGET_PORT), "off");
-            runNetworkSetup(service, "-setsecurewebproxy", TARGET_HOST, String.valueOf(TARGET_PORT), "off");
-            runNetworkSetup(service, "-setsocksfirewallproxy", TARGET_HOST, String.valueOf(TARGET_PORT), "off");
+            runNetworkSetup(service, "-setwebproxy", TARGET_HOST, targetPort, "off");
+            runNetworkSetup(service, "-setsecurewebproxy", TARGET_HOST, targetPort, "off");
+            runNetworkSetup(service, "-setsocksfirewallproxy", TARGET_HOST, targetPort, "off");
             runNetworkSetup(service, "-setwebproxystate", "on");
             runNetworkSetup(service, "-setsecurewebproxystate", "on");
             runNetworkSetup(service, "-setsocksfirewallproxystate", "on");
@@ -226,14 +227,15 @@ public class SystemProxyService {
             return false;
         }
 
+        int targetPort = coreManagerService.getEffectiveMixedPort();
         for (String service : services) {
-            if (!protocolMatchesTarget(service, "-getwebproxy")) {
+            if (!protocolMatchesTarget(service, "-getwebproxy", targetPort)) {
                 return false;
             }
-            if (!protocolMatchesTarget(service, "-getsecurewebproxy")) {
+            if (!protocolMatchesTarget(service, "-getsecurewebproxy", targetPort)) {
                 return false;
             }
-            if (!protocolMatchesTarget(service, "-getsocksfirewallproxy")) {
+            if (!protocolMatchesTarget(service, "-getsocksfirewallproxy", targetPort)) {
                 return false;
             }
         }
@@ -241,11 +243,11 @@ public class SystemProxyService {
         return true;
     }
 
-    private boolean protocolMatchesTarget(String service, String command) {
+    private boolean protocolMatchesTarget(String service, String command, int targetPort) {
         Map<String, String> values = parseProxyInfo(executeCommand(command, service));
         return "Yes".equalsIgnoreCase(values.getOrDefault("Enabled", "No"))
                 && TARGET_HOST.equals(values.getOrDefault("Server", ""))
-                && String.valueOf(TARGET_PORT).equals(values.getOrDefault("Port", ""));
+                && String.valueOf(targetPort).equals(values.getOrDefault("Port", ""));
     }
 
     private void writeSnapshot(List<String> services) throws IOException {
@@ -567,30 +569,7 @@ public class SystemProxyService {
         return Files.exists(Path.of(explicit)) ? explicit : "scutil";
     }
 
-    private String executeCommand(String... arguments) {
-        return executeRawCommand(resolveNetworkSetupBinary(), arguments);
-    }
-
-    private String executeRawCommand(String binary, String... arguments) {
-        try {
-            ProcessBuilder processBuilder = new ProcessBuilder(buildCommand(binary, arguments));
-            processBuilder.redirectErrorStream(true);
-            Process process = processBuilder.start();
-            String output = new String(process.getInputStream().readAllBytes());
-            int exitCode = process.waitFor();
-            if (exitCode != 0) {
-                throw new IllegalStateException(output.isBlank() ? "networksetup command failed" : output.trim());
-            }
-            return output;
-        } catch (InterruptedException error) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(error.getMessage(), error);
-        } catch (IOException error) {
-            throw new IllegalStateException(error.getMessage(), error);
-        }
-    }
-
-    private void runNetworkSetup(String service, String command, String... extraArguments) throws IOException, InterruptedException {
+    protected void runNetworkSetup(String service, String command, String... extraArguments) throws IOException, InterruptedException {
         List<String> arguments = new ArrayList<>();
         arguments.add(command);
         arguments.add(service);
@@ -613,7 +592,30 @@ public class SystemProxyService {
         return command;
     }
 
-    private Map<String, String> parseProxyInfo(String output) {
+    protected String executeCommand(String... arguments) {
+        return executeRawCommand(resolveNetworkSetupBinary(), arguments);
+    }
+
+    protected String executeRawCommand(String binary, String... arguments) {
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder(buildCommand(binary, arguments));
+            processBuilder.redirectErrorStream(true);
+            Process process = processBuilder.start();
+            String output = new String(process.getInputStream().readAllBytes());
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new IllegalStateException(output.isBlank() ? "networksetup command failed" : output.trim());
+            }
+            return output;
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(error.getMessage(), error);
+        } catch (IOException error) {
+            throw new IllegalStateException(error.getMessage(), error);
+        }
+    }
+
+    protected Map<String, String> parseProxyInfo(String output) {
         Map<String, String> values = new LinkedHashMap<>();
         for (String line : output.split("\\R")) {
             int separator = line.indexOf(':');
@@ -627,7 +629,7 @@ public class SystemProxyService {
         return values;
     }
 
-    private Path snapshotPath() {
+    protected Path snapshotPath() {
         return Path.of(appRuntimeProperties.getRoot(), "system-proxy", "state", "snapshot.json");
     }
 

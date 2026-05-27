@@ -6,6 +6,8 @@ import com.sunsetflower.macproxy.localapi.service.dto.CoreStatusResponse;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,8 +18,8 @@ import java.util.List;
 @Service
 public class CoreManagerService {
 
-    private static final int MIXED_PORT = 7890;
-    private static final int CONTROLLER_PORT = 9090;
+    private static final String LOOPBACK_HOST = "127.0.0.1";
+    private static final long START_STABILITY_WAIT_MILLIS = 400L;
 
     private final AppRuntimeProperties appRuntimeProperties;
     private final ClashMetaProperties clashMetaProperties;
@@ -28,6 +30,8 @@ public class CoreManagerService {
     private volatile String lastAction = "NONE";
     private volatile String lastStartedAt = "";
     private volatile int lastExitCode = -1;
+    private volatile int mixedPort = 0;
+    private volatile int controllerPort = 0;
 
     public CoreManagerService(AppRuntimeProperties appRuntimeProperties, ClashMetaProperties clashMetaProperties) {
         this.appRuntimeProperties = appRuntimeProperties;
@@ -48,12 +52,16 @@ public class CoreManagerService {
             effectiveState = "RUNNING";
         } else if ("RUNNING".equals(state)) {
             effectiveState = "EXITED";
+        } else if ("NOT_CONFIGURED".equals(state) || "MISSING_BINARY".equals(state)) {
+            effectiveState = "STOPPED";
         }
 
         return new CoreStatusResponse(
                 effectiveState,
                 configuredPath,
                 exists,
+                mixedPort,
+                controllerPort,
                 lastAction,
                 lastStartedAt,
                 lastError
@@ -86,6 +94,10 @@ public class CoreManagerService {
         }
 
         try {
+            int nextMixedPort = allocateEphemeralPort();
+            int nextControllerPort = allocateDistinctEphemeralPort(nextMixedPort);
+            mixedPort = nextMixedPort;
+            controllerPort = nextControllerPort;
             Path runtimeRoot = ensureRuntimeLayout();
             Path configPath = writeMinimalConfig(runtimeRoot);
             Path logPath = runtimeRoot.resolve("logs").resolve("clash-meta.log");
@@ -113,10 +125,17 @@ public class CoreManagerService {
                 lastError = "Clash.Meta process exited with code " + lastExitCode;
             });
 
+            verifyProcessStayedAlive(process, logPath);
+
             state = "RUNNING";
             lastError = "";
             lastAction = "START";
             lastStartedAt = OffsetDateTime.now().toString();
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            state = "START_FAILED";
+            lastAction = "START";
+            lastError = "Interrupted while waiting for Clash.Meta startup";
         } catch (IOException error) {
             state = "START_FAILED";
             lastAction = "START";
@@ -157,6 +176,10 @@ public class CoreManagerService {
         return start();
     }
 
+    public int getEffectiveMixedPort() {
+        return mixedPort;
+    }
+
     private Path ensureRuntimeLayout() throws IOException {
         Path runtimeRoot = Path.of(appRuntimeProperties.getRoot(), "clash-meta");
         Files.createDirectories(runtimeRoot);
@@ -169,11 +192,11 @@ public class CoreManagerService {
     private Path writeMinimalConfig(Path runtimeRoot) throws IOException {
         Path configPath = runtimeRoot.resolve("config").resolve("config.yaml");
         List<String> lines = List.of(
-                "mixed-port: " + MIXED_PORT,
+                "mixed-port: " + mixedPort,
                 "allow-lan: false",
                 "mode: rule",
                 "log-level: info",
-                "external-controller: 127.0.0.1:" + CONTROLLER_PORT,
+                "external-controller: " + LOOPBACK_HOST + ":" + controllerPort,
                 "log-file: " + runtimeRoot.resolve("logs").resolve("clash-meta.log").toAbsolutePath(),
                 "proxies: []",
                 "proxy-groups: []",
@@ -189,5 +212,52 @@ public class CoreManagerService {
                 StandardOpenOption.WRITE
         );
         return configPath;
+    }
+
+    private void verifyProcessStayedAlive(Process process, Path logPath) throws IOException, InterruptedException {
+        Thread.sleep(START_STABILITY_WAIT_MILLIS);
+
+        if (process.isAlive()) {
+            return;
+        }
+
+        lastExitCode = process.exitValue();
+        coreProcess = null;
+        throw new IOException(buildEarlyExitMessage(logPath, lastExitCode));
+    }
+
+    private String buildEarlyExitMessage(Path logPath, int exitCode) throws IOException {
+        String logTail = readLogTail(logPath);
+        if (logTail.isBlank()) {
+            return "Clash.Meta exited during startup with code " + exitCode;
+        }
+
+        return "Clash.Meta exited during startup with code " + exitCode + ": " + logTail;
+    }
+
+    private String readLogTail(Path logPath) throws IOException {
+        if (!Files.exists(logPath)) {
+            return "";
+        }
+
+        List<String> lines = Files.readAllLines(logPath, StandardCharsets.UTF_8);
+        int fromIndex = Math.max(0, lines.size() - 6);
+        return String.join(" | ", lines.subList(fromIndex, lines.size())).trim();
+    }
+
+    private int allocateEphemeralPort() throws IOException {
+        try (ServerSocket socket = new ServerSocket()) {
+            socket.setReuseAddress(true);
+            socket.bind(new InetSocketAddress(LOOPBACK_HOST, 0));
+            return socket.getLocalPort();
+        }
+    }
+
+    private int allocateDistinctEphemeralPort(int occupiedPort) throws IOException {
+        int candidate = allocateEphemeralPort();
+        while (candidate == occupiedPort) {
+            candidate = allocateEphemeralPort();
+        }
+        return candidate;
     }
 }

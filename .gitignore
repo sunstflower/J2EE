@@ -23,6 +23,7 @@ logs/
 tmp/
 *.log
 .runtime/
+**/.runtime*/
 apps/desktop/.bundle/
 
 # Environment

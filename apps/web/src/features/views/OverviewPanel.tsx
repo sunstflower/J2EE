@@ -88,6 +88,13 @@ export function OverviewPanel({ metrics }: OverviewPanelProps) {
     });
   }, [acceptRecommendedServices]);
 
+  const coreMixedPortLabel = core && core.mixedPort > 0 ? String(core.mixedPort) : "Unknown";
+  const coreControllerPortLabel = core && core.controllerPort > 0 ? String(core.controllerPort) : "Unknown";
+  const systemProxyTargetLabel =
+    systemProxy && systemProxy.targetPort > 0
+      ? `${systemProxy.targetHost}:${systemProxy.targetPort}`
+      : "Unknown";
+
   return (
     <div className="grid gap-5 xl:grid-cols-[1.2fr_0.9fr_0.9fr]">
       <section className="rounded-[30px] border border-white/60 bg-white/75 p-8 shadow-[0_28px_70px_rgba(26,57,92,0.10)] backdrop-blur-xl">
@@ -131,6 +138,8 @@ export function OverviewPanel({ metrics }: OverviewPanelProps) {
           <p>State: <span className="font-medium text-white">{core?.state ?? "Loading"}</span></p>
           <p>Binary present: <span className="font-medium text-white">{core?.binaryExists ? "Yes" : "No"}</span></p>
           <p className="break-all">Configured path: <span className="font-medium text-white">{core?.configuredPath || "(not configured)"}</span></p>
+          <p>Mixed port: <span className="font-medium text-white">{coreMixedPortLabel}</span></p>
+          <p>Controller port: <span className="font-medium text-white">{coreControllerPortLabel}</span></p>
           <p>Last action: <span className="font-medium text-white">{core?.lastAction ?? "NONE"}</span></p>
           {core?.lastError ? <p className="text-rose-300">Error: {core.lastError}</p> : null}
           {coreError ? <p className="text-rose-300">Error: {coreError}</p> : null}
@@ -171,7 +180,7 @@ export function OverviewPanel({ metrics }: OverviewPanelProps) {
           <p>Mode: <span className="font-medium text-slate-950">{systemProxy?.mode ?? "Unknown"}</span></p>
           <p>Capability: <span className="font-medium text-slate-950">{systemProxy?.capability ?? "Unknown"}</span></p>
           <p>Scope: <span className="font-medium text-slate-950">{systemProxy?.scope ?? "Unknown"}</span></p>
-          <p>Target: <span className="font-medium text-slate-950">{systemProxy ? `${systemProxy.targetHost}:${systemProxy.targetPort}` : "Unknown"}</span></p>
+          <p>Target: <span className="font-medium text-slate-950">{systemProxyTargetLabel}</span></p>
           <p>Services: <span className="font-medium text-slate-950">{systemProxy?.serviceCount ?? 0}</span></p>
           <p>Applied to macOS: <span className="font-medium text-slate-950">{systemProxy?.managed ? "Yes" : "No"}</span></p>
           <p>Last action: <span className="font-medium text-slate-950">{systemProxy?.lastAction ?? "NONE"}</span></p>
