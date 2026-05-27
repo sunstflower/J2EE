@@ -1,7 +1,9 @@
 const { app, BrowserWindow, Menu, Notification, Tray, ipcMain } = require("electron");
 const path = require("node:path");
 const { startBackend } = require("./backend");
-const { createTrayImage } = require("./trayIcon");
+const { resolveTrayImage } = require("./trayAssets");
+
+app.setName("mac-proxy-client");
 
 const DEFAULT_WINDOW = {
   width: 1280,
@@ -26,6 +28,10 @@ function resolveRendererEntry() {
 
   if (rendererUrl) {
     return rendererUrl;
+  }
+
+  if (app.isPackaged) {
+    return `file://${path.join(process.resourcesPath, "web", "index.html")}`;
   }
 
   return `file://${path.join(__dirname, "../../renderer/index.html")}`;
@@ -101,7 +107,7 @@ function setupTray() {
     return;
   }
 
-  const trayImage = createTrayImage(resolveTrayVisualState());
+  const trayImage = resolveTrayImage(resolveTrayVisualState());
   tray = new Tray(trayImage);
   tray.on("click", () => {
     focusMainWindow();
@@ -180,7 +186,7 @@ function updateTrayPresentation() {
 
   const title = resolveTrayTitle();
   const tooltip = resolveTrayTooltip();
-  const image = createTrayImage(resolveTrayVisualState());
+  const image = resolveTrayImage(resolveTrayVisualState());
 
   tray.setImage(image);
   tray.setTitle(title);

@@ -1,0 +1,8 @@
+source_type=vendor
+version=v1.19.25
+architecture=arm64
+asset_name=mihomo-darwin-arm64-v1.19.25.gz
+asset_url=https://github.com/MetaCubeX/mihomo/releases/download/v1.19.25/mihomo-darwin-arm64-v1.19.25.gz
+imported_at=2026-05-27T06:49:44Z
+size_bytes=41717778
+sha256=c17bf327f03d41687dee400118b18975c2b27123c132167e9d86c50efd534b24

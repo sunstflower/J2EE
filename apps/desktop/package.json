@@ -3,13 +3,51 @@
   "private": true,
   "version": "0.1.0",
   "description": "Electron shell for mac-proxy-client",
+  "author": "sunsetflower",
   "main": "src/main/main.js",
   "scripts": {
     "dev": "electron .",
     "dev:web": "MAC_PROXY_RENDERER_URL=http://127.0.0.1:5173 electron .",
-    "build": "echo \"Desktop packaging is not configured yet.\""
+    "build": "electron-builder --dir",
+    "dist": "electron-builder --mac zip"
+  },
+  "build": {
+    "appId": "com.sunsetflower.macproxyclient",
+    "productName": "mac-proxy-client",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/main/**/*",
+      "src/preload/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "extraResources": [
+      {
+        "from": ".bundle/web",
+        "to": "web"
+      },
+      {
+        "from": ".bundle/backend",
+        "to": "backend"
+      },
+      {
+        "from": ".bundle/core",
+        "to": "core"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        "dir",
+        "zip"
+      ]
+    }
   },
   "devDependencies": {
-    "electron": "^37.2.0"
+    "electron": "37.10.3",
+    "electron-builder": "26.8.1"
   }
 }

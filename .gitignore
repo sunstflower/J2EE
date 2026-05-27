@@ -10,6 +10,7 @@ node_modules/
 dist/
 build/
 .vite/
+release/
 
 # Java
 target/
@@ -22,6 +23,7 @@ logs/
 tmp/
 *.log
 .runtime/
+apps/desktop/.bundle/
 
 # Environment
 .env

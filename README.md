@@ -35,8 +35,8 @@ The following design decisions are now fixed for the first implementation:
 
 - No full Clash.Meta config modeling yet
 - No production-ready UI polish yet
-- No packaged desktop app yet
-- No production packaging pipeline yet
+- No signed production release yet
+- No notarization pipeline yet
 - No TUN mode work in the first implementation
 
 ## Proposed Architecture
@@ -89,8 +89,8 @@ Current scaffolds:
 Not implemented yet:
 
 - full Clash.Meta config generation from subscriptions and selections
-- packaged desktop distribution
-- signed bundled core delivery
+- signed and notarized desktop distribution
+- release update channel integration
 - log retention and diagnostics workflows
 
 Already initialized:
@@ -109,6 +109,9 @@ Already initialized:
 - Electron tray now shows system proxy status and can trigger one-click recommendation acceptance
 - Electron tray title and tooltip now reflect current system proxy status and pending recommendation state
 - Electron tray icon now switches visual state for `On`, `Off`, `Pending`, and idle conditions
+- Desktop tray icon loading now prefers packaged state-specific PNG assets, using `macos-template-*` files on macOS and default colored assets elsewhere, then falls back to generated vector icons when assets are missing
+- The repository now defines a canonical bundled-core vendor/import flow into `runtime-assets/clash-meta/bin/clash-meta`
+- Electron Builder packaging scaffold now collects the web build, Spring Boot jar, and bundled Clash.Meta binary into desktop `extraResources`
 - Runtime root and Clash.Meta path can be injected explicitly through environment variables
 
 ## Planned Module Boundaries
@@ -250,6 +253,18 @@ Install workspace dependencies:
 npm install
 ```
 
+Vendor the pinned bundled Clash.Meta executable into the repository asset path:
+
+```bash
+npm run vendor:core
+```
+
+Or import an explicit local binary into the same repository path:
+
+```bash
+npm run import:core -- /absolute/path/to/clash-meta
+```
+
 Run the web scaffold:
 
 ```bash
@@ -260,6 +275,26 @@ Run the desktop scaffold:
 
 ```bash
 npm run dev:desktop
+```
+
+Build desktop distribution prerequisites:
+
+```bash
+npm run build:web
+npm run build:local-api
+npm run prepare:desktop-bundle
+```
+
+Build an unpacked desktop app:
+
+```bash
+npm run build:desktop
+```
+
+Build a macOS zip distributable:
+
+```bash
+npm run dist:desktop
 ```
 
 Optional development environment overrides:
@@ -286,17 +321,78 @@ mvn test
 
 ## Development Asset Convention
 
-The repository now reserves a development-only core asset path:
+The repository now reserves this canonical bundled core asset path:
 
 ```text
 runtime-assets/clash-meta/bin/clash-meta
 ```
 
-If that file exists, Electron uses it as the default `Clash.Meta` path during local development. Otherwise the backend remains in `NOT_CONFIGURED` or `MISSING_BINARY` state until a path is supplied.
+If that file exists, Electron uses it as the default `Clash.Meta` path during local development. The same file is also the required source for packaged desktop bundling. If it is missing, the backend remains in `NOT_CONFIGURED` or `MISSING_BINARY` state until a path is supplied, and desktop bundle preparation will stop.
+
+The pinned vendor version lives in:
+
+```text
+runtime-assets/clash-meta/version.txt
+```
+
+For packaged desktop builds, Electron now expects the following generated bundle staging layout before `electron-builder` runs:
+
+```text
+apps/desktop/.bundle/
+  web/        # copied from apps/web/dist
+  backend/    # contains local-api.jar
+  core/       # contains bundled clash-meta executable
+```
+
+Prepare that staging area with:
+
+```bash
+./scripts/prepare_desktop_bundle.sh
+```
+
+Vendor or import the bundled core into that repository path before preparing the desktop bundle:
+
+```bash
+npm run vendor:core
+```
+
+```bash
+npm run import:core -- /absolute/path/to/clash-meta
+```
+
+Tray assets follow a dual-track convention under `apps/desktop/assets/tray`:
+
+```text
+default PNGs:
+tray-idle.png
+tray-idle@2x.png
+tray-on.png
+tray-on@2x.png
+tray-off.png
+tray-off@2x.png
+tray-pending.png
+tray-pending@2x.png
+
+macOS template PNGs:
+macos-template-tray-idle.png
+macos-template-tray-idle@2x.png
+macos-template-tray-on.png
+macos-template-tray-on@2x.png
+macos-template-tray-off.png
+macos-template-tray-off@2x.png
+macos-template-tray-pending.png
+macos-template-tray-pending@2x.png
+```
+
+Source SVG files live in `apps/desktop/assets/tray/svg/default` and `apps/desktop/assets/tray/svg/macos-template`. Regenerate all PNG outputs with:
+
+```bash
+./scripts/generate_tray_assets.sh
+```
 
 ## Next Recommended Work
 
-1. Wire Electron startup to the Spring Boot process and runtime parameter passing
-2. Implement session token validation in the local API
-3. Add the first persisted settings and subscription tables
-4. Introduce Clash.Meta binary discovery and runtime config generation
+1. Add signed packaged builds that embed `Clash.Meta` and tray assets into the distributable app bundle
+2. Introduce actual Clash.Meta config generation and profile rendering instead of lifecycle-only backend wiring
+3. Add subscription fetch, parse, and persistence flows with refresh scheduling
+4. Expand end-to-end verification for backend startup, token-authenticated API access, and macOS system proxy transitions
