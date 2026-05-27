@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSettingsState } from "../settings/useSettingsState";
+import { useSystemProxyStatus } from "../system-proxy/useSystemProxyStatus";
 import type { AppSettings } from "../../shared/types";
 
 export function SettingsPanel() {
   const { data, loading, saving, error, save } = useSettingsState();
+  const { data: systemProxy, acting: systemProxyActing, error: systemProxyError, setEnabled } = useSystemProxyStatus();
   const [draft, setDraft] = useState<AppSettings | null>(null);
 
   useEffect(() => {
@@ -29,8 +31,13 @@ export function SettingsPanel() {
         </div>
         <button
           className="rounded-full border border-slate-200 bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={saving}
-          onClick={() => save(draft)}
+          disabled={saving || systemProxyActing}
+          onClick={() =>
+            save({
+              ...draft,
+              systemProxyEnabled: systemProxy?.enabled ?? draft.systemProxyEnabled
+            })
+          }
           type="button"
         >
           {saving ? "Saving..." : "Save settings"}
@@ -44,17 +51,32 @@ export function SettingsPanel() {
               <p className="text-sm text-slate-500">Network behavior</p>
               <h3 className="mt-2 text-lg font-semibold text-slate-950">System proxy enabled</h3>
               <p className="mt-3 text-sm leading-7 text-slate-700">
-                Controls whether the application considers system proxy mode enabled in persisted settings.
+                Controls whether the backend applies macOS proxy settings through `networksetup` for the detected enabled network services.
+              </p>
+              <p className="mt-3 text-sm leading-7 text-slate-500">
+                Current runtime status: {systemProxy?.statusLabel ?? "Loading"}
+                {systemProxy ? ` · ${systemProxy.serviceCount} services · ${systemProxy.targetHost}:${systemProxy.targetPort}` : ""}
               </p>
             </div>
             <input
               checked={draft.systemProxyEnabled}
               className="mt-1 h-5 w-5"
-              onChange={(event) =>
+              disabled={systemProxyActing}
+              onChange={async (event) => {
+                const nextValue = event.target.checked;
+                const nextScope = draft.systemProxyScope;
+                const nextServices = draft.systemProxyServices
+                  .split(",")
+                  .map((value) => value.trim())
+                  .filter(Boolean);
                 setDraft((current) =>
-                  current ? { ...current, systemProxyEnabled: event.target.checked } : current
-                )
-              }
+                  current ? { ...current, systemProxyEnabled: nextValue } : current
+                );
+                await setEnabled(nextValue, {
+                  scope: nextScope,
+                  services: nextServices
+                });
+              }}
               type="checkbox"
             />
           </div>
@@ -84,6 +106,87 @@ export function SettingsPanel() {
       </div>
 
       <div className="mt-4 rounded-[24px] border border-slate-200 bg-slate-50/75 p-6">
+        <p className="text-sm text-slate-500">System proxy targeting</p>
+        <h3 className="mt-2 text-lg font-semibold text-slate-950">Managed network services</h3>
+        <p className="mt-3 text-sm leading-7 text-slate-700">
+          Choose whether system proxy should apply to every enabled macOS network service or only to explicitly selected services.
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            className={`rounded-full border px-4 py-2 text-sm ${
+              draft.systemProxyScope === "ALL_ENABLED"
+                ? "border-slate-900 bg-slate-900 text-white"
+                : "border-slate-300 bg-white text-slate-800"
+            }`}
+            onClick={() =>
+              setDraft((current) =>
+                current ? { ...current, systemProxyScope: "ALL_ENABLED" } : current
+              )
+            }
+            type="button"
+          >
+            All enabled services
+          </button>
+          <button
+            className={`rounded-full border px-4 py-2 text-sm ${
+              draft.systemProxyScope === "SELECTED"
+                ? "border-slate-900 bg-slate-900 text-white"
+                : "border-slate-300 bg-white text-slate-800"
+            }`}
+            onClick={() =>
+              setDraft((current) =>
+                current ? { ...current, systemProxyScope: "SELECTED" } : current
+              )
+            }
+            type="button"
+          >
+            Selected services only
+          </button>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {(systemProxy?.services ?? []).map((serviceName) => {
+            const selected = draft.systemProxyServices
+              .split(",")
+              .map((value) => value.trim())
+              .filter(Boolean);
+            const checked = selected.includes(serviceName);
+
+            return (
+              <label
+                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800"
+                key={serviceName}
+              >
+                <span>{serviceName}</span>
+                <input
+                  checked={checked}
+                  className="h-4 w-4"
+                  disabled={draft.systemProxyScope !== "SELECTED"}
+                  onChange={(event) => {
+                    const nextSelected = event.target.checked
+                      ? [...selected, serviceName]
+                      : selected.filter((value) => value !== serviceName);
+
+                    setDraft((current) =>
+                      current
+                        ? { ...current, systemProxyServices: Array.from(new Set(nextSelected)).join(",") }
+                        : current
+                    );
+                  }}
+                  type="checkbox"
+                />
+              </label>
+            );
+          })}
+        </div>
+
+        <p className="mt-4 text-sm leading-7 text-slate-500">
+          Current scope: {systemProxy?.scope ?? draft.systemProxyScope}. Selected services are persisted and used by the backend when scope is `SELECTED`.
+        </p>
+      </div>
+
+      <div className="mt-4 rounded-[24px] border border-slate-200 bg-slate-50/75 p-6">
         <p className="text-sm text-slate-500">Diagnostics</p>
         <h3 className="mt-2 text-lg font-semibold text-slate-950">Log level</h3>
         <p className="mt-3 text-sm leading-7 text-slate-700">
@@ -109,6 +212,12 @@ export function SettingsPanel() {
       {error ? (
         <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
           {error}
+        </div>
+      ) : null}
+
+      {systemProxyError ? (
+        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          {systemProxyError}
         </div>
       ) : null}
     </section>

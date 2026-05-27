@@ -122,6 +122,7 @@ The current repository state already includes:
 - Bearer-token protection on local API endpoints except health
 - SQLite-backed settings and subscriptions slices
 - early Clash.Meta lifecycle endpoints with runtime-root-backed generated config
+- `system-proxy` endpoints backed by macOS `networksetup`, with restore snapshots stored under the runtime root
 
 Contributors should extend these behaviors instead of reintroducing mock startup assumptions in new code or docs.
 

@@ -88,7 +88,6 @@ Current scaffolds:
 
 Not implemented yet:
 
-- real system proxy switching on macOS
 - full Clash.Meta config generation from subscriptions and selections
 - packaged desktop distribution
 - signed bundled core delivery
@@ -100,6 +99,8 @@ Already initialized:
 - Backend binds to random localhost port and validates a session token on `/api/v1/**` except health
 - SQLite persistence is active for settings and subscriptions
 - Core endpoints exist for status, start, stop, and reload
+- System proxy endpoints now integrate with macOS `networksetup`, with runtime snapshot-based restore on disable
+- System proxy targeting supports either all enabled network services or an explicit selected-service list
 - Runtime root and Clash.Meta path can be injected explicitly through environment variables
 
 ## Planned Module Boundaries

@@ -228,6 +228,22 @@ Purpose:
 
 - Return current system proxy state known to the application
 
+Current scaffold fields:
+
+- `enabled`
+- `managed`
+- `mode`
+- `statusLabel`
+- `capability`
+- `scope`
+- `selectedServices`
+- `targetHost`
+- `targetPort`
+- `serviceCount`
+- `services`
+- `lastAction`
+- `lastError`
+
 ### `PUT /api/v1/system-proxy`
 
 Purpose:
@@ -237,6 +253,16 @@ Purpose:
 Suggested request fields:
 
 - enabled
+- scope
+- services
+
+Current scaffold behavior:
+
+- starts Clash.Meta before enabling system proxy if needed
+- applies Web, Secure Web, and SOCKS proxy settings through macOS `networksetup`
+- supports `ALL_ENABLED` and `SELECTED` service targeting modes
+- stores a pre-change snapshot under the runtime root for later restore
+- restores prior proxy settings when disabling system proxy
 
 ## 7. Clash.Meta Lifecycle
 

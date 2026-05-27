@@ -35,6 +35,8 @@ export type DashboardState = {
 
 export type AppSettings = {
   systemProxyEnabled: boolean;
+  systemProxyScope: "ALL_ENABLED" | "SELECTED";
+  systemProxyServices: string;
   launchAtLogin: boolean;
   logLevel: string;
 };
@@ -45,6 +47,22 @@ export type RuntimeSummary = {
   systemProxyStatus: string;
   subscriptionCount: number;
   logLevel: string;
+};
+
+export type SystemProxyStatus = {
+  enabled: boolean;
+  managed: boolean;
+  mode: string;
+  statusLabel: string;
+  capability: string;
+  scope: "ALL_ENABLED" | "SELECTED";
+  selectedServices: string[];
+  targetHost: string;
+  targetPort: number;
+  serviceCount: number;
+  services: string[];
+  lastAction: string;
+  lastError: string;
 };
 
 export type CoreStatus = {

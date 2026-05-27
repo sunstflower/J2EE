@@ -224,6 +224,8 @@ Examples:
 - current PID marker
 - last generated config checksum
 - last known core launch metadata
+- system proxy restore snapshot for previously active network service proxy settings
+- persisted system proxy service scope and selected service list in SQLite settings
 
 ## Failure Handling Expectations
 
