@@ -12,6 +12,8 @@ app:
   core:
     clash-meta:
       path: ${APP_CORE_CLASH_META_PATH:}
+  runtime:
+    root: ${APP_RUNTIME_ROOT:./.runtime}
   session:
     token: ${APP_SESSION_TOKEN:dev-session-token}
 

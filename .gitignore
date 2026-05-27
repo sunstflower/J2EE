@@ -21,6 +21,7 @@ out/
 logs/
 tmp/
 *.log
+.runtime/
 
 # Environment
 .env

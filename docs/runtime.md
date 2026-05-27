@@ -43,6 +43,7 @@ Recommended subdirectories:
       config/
       logs/
       state/
+    local-api/
 ```
 
 ### Local Development
@@ -67,10 +68,12 @@ Suggested split:
 <repo>/runtime-assets/clash-meta/
   bin/
 
-<repo>/.runtime/clash-meta/
-  config/
-  logs/
-  state/
+<repo>/.runtime/
+  clash-meta/
+    config/
+    logs/
+    state/
+  local-api/
 ```
 
 ## Clash.Meta Asset Strategy
@@ -112,6 +115,10 @@ Current development scaffold:
 
 - Spring Boot emits `LOCAL_API_READY port=<port>` on `ApplicationReadyEvent`
 - Electron parses that stdout line as the source of truth for the bound port
+- Electron now passes:
+  - `APP_SESSION_TOKEN`
+  - `APP_RUNTIME_ROOT`
+  - `APP_CORE_CLASH_META_PATH`
 
 ## Recommended Launch Parameters
 
@@ -147,10 +154,12 @@ Current scaffold status:
 
 - Backend interceptor expects `Authorization: Bearer <token>`
 - Development token defaults from `APP_SESSION_TOKEN`
+- Runtime root defaults from `APP_RUNTIME_ROOT`, falling back to `./.runtime`
 - Frontend real-API mode reads:
   - `VITE_LOCAL_API_BASE_URL`
   - `VITE_LOCAL_API_SESSION_TOKEN`
 - Electron development shell now starts Spring Boot, generates a session token, parses the bound port from startup logs, and exposes both values to the renderer preload bridge
+- Electron development shell also resolves the development Clash.Meta path from `runtime-assets/clash-meta/bin/clash-meta` when no explicit override is provided
 
 ## Local API Binding
 
@@ -177,6 +186,12 @@ Rules:
 2. Generated files may be replaced atomically
 3. The packaged binary directory must remain untouched
 
+Current scaffold status:
+
+- `CoreManagerService` currently writes a minimal generated config to `clash-meta/config/config.yaml`
+- `Clash.Meta` is started with explicit `-f <config-file> -d <runtime-root>/clash-meta`
+- the local SQLite file currently lives at `<runtime-root>/local-api/local-api.db`
+
 ### Logs
 
 Recommended location:
@@ -190,6 +205,11 @@ Rules:
 1. Runtime logs should be separated from source and packaged assets
 2. Rolling log strategy is preferred over unbounded append-only files
 3. Sensitive values should be filtered before persistence when practical
+
+Current scaffold status:
+
+- the first lifecycle implementation appends core process output to `clash-meta/logs/clash-meta.log`
+- log rotation is not implemented yet
 
 ### State
 

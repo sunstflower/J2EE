@@ -10,7 +10,7 @@ This repository hosts a macOS local proxy client with the following shape:
 - `apps/web`: React UI
 - `services/local-api`: Spring Boot local backend
 
-The repository is currently in documentation-first initialization. Prefer architectural clarity over premature implementation.
+The repository has moved past documentation-only initialization. Prefer maintaining the documented architecture while extending the real scaffold in small, reviewable slices.
 
 The following decisions are fixed unless explicitly revised by the project owner:
 
@@ -54,6 +54,7 @@ The following decisions are fixed unless explicitly revised by the project owner
 - Must isolate command execution and process management behind explicit abstractions
 - Is the only process allowed to start, stop, reload, or inspect Clash.Meta
 - Must validate a session token on UI-facing local API access
+- Should keep generated runtime files under the configured runtime root instead of mutating packaged assets
 
 ## Documentation Requirements
 
@@ -101,6 +102,7 @@ At minimum, keep these files aligned:
 - Process management must include health checks and predictable shutdown
 - Do not silently restart privileged operations without surfacing status
 - Do not move Clash.Meta lifecycle management into Electron
+- Electron may resolve and pass the runtime root and Clash.Meta binary path, but must not absorb runtime orchestration logic
 
 ## Security Baseline
 
@@ -110,6 +112,18 @@ At minimum, keep these files aligned:
 4. Document every shell command or OS integration that affects networking
 5. Treat bundled executable integrity and version compatibility as a documented concern
 6. Do not replace random port plus session token with a weaker local API access pattern without explicit approval
+
+## Current Scaffold Reality
+
+The current repository state already includes:
+
+- Electron development bootstrap for Spring Boot
+- random-port readiness handoff via `LOCAL_API_READY port=<port>`
+- Bearer-token protection on local API endpoints except health
+- SQLite-backed settings and subscriptions slices
+- early Clash.Meta lifecycle endpoints with runtime-root-backed generated config
+
+Contributors should extend these behaviors instead of reintroducing mock startup assumptions in new code or docs.
 
 ## Definition Of Ready
 

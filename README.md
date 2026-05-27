@@ -10,7 +10,7 @@ This repository is initialized for architecture scheme 2:
 - Persistence: MyBatis + SQLite
 - Proxy dataplane: bundled Clash.Meta core
 
-This repository now includes formal scaffolds for the desktop shell, web UI, and local API. Business features are still intentionally minimal so the architecture, boundaries, and contributor workflow remain stable before deeper implementation starts.
+This repository now includes formal scaffolds for the desktop shell, web UI, and local API. The baseline local control plane is initialized, including desktop-to-backend bootstrap, session-token-protected local APIs, SQLite persistence for early settings and subscriptions, and a first real Clash.Meta lifecycle service boundary.
 
 ## Locked Decisions
 
@@ -31,12 +31,12 @@ The following design decisions are now fixed for the first implementation:
 - Expose local RESTful APIs for UI orchestration and runtime control
 - Support system proxy mode, subscription management, policy routing, and runtime management around Clash.Meta
 
-## Non-Goals For Initialization
+## Non-Goals For The Current Stage
 
-- No proxy core integration yet
-- No production-ready UI yet
+- No full Clash.Meta config modeling yet
+- No production-ready UI polish yet
 - No packaged desktop app yet
-- No full build scripts yet
+- No production packaging pipeline yet
 - No TUN mode work in the first implementation
 
 ## Proposed Architecture
@@ -82,17 +82,25 @@ mac-proxy-client/
 
 Current scaffolds:
 
-- `apps/desktop`: Electron main process, preload entry, renderer fallback page
-- `apps/web`: React 19 + Vite + TypeScript + Tailwind CSS v4 application shell with mock-backed service boundaries
-- `services/local-api`: Spring Boot 3 + MyBatis + SQLite starter setup
+- `apps/desktop`: Electron main process, preload bridge, development-time Spring Boot launcher, renderer fallback page
+- `apps/web`: React 19 + Vite + TypeScript + Tailwind CSS v4 shell with real local API service modules
+- `services/local-api`: Spring Boot 3 + MyBatis + SQLite local API with controller/service/dao baseline and early runtime endpoints
 
 Not implemented yet:
 
-- Clash.Meta process integration
-- session token validation
-- subscription persistence
-- desktop-to-backend bootstrap wiring
+- real system proxy switching on macOS
+- full Clash.Meta config generation from subscriptions and selections
 - packaged desktop distribution
+- signed bundled core delivery
+- log retention and diagnostics workflows
+
+Already initialized:
+
+- Electron launches Spring Boot in development and captures a machine-readable ready line
+- Backend binds to random localhost port and validates a session token on `/api/v1/**` except health
+- SQLite persistence is active for settings and subscriptions
+- Core endpoints exist for status, start, stop, and reload
+- Runtime root and Clash.Meta path can be injected explicitly through environment variables
 
 ## Planned Module Boundaries
 
@@ -245,6 +253,14 @@ Run the desktop scaffold:
 npm run dev:desktop
 ```
 
+Optional development environment overrides:
+
+```bash
+APP_CORE_CLASH_META_PATH=/absolute/path/to/clash-meta \
+APP_RUNTIME_ROOT=/absolute/path/to/runtime \
+npm run dev:desktop
+```
+
 Run the local API scaffold:
 
 ```bash
@@ -258,6 +274,16 @@ Verify the backend scaffold:
 cd services/local-api
 mvn test
 ```
+
+## Development Asset Convention
+
+The repository now reserves a development-only core asset path:
+
+```text
+runtime-assets/clash-meta/bin/clash-meta
+```
+
+If that file exists, Electron uses it as the default `Clash.Meta` path during local development. Otherwise the backend remains in `NOT_CONFIGURED` or `MISSING_BINARY` state until a path is supplied.
 
 ## Next Recommended Work
 
