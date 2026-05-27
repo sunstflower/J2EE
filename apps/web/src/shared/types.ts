@@ -57,6 +57,8 @@ export type SystemProxyStatus = {
   capability: string;
   scope: "ALL_ENABLED" | "SELECTED";
   selectedServices: string[];
+  recommendedServices: string[];
+  availableServices: string[];
   targetHost: string;
   targetPort: number;
   serviceCount: number;

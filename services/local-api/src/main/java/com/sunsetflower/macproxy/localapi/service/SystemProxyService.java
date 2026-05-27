@@ -25,6 +25,21 @@ public class SystemProxyService {
     private static final String CAPABILITY_UNAVAILABLE = "UNAVAILABLE";
     private static final String TARGET_HOST = "127.0.0.1";
     private static final int TARGET_PORT = 7890;
+    private static final List<String> PREFERRED_SERVICE_TOKENS = List.of(
+            "wi-fi",
+            "ethernet",
+            "usb 10/100/1000",
+            "thunderbolt ethernet"
+    );
+    private static final List<String> EXCLUDED_SERVICE_TOKENS = List.of(
+            "tailscale",
+            "surge",
+            "bridge",
+            "vpn",
+            "utun",
+            "loopback",
+            "bluetooth pan"
+    );
 
     private final AppRuntimeProperties appRuntimeProperties;
     private final CoreManagerService coreManagerService;
@@ -50,7 +65,13 @@ public class SystemProxyService {
         var settings = settingsService.getSettings();
         boolean desiredEnabled = settings.systemProxyEnabled();
         List<String> availableServices = listEnabledNetworkServices();
-        List<String> targetServices = resolveTargetServices(availableServices, settings.systemProxyScope(), settings.systemProxyServices());
+        List<String> recommendedServices = recommendServices(availableServices, listNetworkServiceOrder());
+        List<String> targetServices = resolveTargetServices(
+                availableServices,
+                recommendedServices,
+                settings.systemProxyScope(),
+                settings.systemProxyServices()
+        );
         String capability = resolveCapability(availableServices, targetServices);
         boolean applied = CAPABILITY_AVAILABLE.equals(capability) && proxiesMatchTarget(targetServices);
 
@@ -62,6 +83,8 @@ public class SystemProxyService {
                 capability,
                 settings.systemProxyScope(),
                 parseSelectedServices(settings.systemProxyServices()),
+                recommendedServices,
+                availableServices,
                 TARGET_HOST,
                 TARGET_PORT,
                 targetServices.size(),
@@ -79,7 +102,13 @@ public class SystemProxyService {
 
             var settings = settingsService.getSettings();
             List<String> availableServices = listEnabledNetworkServices();
-            List<String> targetServices = resolveTargetServices(availableServices, settings.systemProxyScope(), settings.systemProxyServices());
+            List<String> recommendedServices = recommendServices(availableServices, listNetworkServiceOrder());
+            List<String> targetServices = resolveTargetServices(
+                    availableServices,
+                    recommendedServices,
+                    settings.systemProxyScope(),
+                    settings.systemProxyServices()
+            );
             String capability = resolveCapability(availableServices, targetServices);
 
             if (!CAPABILITY_AVAILABLE.equals(capability)) {
@@ -256,15 +285,91 @@ public class SystemProxyService {
         return services;
     }
 
-    private List<String> resolveTargetServices(List<String> availableServices, String scope, String configuredServices) {
+    private List<String> listNetworkServiceOrder() {
+        List<String> orderedServices = new ArrayList<>();
+        for (String line : executeCommand("-listnetworkserviceorder").split("\\R")) {
+            String trimmed = line.trim();
+            if (!trimmed.startsWith("(") || !trimmed.contains(")")) {
+                continue;
+            }
+
+            int closingIndex = trimmed.indexOf(')');
+            if (closingIndex < 0 || closingIndex + 1 >= trimmed.length()) {
+                continue;
+            }
+
+            String serviceName = trimmed.substring(closingIndex + 1).trim();
+            if (!serviceName.isBlank()) {
+                orderedServices.add(serviceName);
+            }
+        }
+        return orderedServices;
+    }
+
+    private List<String> resolveTargetServices(
+            List<String> availableServices,
+            List<String> recommendedServices,
+            String scope,
+            String configuredServices
+    ) {
         if ("SELECTED".equalsIgnoreCase(scope)) {
             Set<String> selected = new LinkedHashSet<>(parseSelectedServices(configuredServices));
-            return availableServices.stream()
+            List<String> resolved = availableServices.stream()
                     .filter(selected::contains)
                     .toList();
+            return resolved.isEmpty() ? recommendedServices : resolved;
         }
 
         return availableServices;
+    }
+
+    private List<String> recommendServices(List<String> availableServices, List<String> orderedServices) {
+        List<String> preferred = availableServices.stream()
+                .filter(this::isPreferredService)
+                .toList();
+
+        if (!preferred.isEmpty()) {
+            return sortByServiceOrder(preferred, orderedServices);
+        }
+
+        List<String> filtered = availableServices.stream()
+                .filter(service -> !isExcludedService(service))
+                .toList();
+
+        List<String> fallback = filtered.isEmpty() ? availableServices : filtered;
+        return sortByServiceOrder(fallback, orderedServices);
+    }
+
+    private boolean isPreferredService(String serviceName) {
+        String normalized = serviceName.toLowerCase();
+        if (isExcludedService(serviceName)) {
+            return false;
+        }
+
+        return PREFERRED_SERVICE_TOKENS.stream().anyMatch(normalized::contains);
+    }
+
+    private boolean isExcludedService(String serviceName) {
+        String normalized = serviceName.toLowerCase();
+        return EXCLUDED_SERVICE_TOKENS.stream().anyMatch(normalized::contains);
+    }
+
+    private List<String> sortByServiceOrder(List<String> services, List<String> orderedServices) {
+        Map<String, Integer> orderIndex = new LinkedHashMap<>();
+        for (int index = 0; index < orderedServices.size(); index++) {
+            orderIndex.put(orderedServices.get(index), index);
+        }
+
+        return services.stream()
+                .sorted((left, right) -> {
+                    int leftIndex = orderIndex.getOrDefault(left, Integer.MAX_VALUE);
+                    int rightIndex = orderIndex.getOrDefault(right, Integer.MAX_VALUE);
+                    if (leftIndex != rightIndex) {
+                        return Integer.compare(leftIndex, rightIndex);
+                    }
+                    return left.compareToIgnoreCase(right);
+                })
+                .toList();
     }
 
     private List<String> parseSelectedServices(String configuredServices) {

@@ -10,6 +10,8 @@ public record SystemProxyStatusResponse(
         String capability,
         String scope,
         List<String> selectedServices,
+        List<String> recommendedServices,
+        List<String> availableServices,
         String targetHost,
         int targetPort,
         int serviceCount,

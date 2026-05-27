@@ -261,6 +261,9 @@ Current scaffold behavior:
 - starts Clash.Meta before enabling system proxy if needed
 - applies Web, Secure Web, and SOCKS proxy settings through macOS `networksetup`
 - supports `ALL_ENABLED` and `SELECTED` service targeting modes
+- defaults to `SELECTED` mode for new settings records
+- falls back to backend-recommended primary services when selected mode has no explicit saved targets
+- recommendation order uses macOS network service order before name-based tie-breaking
 - stores a pre-change snapshot under the runtime root for later restore
 - restores prior proxy settings when disabling system proxy
 

@@ -15,7 +15,7 @@ import java.util.Set;
 @Service
 public class SettingsService {
 
-    private static final SettingsRecord DEFAULT_SETTINGS = new SettingsRecord(false, "ALL_ENABLED", "", false, "INFO");
+    private static final SettingsRecord DEFAULT_SETTINGS = new SettingsRecord(false, "SELECTED", "", false, "INFO");
 
     private final JdbcTemplate jdbcTemplate;
     private final SettingsDao settingsDao;

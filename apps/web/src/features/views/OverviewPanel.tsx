@@ -119,6 +119,9 @@ export function OverviewPanel({ metrics }: OverviewPanelProps) {
           {systemProxy?.services?.length ? (
             <p className="text-slate-500">Network services: {systemProxy.services.join(", ")}</p>
           ) : null}
+          {systemProxy?.recommendedServices?.length ? (
+            <p className="text-slate-500">Recommended services: {systemProxy.recommendedServices.join(", ")}</p>
+          ) : null}
           {systemProxy?.lastError ? <p className="text-rose-700">Error: {systemProxy.lastError}</p> : null}
           {systemProxyError ? <p className="text-rose-700">Error: {systemProxyError}</p> : null}
         </div>
@@ -147,7 +150,7 @@ export function OverviewPanel({ metrics }: OverviewPanelProps) {
         </div>
 
         <p className="mt-5 text-sm leading-7 text-slate-500">
-          The backend now drives macOS proxy state through `networksetup`, targeting Clash.Meta on the local mixed port and restoring prior settings from a runtime snapshot when turned off.
+          The backend now drives macOS proxy state through `networksetup`, prefers likely primary interfaces using macOS service order plus interface heuristics, and restores prior settings from a runtime snapshot when turned off.
         </p>
       </section>
     </div>

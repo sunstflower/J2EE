@@ -226,6 +226,7 @@ Examples:
 - last known core launch metadata
 - system proxy restore snapshot for previously active network service proxy settings
 - persisted system proxy service scope and selected service list in SQLite settings
+- backend heuristics plus macOS network service order for recommended primary services, used as the selected-mode fallback set
 
 ## Failure Handling Expectations
 

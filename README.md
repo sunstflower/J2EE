@@ -101,6 +101,7 @@ Already initialized:
 - Core endpoints exist for status, start, stop, and reload
 - System proxy endpoints now integrate with macOS `networksetup`, with runtime snapshot-based restore on disable
 - System proxy targeting supports either all enabled network services or an explicit selected-service list
+- Default targeting now starts in selected-service mode and prefers likely primary interfaces using macOS service order plus interface heuristics
 - Runtime root and Clash.Meta path can be injected explicitly through environment variables
 
 ## Planned Module Boundaries

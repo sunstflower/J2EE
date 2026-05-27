@@ -111,6 +111,11 @@ export function SettingsPanel() {
         <p className="mt-3 text-sm leading-7 text-slate-700">
           Choose whether system proxy should apply to every enabled macOS network service or only to explicitly selected services.
         </p>
+        {systemProxy?.recommendedServices?.length ? (
+          <p className="mt-3 text-sm leading-7 text-slate-500">
+            Recommended by the backend from macOS service order and interface heuristics: {systemProxy.recommendedServices.join(", ")}
+          </p>
+        ) : null}
 
         <div className="mt-4 flex flex-wrap gap-3">
           <button
@@ -146,19 +151,23 @@ export function SettingsPanel() {
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          {(systemProxy?.services ?? []).map((serviceName) => {
+          {(systemProxy?.availableServices ?? []).map((serviceName) => {
             const selected = draft.systemProxyServices
               .split(",")
               .map((value) => value.trim())
               .filter(Boolean);
             const checked = selected.includes(serviceName);
+            const recommended = systemProxy?.recommendedServices.includes(serviceName) ?? false;
 
             return (
               <label
                 className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800"
                 key={serviceName}
               >
-                <span>{serviceName}</span>
+                <span>
+                  {serviceName}
+                  {recommended ? " (Recommended)" : ""}
+                </span>
                 <input
                   checked={checked}
                   className="h-4 w-4"
