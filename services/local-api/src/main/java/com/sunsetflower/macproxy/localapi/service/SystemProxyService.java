@@ -395,7 +395,7 @@ public class SystemProxyService {
         List<String> activeDevices = new ArrayList<>();
         String currentDevice = null;
 
-        for (String line : executeCommand("scutil", "--nwi").split("\\R")) {
+        for (String line : executeRawCommand(resolveScutilBinary(), "--nwi").split("\\R")) {
             String rawLine = line.stripTrailing();
             String trimmed = rawLine.trim();
             if (trimmed.isBlank()) {
@@ -562,9 +562,18 @@ public class SystemProxyService {
         return Files.exists(Path.of(explicit)) ? explicit : "networksetup";
     }
 
+    private String resolveScutilBinary() {
+        String explicit = "/usr/sbin/scutil";
+        return Files.exists(Path.of(explicit)) ? explicit : "scutil";
+    }
+
     private String executeCommand(String... arguments) {
+        return executeRawCommand(resolveNetworkSetupBinary(), arguments);
+    }
+
+    private String executeRawCommand(String binary, String... arguments) {
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder(buildCommand(arguments));
+            ProcessBuilder processBuilder = new ProcessBuilder(buildCommand(binary, arguments));
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
             String output = new String(process.getInputStream().readAllBytes());
@@ -587,7 +596,7 @@ public class SystemProxyService {
         arguments.add(service);
         arguments.addAll(List.of(extraArguments));
 
-        ProcessBuilder processBuilder = new ProcessBuilder(buildCommand(arguments.toArray(String[]::new)));
+        ProcessBuilder processBuilder = new ProcessBuilder(buildCommand(resolveNetworkSetupBinary(), arguments.toArray(String[]::new)));
         processBuilder.redirectErrorStream(true);
         Process process = processBuilder.start();
         String output = new String(process.getInputStream().readAllBytes());
@@ -597,9 +606,9 @@ public class SystemProxyService {
         }
     }
 
-    private List<String> buildCommand(String... arguments) {
+    private List<String> buildCommand(String binary, String... arguments) {
         List<String> command = new ArrayList<>();
-        command.add(resolveNetworkSetupBinary());
+        command.add(binary);
         command.addAll(List.of(arguments));
         return command;
     }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { subscribeDesktopRuntime } from "../../shared/runtime/desktopRuntime";
 import type { Subscription } from "../../shared/types";
 import { createSubscriptionsService, type SubscriptionInput } from "./subscriptionsService";
 
@@ -8,8 +9,6 @@ type SubscriptionsState = {
   saving: boolean;
   error: string | null;
 };
-
-const service = createSubscriptionsService();
 
 export function useSubscriptionsState() {
   const [state, setState] = useState<SubscriptionsState>({
@@ -21,6 +20,7 @@ export function useSubscriptionsState() {
 
   useEffect(() => {
     let active = true;
+    const service = createSubscriptionsService();
 
     async function load() {
       try {
@@ -50,13 +50,18 @@ export function useSubscriptionsState() {
     }
 
     load();
+    const unsubscribe = subscribeDesktopRuntime(() => {
+      void load();
+    });
 
     return () => {
       active = false;
+      unsubscribe();
     };
   }, []);
 
   async function create(input: SubscriptionInput) {
+    const service = createSubscriptionsService();
     setState((current) => ({ ...current, saving: true, error: null }));
     try {
       const created = await service.createSubscription(input);
@@ -76,6 +81,7 @@ export function useSubscriptionsState() {
   }
 
   async function update(id: number, input: SubscriptionInput) {
+    const service = createSubscriptionsService();
     setState((current) => ({ ...current, saving: true, error: null }));
     try {
       const updated = await service.updateSubscription(id, input);
@@ -95,6 +101,7 @@ export function useSubscriptionsState() {
   }
 
   async function remove(id: number) {
+    const service = createSubscriptionsService();
     setState((current) => ({ ...current, saving: true, error: null }));
     try {
       await service.deleteSubscription(id);

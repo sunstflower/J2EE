@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { AppSettings } from "../../shared/types";
 import { createSettingsService } from "./settingsService";
+import { subscribeDesktopRuntime } from "../../shared/runtime/desktopRuntime";
 
 type SettingsState = {
   data: AppSettings | null;
@@ -8,8 +9,6 @@ type SettingsState = {
   saving: boolean;
   error: string | null;
 };
-
-const service = createSettingsService();
 
 export function useSettingsState() {
   const [state, setState] = useState<SettingsState>({
@@ -21,6 +20,7 @@ export function useSettingsState() {
 
   useEffect(() => {
     let active = true;
+    const service = createSettingsService();
 
     async function load() {
       try {
@@ -51,13 +51,18 @@ export function useSettingsState() {
     }
 
     load();
+    const unsubscribe = subscribeDesktopRuntime(() => {
+      void load();
+    });
 
     return () => {
       active = false;
+      unsubscribe();
     };
   }, []);
 
   async function save(data: AppSettings) {
+    const service = createSettingsService();
     setState((current) => ({
       ...current,
       saving: true,

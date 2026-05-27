@@ -1,4 +1,4 @@
-import { getDesktopRuntime } from "../runtime/desktopRuntime";
+import { getDesktopRuntime, hasDesktopRuntimeBridge, hasResolvedDesktopLocalApi, waitForDesktopLocalApiRuntime } from "../runtime/desktopRuntime";
 
 type RequestOptions = {
   method?: string;
@@ -17,13 +17,13 @@ function resolveSessionToken() {
 }
 
 export class LocalApiClient {
-  private readonly baseUrl: string;
-  private readonly sessionToken?: string;
-
   constructor(options?: { baseUrl?: string; sessionToken?: string }) {
-    this.baseUrl = options?.baseUrl ?? resolveBaseUrl();
-    this.sessionToken = options?.sessionToken ?? resolveSessionToken();
+    this.baseUrlOverride = options?.baseUrl;
+    this.sessionTokenOverride = options?.sessionToken;
   }
+
+  private readonly baseUrlOverride?: string;
+  private readonly sessionTokenOverride?: string;
 
   async get<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: "GET" });
@@ -42,11 +42,12 @@ export class LocalApiClient {
   }
 
   private async request<T>(path: string, options: RequestOptions): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${path}`, {
+    const requestContext = await this.resolveRequestContext();
+    const response = await fetch(`${requestContext.baseUrl}${path}`, {
       method: options.method ?? "GET",
       headers: {
         "Content-Type": "application/json",
-        ...(this.sessionToken ? { Authorization: `Bearer ${this.sessionToken}` } : {}),
+        ...(requestContext.sessionToken ? { Authorization: `Bearer ${requestContext.sessionToken}` } : {}),
         ...options.headers
       },
       body: options.body ? JSON.stringify(options.body) : undefined
@@ -57,5 +58,37 @@ export class LocalApiClient {
     }
 
     return response.json() as Promise<T>;
+  }
+
+  private async resolveRequestContext() {
+    if (this.baseUrlOverride) {
+      return {
+        baseUrl: this.baseUrlOverride,
+        sessionToken: this.sessionTokenOverride
+      };
+    }
+
+    const currentRuntime = getDesktopRuntime();
+    if (hasResolvedDesktopLocalApi(currentRuntime)) {
+      return {
+        baseUrl: currentRuntime!.localApiBaseUrl!,
+        sessionToken: currentRuntime!.localApiSessionToken!
+      };
+    }
+
+    if (hasDesktopRuntimeBridge()) {
+      const runtime = await waitForDesktopLocalApiRuntime();
+      if (hasResolvedDesktopLocalApi(runtime)) {
+        return {
+          baseUrl: runtime!.localApiBaseUrl!,
+          sessionToken: runtime!.localApiSessionToken!
+        };
+      }
+    }
+
+    return {
+      baseUrl: resolveBaseUrl(),
+      sessionToken: resolveSessionToken()
+    };
   }
 }

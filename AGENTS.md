@@ -95,6 +95,7 @@ At minimum, keep these files aligned:
 - Keep UI state and API client concerns separated
 - Avoid embedding OS workflow assumptions deeply into components
 - Model runtime state from backend responses instead of re-deriving it in the UI
+- Do not cache Electron-provided local API base URLs or session tokens at module load time; desktop runtime may be injected after the first render, so local API clients must resolve runtime context at request time or reload when runtime becomes available
 
 ### Desktop
 
@@ -123,6 +124,10 @@ The current repository state already includes:
 - SQLite-backed settings and subscriptions slices
 - early Clash.Meta lifecycle endpoints with runtime-root-backed generated config
 - `system-proxy` endpoints backed by macOS `networksetup`, with restore snapshots stored under the runtime root
+- a pinned bundled-core vendor flow via `npm run vendor:core` into `runtime-assets/clash-meta/bin/clash-meta`
+- Electron Builder packaging that embeds the web build, Spring Boot jar, and bundled Clash.Meta binary into the desktop app
+- packaged desktop runtime storage now lives under Electron `userData` and must remain writable outside packaged assets
+- the Vite renderer dev server is expected to stay on `127.0.0.1:5173` with a strict port check, so desktop development should fail loudly on port conflicts instead of silently drifting
 
 Contributors should extend these behaviors instead of reintroducing mock startup assumptions in new code or docs.
 

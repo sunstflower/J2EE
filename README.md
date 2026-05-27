@@ -271,11 +271,21 @@ Run the web scaffold:
 npm run dev:web
 ```
 
+The Vite dev server is pinned to `127.0.0.1:5173` with `strictPort: true`. If that port is already occupied, stop the conflicting process instead of letting Vite drift to a different port.
+
 Run the desktop scaffold:
 
 ```bash
 npm run dev:desktop
 ```
+
+When attaching Electron to a Vite dev server, pass the actual renderer URL explicitly if Vite selected a different port:
+
+```bash
+MAC_PROXY_RENDERER_URL=http://127.0.0.1:5174 npm run dev:web --workspace @mac-proxy-client/desktop
+```
+
+That override is now mainly for intentionally custom renderer URLs. The default development path expects the standard `5173` port to stay stable.
 
 Build desktop distribution prerequisites:
 

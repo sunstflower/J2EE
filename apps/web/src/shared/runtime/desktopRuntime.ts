@@ -4,6 +4,12 @@ type DesktopRuntimePayload = {
   localApiSessionToken: string | null;
 };
 
+const EMPTY_RUNTIME: DesktopRuntimePayload = {
+  platform: typeof window !== "undefined" ? window.navigator.platform : "unknown",
+  localApiBaseUrl: null,
+  localApiSessionToken: null
+};
+
 declare global {
   interface Window {
     desktopRuntime?: {
@@ -34,16 +40,58 @@ export function subscribeDesktopRuntime(listener: (runtime: DesktopRuntimePayloa
   const subscribe = window.desktopRuntime?.subscribe;
 
   if (!subscribe) {
-    listener({
-      platform: window.navigator.platform,
-      localApiBaseUrl: null,
-      localApiSessionToken: null
-    });
+    listener(EMPTY_RUNTIME);
 
     return () => {};
   }
 
   return subscribe(listener);
+}
+
+export function hasDesktopRuntimeBridge() {
+  return Boolean(window.desktopRuntime?.getRuntime || window.desktopRuntime?.subscribe);
+}
+
+export function hasResolvedDesktopLocalApi(runtime: DesktopRuntimePayload | null) {
+  return Boolean(runtime?.localApiBaseUrl && runtime?.localApiSessionToken);
+}
+
+export async function waitForDesktopLocalApiRuntime(timeoutMs = 5000) {
+  const currentRuntime = getDesktopRuntime();
+  if (hasResolvedDesktopLocalApi(currentRuntime)) {
+    return currentRuntime;
+  }
+
+  if (!hasDesktopRuntimeBridge()) {
+    return currentRuntime;
+  }
+
+  return new Promise<DesktopRuntimePayload>((resolve) => {
+    let settled = false;
+    let unsubscribe = () => {};
+    let timer = 0;
+
+    const finish = (runtime: DesktopRuntimePayload) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      unsubscribe();
+      window.clearTimeout(timer);
+      resolve(runtime);
+    };
+
+    unsubscribe = subscribeDesktopRuntime((runtime) => {
+      if (hasResolvedDesktopLocalApi(runtime)) {
+        finish(runtime);
+      }
+    });
+
+    timer = window.setTimeout(() => {
+      finish(getDesktopRuntime() ?? EMPTY_RUNTIME);
+    }, timeoutMs);
+  });
 }
 
 export async function notifyDesktopRecommendationChange(recommendedServices: string[]) {

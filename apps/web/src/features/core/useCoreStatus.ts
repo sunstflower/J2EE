@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CoreStatus } from "../../shared/types";
 import { createCoreService } from "./coreService";
+import { subscribeDesktopRuntime } from "../../shared/runtime/desktopRuntime";
 
 type CoreState = {
   data: CoreStatus | null;
@@ -8,8 +9,6 @@ type CoreState = {
   acting: boolean;
   error: string | null;
 };
-
-const service = createCoreService();
 
 export function useCoreStatus() {
   const [state, setState] = useState<CoreState>({
@@ -21,6 +20,7 @@ export function useCoreStatus() {
 
   useEffect(() => {
     let active = true;
+    const service = createCoreService();
 
     async function load() {
       try {
@@ -50,13 +50,18 @@ export function useCoreStatus() {
     }
 
     load();
+    const unsubscribe = subscribeDesktopRuntime(() => {
+      void load();
+    });
 
     return () => {
       active = false;
+      unsubscribe();
     };
   }, []);
 
   async function run(action: "start" | "stop" | "reload") {
+    const service = createCoreService();
     setState((current) => ({ ...current, acting: true, error: null }));
     try {
       const data =

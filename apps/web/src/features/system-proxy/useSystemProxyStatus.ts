@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { SystemProxyStatus } from "../../shared/types";
 import { createSystemProxyService } from "./systemProxyService";
+import { subscribeDesktopRuntime } from "../../shared/runtime/desktopRuntime";
 
 type SystemProxyState = {
   data: SystemProxyStatus | null;
@@ -8,8 +9,6 @@ type SystemProxyState = {
   acting: boolean;
   error: string | null;
 };
-
-const service = createSystemProxyService();
 
 export function useSystemProxyStatus() {
   const [state, setState] = useState<SystemProxyState>({
@@ -21,6 +20,7 @@ export function useSystemProxyStatus() {
 
   useEffect(() => {
     let active = true;
+    const service = createSystemProxyService();
 
     async function load() {
       try {
@@ -50,9 +50,13 @@ export function useSystemProxyStatus() {
     }
 
     load();
+    const unsubscribe = subscribeDesktopRuntime(() => {
+      void load();
+    });
 
     return () => {
       active = false;
+      unsubscribe();
     };
   }, []);
 
@@ -62,6 +66,7 @@ export function useSystemProxyStatus() {
     services?: string[];
     acceptRecommendedServices?: boolean;
   }) {
+    const service = createSystemProxyService();
     setState((current) => ({ ...current, acting: true, error: null }));
 
     try {

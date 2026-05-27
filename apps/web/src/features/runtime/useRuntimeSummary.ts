@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import type { RuntimeSummary } from "../../shared/types";
 import { createRuntimeService } from "./runtimeService";
+import { subscribeDesktopRuntime } from "../../shared/runtime/desktopRuntime";
 
 type RuntimeState = {
   data: RuntimeSummary | null;
   loading: boolean;
   error: string | null;
 };
-
-const service = createRuntimeService();
 
 export function useRuntimeSummary() {
   const [state, setState] = useState<RuntimeState>({
@@ -19,6 +18,7 @@ export function useRuntimeSummary() {
 
   useEffect(() => {
     let active = true;
+    const service = createRuntimeService();
 
     async function load() {
       try {
@@ -46,9 +46,13 @@ export function useRuntimeSummary() {
     }
 
     load();
+    const unsubscribe = subscribeDesktopRuntime(() => {
+      void load();
+    });
 
     return () => {
       active = false;
+      unsubscribe();
     };
   }, []);
 

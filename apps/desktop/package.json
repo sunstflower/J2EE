@@ -7,7 +7,7 @@
   "main": "src/main/main.js",
   "scripts": {
     "dev": "electron .",
-    "dev:web": "MAC_PROXY_RENDERER_URL=http://127.0.0.1:5173 electron .",
+    "dev:web": "MAC_PROXY_RENDERER_URL=${MAC_PROXY_RENDERER_URL:-http://127.0.0.1:5173} electron .",
     "build": "electron-builder --dir",
     "dist": "electron-builder --mac zip"
   },
