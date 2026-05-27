@@ -60,6 +60,7 @@ export function useSystemProxyStatus() {
     enabled: boolean;
     scope?: "ALL_ENABLED" | "SELECTED";
     services?: string[];
+    acceptRecommendedServices?: boolean;
   }) {
     setState((current) => ({ ...current, acting: true, error: null }));
 
@@ -87,6 +88,8 @@ export function useSystemProxyStatus() {
     disable: (options?: { scope?: "ALL_ENABLED" | "SELECTED"; services?: string[] }) =>
       update({ enabled: false, ...options }),
     setEnabled: (enabled: boolean, options?: { scope?: "ALL_ENABLED" | "SELECTED"; services?: string[] }) =>
-      update({ enabled, ...options })
+      update({ enabled, ...options }),
+    acceptRecommendedServices: () =>
+      update({ enabled: state.data?.enabled ?? false, acceptRecommendedServices: true })
   };
 }

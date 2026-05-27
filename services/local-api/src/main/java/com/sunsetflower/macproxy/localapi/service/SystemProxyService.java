@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -65,7 +66,11 @@ public class SystemProxyService {
         var settings = settingsService.getSettings();
         boolean desiredEnabled = settings.systemProxyEnabled();
         List<String> availableServices = listEnabledNetworkServices();
-        List<String> recommendedServices = recommendServices(availableServices, listNetworkServiceOrder());
+        List<String> orderedServices = listNetworkServiceOrder();
+        Map<String, String> serviceDevices = mapServiceToDevice(orderedServices);
+        List<String> activeServices = detectActiveServices(availableServices, orderedServices, serviceDevices);
+        List<String> recommendedServices = recommendServices(availableServices, orderedServices, activeServices);
+        List<String> confirmedServices = parseSelectedServices(settings.systemProxyConfirmedServices());
         List<String> targetServices = resolveTargetServices(
                 availableServices,
                 recommendedServices,
@@ -74,6 +79,11 @@ public class SystemProxyService {
         );
         String capability = resolveCapability(availableServices, targetServices);
         boolean applied = CAPABILITY_AVAILABLE.equals(capability) && proxiesMatchTarget(targetServices);
+        boolean recommendationPending = isRecommendationPending(
+                settings.systemProxyScope(),
+                confirmedServices,
+                recommendedServices
+        );
 
         return new SystemProxyStatusResponse(
                 desiredEnabled,
@@ -83,8 +93,11 @@ public class SystemProxyService {
                 capability,
                 settings.systemProxyScope(),
                 parseSelectedServices(settings.systemProxyServices()),
+                confirmedServices,
                 recommendedServices,
                 availableServices,
+                activeServices,
+                recommendationPending,
                 TARGET_HOST,
                 TARGET_PORT,
                 targetServices.size(),
@@ -94,7 +107,7 @@ public class SystemProxyService {
         );
     }
 
-    public SystemProxyStatusResponse update(boolean enabled, String scope, List<String> services) {
+    public SystemProxyStatusResponse update(boolean enabled, String scope, List<String> services, boolean acceptRecommendedServices) {
         lastAction = enabled ? "ENABLE" : "DISABLE";
 
         try {
@@ -102,7 +115,16 @@ public class SystemProxyService {
 
             var settings = settingsService.getSettings();
             List<String> availableServices = listEnabledNetworkServices();
-            List<String> recommendedServices = recommendServices(availableServices, listNetworkServiceOrder());
+            List<String> orderedServices = listNetworkServiceOrder();
+            Map<String, String> serviceDevices = mapServiceToDevice(orderedServices);
+            List<String> activeServices = detectActiveServices(availableServices, orderedServices, serviceDevices);
+            List<String> recommendedServices = recommendServices(availableServices, orderedServices, activeServices);
+
+            if (acceptRecommendedServices) {
+                settingsService.updateSystemProxyConfirmedServices(joinSelectedServices(recommendedServices));
+            }
+
+            settings = settingsService.getSettings();
             List<String> targetServices = resolveTargetServices(
                     availableServices,
                     recommendedServices,
@@ -285,6 +307,18 @@ public class SystemProxyService {
         return services;
     }
 
+    private boolean isRecommendationPending(
+            String scope,
+            List<String> confirmedServices,
+            List<String> recommendedServices
+    ) {
+        if (!"SELECTED".equalsIgnoreCase(scope)) {
+            return false;
+        }
+
+        return !joinSelectedServices(confirmedServices).equals(joinSelectedServices(recommendedServices));
+    }
+
     private List<String> listNetworkServiceOrder() {
         List<String> orderedServices = new ArrayList<>();
         for (String line : executeCommand("-listnetworkserviceorder").split("\\R")) {
@@ -306,6 +340,85 @@ public class SystemProxyService {
         return orderedServices;
     }
 
+    private Map<String, String> mapServiceToDevice(List<String> orderedServices) {
+        Map<String, String> serviceDevices = new HashMap<>();
+        String currentService = null;
+
+        for (String line : executeCommand("-listnetworkserviceorder").split("\\R")) {
+            String trimmed = line.trim();
+            if (trimmed.startsWith("(") && trimmed.contains(")")) {
+                int closingIndex = trimmed.indexOf(')');
+                currentService = closingIndex >= 0 ? trimmed.substring(closingIndex + 1).trim() : null;
+                continue;
+            }
+
+            if (currentService == null || !trimmed.startsWith("(Hardware Port:")) {
+                continue;
+            }
+
+            int deviceIndex = trimmed.indexOf("Device:");
+            int closingParen = trimmed.lastIndexOf(')');
+            if (deviceIndex < 0 || closingParen < deviceIndex) {
+                continue;
+            }
+
+            String device = trimmed.substring(deviceIndex + "Device:".length(), closingParen).trim();
+            if (!device.isBlank() && orderedServices.contains(currentService)) {
+                serviceDevices.put(currentService, device);
+            }
+        }
+
+        return serviceDevices;
+    }
+
+    private List<String> detectActiveServices(
+            List<String> availableServices,
+            List<String> orderedServices,
+            Map<String, String> serviceDevices
+    ) {
+        List<String> activeDevices = listActiveDevices();
+        if (activeDevices.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> activeServices = new ArrayList<>();
+        for (String service : sortByServiceOrder(availableServices, orderedServices)) {
+            String device = serviceDevices.get(service);
+            if (device != null && activeDevices.contains(device) && !isExcludedService(service)) {
+                activeServices.add(service);
+            }
+        }
+        return activeServices;
+    }
+
+    private List<String> listActiveDevices() {
+        List<String> activeDevices = new ArrayList<>();
+        String currentDevice = null;
+
+        for (String line : executeCommand("scutil", "--nwi").split("\\R")) {
+            String rawLine = line.stripTrailing();
+            String trimmed = rawLine.trim();
+            if (trimmed.isBlank()) {
+                continue;
+            }
+
+            if (!rawLine.startsWith(" ") && trimmed.contains(": flags")) {
+                currentDevice = trimmed.substring(0, trimmed.indexOf(':')).trim();
+                continue;
+            }
+
+            if (currentDevice == null || !trimmed.startsWith("reach")) {
+                continue;
+            }
+
+            if (trimmed.contains("Reachable") && !currentDevice.startsWith("utun")) {
+                activeDevices.add(currentDevice);
+            }
+        }
+
+        return activeDevices.stream().distinct().toList();
+    }
+
     private List<String> resolveTargetServices(
             List<String> availableServices,
             List<String> recommendedServices,
@@ -323,7 +436,23 @@ public class SystemProxyService {
         return availableServices;
     }
 
-    private List<String> recommendServices(List<String> availableServices, List<String> orderedServices) {
+    private List<String> recommendServices(
+            List<String> availableServices,
+            List<String> orderedServices,
+            List<String> activeServices
+    ) {
+        List<String> activePreferred = activeServices.stream()
+                .filter(this::isPreferredService)
+                .toList();
+
+        if (!activePreferred.isEmpty()) {
+            return sortByServiceOrder(activePreferred, orderedServices);
+        }
+
+        if (!activeServices.isEmpty()) {
+            return sortByServiceOrder(activeServices, orderedServices);
+        }
+
         List<String> preferred = availableServices.stream()
                 .filter(this::isPreferredService)
                 .toList();

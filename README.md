@@ -102,6 +102,9 @@ Already initialized:
 - System proxy endpoints now integrate with macOS `networksetup`, with runtime snapshot-based restore on disable
 - System proxy targeting supports either all enabled network services or an explicit selected-service list
 - Default targeting now starts in selected-service mode and prefers likely primary interfaces using macOS service order plus interface heuristics
+- Active non-VPN network services are now preferred ahead of passive or virtual services when building the default recommendation set
+- The backend now tracks confirmed recommended service sets so the UI can prompt when the preferred target set changes
+- The overview panel now surfaces pending target-set recommendation changes with a direct accept action
 - Runtime root and Clash.Meta path can be injected explicitly through environment variables
 
 ## Planned Module Boundaries

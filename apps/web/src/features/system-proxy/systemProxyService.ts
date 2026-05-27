@@ -7,6 +7,7 @@ export type SystemProxyService = {
     enabled: boolean;
     scope?: "ALL_ENABLED" | "SELECTED";
     services?: string[];
+    acceptRecommendedServices?: boolean;
   }) => Promise<SystemProxyStatus>;
 };
 
@@ -22,6 +23,7 @@ class LocalApiSystemProxyService implements SystemProxyService {
     enabled: boolean;
     scope?: "ALL_ENABLED" | "SELECTED";
     services?: string[];
+    acceptRecommendedServices?: boolean;
   }): Promise<SystemProxyStatus> {
     const response = await this.client.put<ApiSuccessResponse<SystemProxyStatus>>("/system-proxy", payload);
     return response.data;

@@ -32,7 +32,12 @@ public class SystemProxyController {
     public Map<String, Object> updateSystemProxyStatus(@RequestBody SystemProxyUpdateRequest request) {
         return Map.of(
                 "success", true,
-                "data", systemProxyService.update(request.enabled(), request.scope(), request.services())
+                "data", systemProxyService.update(
+                        request.enabled(),
+                        request.scope(),
+                        request.services(),
+                        request.acceptRecommendedServices()
+                )
         );
     }
 }

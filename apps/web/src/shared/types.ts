@@ -37,6 +37,7 @@ export type AppSettings = {
   systemProxyEnabled: boolean;
   systemProxyScope: "ALL_ENABLED" | "SELECTED";
   systemProxyServices: string;
+  systemProxyConfirmedServices: string;
   launchAtLogin: boolean;
   logLevel: string;
 };
@@ -57,8 +58,11 @@ export type SystemProxyStatus = {
   capability: string;
   scope: "ALL_ENABLED" | "SELECTED";
   selectedServices: string[];
+  confirmedServices: string[];
   recommendedServices: string[];
   availableServices: string[];
+  activeServices: string[];
+  recommendationPending: boolean;
   targetHost: string;
   targetPort: number;
   serviceCount: number;

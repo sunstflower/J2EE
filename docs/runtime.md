@@ -227,6 +227,8 @@ Examples:
 - system proxy restore snapshot for previously active network service proxy settings
 - persisted system proxy service scope and selected service list in SQLite settings
 - backend heuristics plus macOS network service order for recommended primary services, used as the selected-mode fallback set
+- active non-VPN interface detection from `scutil --nwi`, used to bias recommendation toward the current live path
+- persisted confirmed recommendation snapshot for selected-mode service targeting in SQLite settings
 
 ## Failure Handling Expectations
 

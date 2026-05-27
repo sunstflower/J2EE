@@ -15,7 +15,7 @@ import java.util.Set;
 @Service
 public class SettingsService {
 
-    private static final SettingsRecord DEFAULT_SETTINGS = new SettingsRecord(false, "SELECTED", "", false, "INFO");
+    private static final SettingsRecord DEFAULT_SETTINGS = new SettingsRecord(false, "SELECTED", "", "", false, "INFO");
 
     private final JdbcTemplate jdbcTemplate;
     private final SettingsDao settingsDao;
@@ -33,6 +33,7 @@ public class SettingsService {
                     system_proxy_enabled INTEGER NOT NULL,
                     system_proxy_scope TEXT NOT NULL DEFAULT 'ALL_ENABLED',
                     system_proxy_services TEXT NOT NULL DEFAULT '',
+                    system_proxy_confirmed_services TEXT NOT NULL DEFAULT '',
                     launch_at_login INTEGER NOT NULL,
                     log_level TEXT NOT NULL
                 )
@@ -54,6 +55,7 @@ public class SettingsService {
                 request.systemProxyEnabled(),
                 normalizeScope(request.systemProxyScope()),
                 normalizeServices(request.systemProxyServices()),
+                normalizeServices(request.systemProxyConfirmedServices()),
                 request.launchAtLogin(),
                 request.logLevel()
         );
@@ -67,6 +69,7 @@ public class SettingsService {
                 enabled,
                 current.systemProxyScope(),
                 current.systemProxyServices(),
+                current.systemProxyConfirmedServices(),
                 current.launchAtLogin(),
                 current.logLevel()
         );
@@ -80,6 +83,21 @@ public class SettingsService {
                 current.systemProxyEnabled(),
                 normalizeScope(scope),
                 normalizeServices(services),
+                current.systemProxyConfirmedServices(),
+                current.launchAtLogin(),
+                current.logLevel()
+        );
+        settingsDao.updateSettings(updated);
+        return toResponse(updated);
+    }
+
+    public SettingsResponse updateSystemProxyConfirmedServices(String services) {
+        SettingsResponse current = getSettings();
+        SettingsRecord updated = new SettingsRecord(
+                current.systemProxyEnabled(),
+                current.systemProxyScope(),
+                current.systemProxyServices(),
+                normalizeServices(services),
                 current.launchAtLogin(),
                 current.logLevel()
         );
@@ -92,6 +110,7 @@ public class SettingsService {
                 record.systemProxyEnabled(),
                 normalizeScope(record.systemProxyScope()),
                 normalizeServices(record.systemProxyServices()),
+                normalizeServices(record.systemProxyConfirmedServices()),
                 record.launchAtLogin(),
                 record.logLevel()
         );
@@ -121,6 +140,10 @@ public class SettingsService {
 
         if (!columns.contains("system_proxy_services")) {
             jdbcTemplate.execute("ALTER TABLE app_settings ADD COLUMN system_proxy_services TEXT NOT NULL DEFAULT ''");
+        }
+
+        if (!columns.contains("system_proxy_confirmed_services")) {
+            jdbcTemplate.execute("ALTER TABLE app_settings ADD COLUMN system_proxy_confirmed_services TEXT NOT NULL DEFAULT ''");
         }
     }
 }

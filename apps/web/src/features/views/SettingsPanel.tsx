@@ -5,7 +5,13 @@ import type { AppSettings } from "../../shared/types";
 
 export function SettingsPanel() {
   const { data, loading, saving, error, save } = useSettingsState();
-  const { data: systemProxy, acting: systemProxyActing, error: systemProxyError, setEnabled } = useSystemProxyStatus();
+  const {
+    data: systemProxy,
+    acting: systemProxyActing,
+    error: systemProxyError,
+    setEnabled,
+    acceptRecommendedServices
+  } = useSystemProxyStatus();
   const [draft, setDraft] = useState<AppSettings | null>(null);
 
   useEffect(() => {
@@ -35,7 +41,9 @@ export function SettingsPanel() {
           onClick={() =>
             save({
               ...draft,
-              systemProxyEnabled: systemProxy?.enabled ?? draft.systemProxyEnabled
+              systemProxyEnabled: systemProxy?.enabled ?? draft.systemProxyEnabled,
+              systemProxyConfirmedServices:
+                systemProxy?.confirmedServices.join(",") ?? draft.systemProxyConfirmedServices
             })
           }
           type="button"
@@ -113,8 +121,40 @@ export function SettingsPanel() {
         </p>
         {systemProxy?.recommendedServices?.length ? (
           <p className="mt-3 text-sm leading-7 text-slate-500">
-            Recommended by the backend from macOS service order and interface heuristics: {systemProxy.recommendedServices.join(", ")}
+            Recommended by the backend from active services, macOS service order, and interface heuristics: {systemProxy.recommendedServices.join(", ")}
           </p>
+        ) : null}
+        {systemProxy?.activeServices?.length ? (
+          <p className="mt-2 text-sm leading-7 text-slate-500">
+            Currently active non-VPN services: {systemProxy.activeServices.join(", ")}
+          </p>
+        ) : null}
+        {systemProxy?.recommendationPending ? (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+            <p className="font-medium">Recommended services changed.</p>
+            <p className="mt-2 leading-7">
+              The backend has detected a new preferred service set. Accepting it will remember the current recommendation for future selected-mode runs.
+            </p>
+            <button
+              className="mt-3 rounded-full border border-amber-300 bg-white px-4 py-2 text-sm text-amber-900 disabled:opacity-50"
+              disabled={systemProxyActing}
+              onClick={async () => {
+                const nextConfirmedServices = systemProxy?.recommendedServices.join(",") ?? "";
+                await acceptRecommendedServices();
+                setDraft((current) =>
+                  current
+                    ? {
+                        ...current,
+                        systemProxyConfirmedServices: nextConfirmedServices
+                      }
+                    : current
+                );
+              }}
+              type="button"
+            >
+              Accept recommendation
+            </button>
+          </div>
         ) : null}
 
         <div className="mt-4 flex flex-wrap gap-3">

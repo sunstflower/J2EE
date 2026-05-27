@@ -237,10 +237,13 @@ Current scaffold fields:
 - `capability`
 - `scope`
 - `selectedServices`
+- `confirmedServices`
 - `targetHost`
 - `targetPort`
 - `serviceCount`
 - `services`
+- `activeServices`
+- `recommendationPending`
 - `lastAction`
 - `lastError`
 
@@ -263,7 +266,9 @@ Current scaffold behavior:
 - supports `ALL_ENABLED` and `SELECTED` service targeting modes
 - defaults to `SELECTED` mode for new settings records
 - falls back to backend-recommended primary services when selected mode has no explicit saved targets
+- gives priority to currently active non-VPN services when building the recommendation set
 - recommendation order uses macOS network service order before name-based tie-breaking
+- remembers the last confirmed recommended selected-service set and surfaces pending recommendation changes
 - stores a pre-change snapshot under the runtime root for later restore
 - restores prior proxy settings when disabling system proxy
 

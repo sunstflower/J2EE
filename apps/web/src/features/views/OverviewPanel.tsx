@@ -16,7 +16,8 @@ export function OverviewPanel({ metrics }: OverviewPanelProps) {
     acting: systemProxyActing,
     error: systemProxyError,
     enable: enableSystemProxy,
-    disable: disableSystemProxy
+    disable: disableSystemProxy,
+    acceptRecommendedServices
   } = useSystemProxyStatus();
   const runtimeMetrics = runtime
     ? [
@@ -63,6 +64,25 @@ export function OverviewPanel({ metrics }: OverviewPanelProps) {
           <MetricCards metrics={runtimeMetrics} />
           {loading ? <p className="mt-4 text-sm text-slate-500">Loading runtime summary...</p> : null}
           {error ? <p className="mt-4 text-sm text-rose-700">{error}</p> : null}
+          {systemProxy?.recommendationPending ? (
+            <div className="mt-5 rounded-[24px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-950">
+              <p className="font-medium">System proxy recommendation update pending.</p>
+              <p className="mt-2 leading-7">
+                The preferred network service set changed to {systemProxy.recommendedServices.join(", ")}.
+                You can accept the new target set here without opening settings.
+              </p>
+              <button
+                className="mt-3 rounded-full border border-amber-300 bg-white px-4 py-2 text-sm text-amber-950 disabled:opacity-50"
+                disabled={systemProxyActing}
+                onClick={async () => {
+                  await acceptRecommendedServices();
+                }}
+                type="button"
+              >
+                Accept recommendation
+              </button>
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -119,6 +139,9 @@ export function OverviewPanel({ metrics }: OverviewPanelProps) {
           {systemProxy?.services?.length ? (
             <p className="text-slate-500">Network services: {systemProxy.services.join(", ")}</p>
           ) : null}
+          {systemProxy?.activeServices?.length ? (
+            <p className="text-slate-500">Active services: {systemProxy.activeServices.join(", ")}</p>
+          ) : null}
           {systemProxy?.recommendedServices?.length ? (
             <p className="text-slate-500">Recommended services: {systemProxy.recommendedServices.join(", ")}</p>
           ) : null}
@@ -150,7 +173,7 @@ export function OverviewPanel({ metrics }: OverviewPanelProps) {
         </div>
 
         <p className="mt-5 text-sm leading-7 text-slate-500">
-          The backend now drives macOS proxy state through `networksetup`, prefers likely primary interfaces using macOS service order plus interface heuristics, and restores prior settings from a runtime snapshot when turned off.
+          The backend now drives macOS proxy state through `networksetup`, prefers currently active non-VPN interfaces first, then falls back to macOS service order and interface heuristics, and restores prior settings from a runtime snapshot when turned off.
         </p>
       </section>
     </div>

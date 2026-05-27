@@ -5,6 +5,7 @@ import java.util.List;
 public record SystemProxyUpdateRequest(
         boolean enabled,
         String scope,
-        List<String> services
+        List<String> services,
+        boolean acceptRecommendedServices
 ) {
 }
