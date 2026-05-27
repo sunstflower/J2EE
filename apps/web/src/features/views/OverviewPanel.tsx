@@ -1,7 +1,13 @@
+import { useEffect, useRef } from "react";
 import { MetricCards } from "../../shared/components/MetricCards";
 import { useCoreStatus } from "../core/useCoreStatus";
 import { useRuntimeSummary } from "../runtime/useRuntimeSummary";
 import { useSystemProxyStatus } from "../system-proxy/useSystemProxyStatus";
+import {
+  notifyDesktopRecommendationChange,
+  subscribeDesktopAcceptRecommendation,
+  updateDesktopTrayState
+} from "../../shared/runtime/desktopRuntime";
 import type { Metric } from "../../shared/types";
 
 type OverviewPanelProps = {
@@ -9,6 +15,7 @@ type OverviewPanelProps = {
 };
 
 export function OverviewPanel({ metrics }: OverviewPanelProps) {
+  const lastNotifiedRecommendationRef = useRef("");
   const { data: runtime, loading, error } = useRuntimeSummary();
   const { data: core, acting, error: coreError, start, stop, reload } = useCoreStatus();
   const {
@@ -48,6 +55,38 @@ export function OverviewPanel({ metrics }: OverviewPanelProps) {
         }
       ]
     : metrics;
+
+  useEffect(() => {
+    if (!systemProxy?.recommendationPending || !systemProxy.recommendedServices.length) {
+      return;
+    }
+
+    const notificationKey = systemProxy.recommendedServices.join("|");
+    if (lastNotifiedRecommendationRef.current === notificationKey) {
+      return;
+    }
+
+    lastNotifiedRecommendationRef.current = notificationKey;
+    void notifyDesktopRecommendationChange(systemProxy.recommendedServices);
+  }, [systemProxy]);
+
+  useEffect(() => {
+    if (!systemProxy) {
+      return;
+    }
+
+    void updateDesktopTrayState({
+      systemProxyStatus: systemProxy.statusLabel,
+      recommendationPending: systemProxy.recommendationPending,
+      recommendedServices: systemProxy.recommendedServices
+    });
+  }, [systemProxy]);
+
+  useEffect(() => {
+    return subscribeDesktopAcceptRecommendation(() => {
+      void acceptRecommendedServices();
+    });
+  }, [acceptRecommendedServices]);
 
   return (
     <div className="grid gap-5 xl:grid-cols-[1.2fr_0.9fr_0.9fr]">

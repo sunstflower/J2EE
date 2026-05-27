@@ -105,6 +105,10 @@ Already initialized:
 - Active non-VPN network services are now preferred ahead of passive or virtual services when building the default recommendation set
 - The backend now tracks confirmed recommended service sets so the UI can prompt when the preferred target set changes
 - The overview panel now surfaces pending target-set recommendation changes with a direct accept action
+- Electron can now surface a local desktop notification when a pending recommendation change is first observed
+- Electron tray now shows system proxy status and can trigger one-click recommendation acceptance
+- Electron tray title and tooltip now reflect current system proxy status and pending recommendation state
+- Electron tray icon now switches visual state for `On`, `Off`, `Pending`, and idle conditions
 - Runtime root and Clash.Meta path can be injected explicitly through environment variables
 
 ## Planned Module Boundaries
