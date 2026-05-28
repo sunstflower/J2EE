@@ -3,6 +3,8 @@ package com.sunsetflower.macproxy.localapi.service;
 import com.sunsetflower.macproxy.localapi.config.AppRuntimeProperties;
 import com.sunsetflower.macproxy.localapi.config.ClashMetaProperties;
 import com.sunsetflower.macproxy.localapi.service.dto.CoreStatusResponse;
+import com.sunsetflower.macproxy.localapi.service.dto.ImportedProxyNodeRecord;
+import com.sunsetflower.macproxy.localapi.service.dto.ProxyGroupSelectionResponse;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -13,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -23,6 +26,8 @@ public class CoreManagerService {
 
     private final AppRuntimeProperties appRuntimeProperties;
     private final ClashMetaProperties clashMetaProperties;
+    private final ImportedProxyNodesService importedProxyNodesService;
+    private final ProxyGroupsService proxyGroupsService;
 
     private volatile Process coreProcess;
     private volatile String state = "NOT_CONFIGURED";
@@ -33,9 +38,16 @@ public class CoreManagerService {
     private volatile int mixedPort = 0;
     private volatile int controllerPort = 0;
 
-    public CoreManagerService(AppRuntimeProperties appRuntimeProperties, ClashMetaProperties clashMetaProperties) {
+    public CoreManagerService(
+            AppRuntimeProperties appRuntimeProperties,
+            ClashMetaProperties clashMetaProperties,
+            ImportedProxyNodesService importedProxyNodesService,
+            ProxyGroupsService proxyGroupsService
+    ) {
         this.appRuntimeProperties = appRuntimeProperties;
         this.clashMetaProperties = clashMetaProperties;
+        this.importedProxyNodesService = importedProxyNodesService;
+        this.proxyGroupsService = proxyGroupsService;
     }
 
     public CoreStatusResponse getStatus() {
@@ -180,6 +192,11 @@ public class CoreManagerService {
         return mixedPort;
     }
 
+    public Path renderConfigForCurrentState() throws IOException {
+        Path runtimeRoot = ensureRuntimeLayout();
+        return writeMinimalConfig(runtimeRoot);
+    }
+
     private Path ensureRuntimeLayout() throws IOException {
         Path runtimeRoot = Path.of(appRuntimeProperties.getRoot(), "clash-meta");
         Files.createDirectories(runtimeRoot);
@@ -191,18 +208,20 @@ public class CoreManagerService {
 
     private Path writeMinimalConfig(Path runtimeRoot) throws IOException {
         Path configPath = runtimeRoot.resolve("config").resolve("config.yaml");
-        List<String> lines = List.of(
-                "mixed-port: " + mixedPort,
-                "allow-lan: false",
-                "mode: rule",
-                "log-level: info",
-                "external-controller: " + LOOPBACK_HOST + ":" + controllerPort,
-                "log-file: " + runtimeRoot.resolve("logs").resolve("clash-meta.log").toAbsolutePath(),
-                "proxies: []",
-                "proxy-groups: []",
-                "rules:",
-                "  - MATCH,DIRECT"
-        );
+        List<String> lines = new ArrayList<>();
+        lines.add("mixed-port: " + mixedPort);
+        lines.add("allow-lan: false");
+        lines.add("mode: rule");
+        lines.add("log-level: info");
+        lines.add("external-controller: " + LOOPBACK_HOST + ":" + controllerPort);
+        lines.add("log-file: " + runtimeRoot.resolve("logs").resolve("clash-meta.log").toAbsolutePath());
+
+        List<ImportedProxyNodeRecord> importedNodes = importedProxyNodesService.getAllNodes();
+        appendProxies(lines, importedNodes);
+        appendProxyGroups(lines, proxyGroupsService.getGroups());
+
+        lines.add("rules:");
+        lines.add("  - MATCH,DIRECT");
         Files.writeString(
                 configPath,
                 String.join(System.lineSeparator(), lines) + System.lineSeparator(),
@@ -212,6 +231,83 @@ public class CoreManagerService {
                 StandardOpenOption.WRITE
         );
         return configPath;
+    }
+
+    private void appendProxies(List<String> lines, List<ImportedProxyNodeRecord> importedNodes) {
+        if (importedNodes.isEmpty()) {
+            lines.add("proxies: []");
+            return;
+        }
+
+        lines.add("proxies:");
+        for (ImportedProxyNodeRecord node : importedNodes) {
+            lines.add("  - name: \"" + escapeYaml(node.nodeName()) + "\"");
+            lines.add("    type: " + node.nodeType());
+            lines.add("    server: " + node.server());
+            lines.add("    port: " + node.port());
+            lines.add("    udp: false");
+            if ("ss".equalsIgnoreCase(node.nodeType())) {
+                lines.add("    cipher: " + (node.cipher() == null || node.cipher().isBlank() ? "aes-128-gcm" : node.cipher()));
+                lines.add("    password: \"" + escapeYaml(node.password() == null || node.password().isBlank() ? "placeholder-password" : node.password()) + "\"");
+            } else if ("vmess".equalsIgnoreCase(node.nodeType())) {
+                lines.add("    uuid: " + (node.uuid() == null || node.uuid().isBlank() ? "00000000-0000-0000-0000-000000000000" : node.uuid()));
+                lines.add("    alterId: " + (node.alterId() == null ? 0 : node.alterId()));
+                lines.add("    cipher: " + (node.cipher() == null || node.cipher().isBlank() ? "auto" : node.cipher()));
+                lines.add("    tls: " + Boolean.TRUE.equals(node.tls()));
+                if (node.network() != null && !node.network().isBlank()) {
+                    lines.add("    network: " + node.network());
+                }
+                if (node.serverName() != null && !node.serverName().isBlank()) {
+                    lines.add("    servername: \"" + escapeYaml(node.serverName()) + "\"");
+                }
+                if ((node.wsPath() != null && !node.wsPath().isBlank())
+                        || (node.wsHost() != null && !node.wsHost().isBlank())) {
+                    lines.add("    ws-opts:");
+                    if (node.wsPath() != null && !node.wsPath().isBlank()) {
+                        lines.add("      path: \"" + escapeYaml(node.wsPath()) + "\"");
+                    }
+                    if (node.wsHost() != null && !node.wsHost().isBlank()) {
+                        lines.add("      headers:");
+                        lines.add("        Host: \"" + escapeYaml(node.wsHost()) + "\"");
+                    }
+                }
+            }
+        }
+    }
+
+    private void appendProxyGroups(List<String> lines, List<ProxyGroupSelectionResponse> groups) {
+        if (groups.isEmpty()) {
+            lines.add("proxy-groups: []");
+            return;
+        }
+
+        lines.add("proxy-groups:");
+        for (ProxyGroupSelectionResponse group : groups) {
+            lines.add("  - name: \"" + escapeYaml(group.groupName()) + "\"");
+            lines.add("    type: select");
+            lines.add("    proxies:");
+
+            if (group.availableNodeNames().isEmpty()) {
+                lines.add("      - DIRECT");
+                continue;
+            }
+
+            String preferred = group.selectedNodeName();
+            if (preferred != null && !preferred.isBlank() && group.availableNodeNames().contains(preferred)) {
+                lines.add("      - \"" + escapeYaml(preferred) + "\"");
+            }
+
+            for (String nodeName : group.availableNodeNames()) {
+                if (nodeName.equals(preferred)) {
+                    continue;
+                }
+                lines.add("      - \"" + escapeYaml(nodeName) + "\"");
+            }
+        }
+    }
+
+    private String escapeYaml(String value) {
+        return value.replace("\"", "\\\"");
     }
 
     private void verifyProcessStayedAlive(Process process, Path logPath) throws IOException, InterruptedException {

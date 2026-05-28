@@ -15,7 +15,7 @@ function renderView(activeView: ViewId, state: NonNullable<ReturnType<typeof use
   }
 
   if (activeView === "proxies") {
-    return <ProxiesPanel proxyGroups={state.proxyGroups} />;
+    return <ProxiesPanel />;
   }
 
   if (activeView === "subscriptions") {

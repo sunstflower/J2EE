@@ -75,6 +75,13 @@ At minimum, keep these files aligned:
 - `docs/decisions.md`
 - `docs/roadmap.md`
 
+## Work Log Discipline
+
+- Every meaningful work slice must leave a short record in `AGENTS.md`
+- Record at least the date, baseline or branch context, and the main change or verification scope
+- If the repository is reset, rolled back, or partially restored, record that state before continuing implementation
+- Do not treat `AGENTS.md` as optional maintenance; update it as part of the change itself
+
 ## Implementation Guidelines
 
 ### General
@@ -153,3 +160,42 @@ A change is not complete unless:
 2. New modules or directories are reflected in `README.md`
 3. Cross-process behavior is described when applicable
 4. Security-sensitive assumptions are made explicit
+
+## Work Log
+
+### 2026-05-27
+
+- Repository baseline was manually reset to commit `804296c93ddc4e125e187e1b1c5f381188129827` (`bug修复_风险维护`) before continuing work
+- After the reset, the committed baseline includes the documented system-proxy, tray, bundled-core, and dynamic-port/runtime-root work already described in `README.md`
+- The worktree still contains untracked follow-up files for subscription refresh, imported proxy nodes, proxy groups, and related frontend hooks; these should be treated as post-reset in-progress work until they are either integrated or discarded explicitly
+- From this point onward, each new work slice must append or update a corresponding note in this section
+- Post-reset inventory confirmed that the remaining untracked files are only a partial subscription/proxy feature slice
+- Present untracked files cover frontend proxy hooks plus a few backend controller/DAO/DTO/test additions, but they do not include the matching backend service layer, imported-node persistence layer, or the updated committed frontend view/type files needed for a runnable end-to-end feature
+- Practical consequence: the repository should treat these untracked files as incomplete follow-up work, not as an already-usable subscriptions/proxies implementation baseline
+- New work slice begins from `804296c` baseline with the explicit goal of fully rebuilding the `subscriptions/proxies` line end-to-end instead of trying to preserve the earlier partial slice
+- Immediate implementation target is: local subscription refresh, imported proxy node persistence, proxy group selection, Clash.Meta config generation from imported nodes, matching frontend views, and regression tests
+- Rebuild work now in progress has already restored the backend first-pass structure for imported proxy nodes, subscription refresh, proxy group selection, and config rendering inputs
+- Rebuild work now in progress has also reconnected the frontend subscriptions/proxies panels to real local API hooks instead of the older static proxy-group-only panel
+- First-pass rebuild verification completed successfully for this slice: `mvn -q test --file services/local-api/pom.xml` passed and `npm run build:web` passed
+- The rebuilt slice currently covers file-backed subscription refresh, imported proxy node persistence, proxy group selection persistence, dashboard integration, and Clash.Meta config generation from imported nodes with placeholder protocol fields
+- Next follow-up slice starts from the rebuilt subscriptions/proxies baseline and targets real `http/https` subscription fetching instead of `file://`-only fixtures
+- `SubscriptionContentFetcher` has now been extended to support `http/https` fetching using JDK `HttpClient`, while keeping `file://` fixture support for local verification
+- Subscription URL validation has been widened accordingly to allow `http`, `https`, and `file`
+- Added focused backend coverage for file fetch, successful HTTP fetch, and non-2xx HTTP failure handling; `mvn -q test --file services/local-api/pom.xml` passed again after this extension
+- Next follow-up slice now targets replacing the fragile line-based subscription parser with structured YAML parsing while keeping the current imported-node schema intentionally minimal
+- Structured YAML parsing has now replaced the earlier line-based subscription parser using `SnakeYAML`, while still limiting imported fields to the current minimal node schema
+- Post-change verification for this parsing upgrade passed again with `mvn -q test --file services/local-api/pom.xml`
+
+### 2026-05-28
+
+- Next follow-up slice begins with the goal of extending the imported-node schema from minimal routing fields to protocol-critical `ss` / `vmess` fields so generated Clash.Meta config can stop relying on hardcoded placeholder credentials
+- Imported-node schema has now been extended with protocol-critical `ss` / `vmess` fields: `cipher`, `password`, `uuid`, `alterId`, and `tls`
+- SQLite imported-node storage and DAO mappings were expanded compatibly for those fields, and subscription parsing now persists them from structured YAML
+- Clash.Meta config generation now consumes imported protocol fields before falling back to placeholders, reducing the amount of hardcoded protocol data in generated configs
+- Post-change verification for the schema/config upgrade passed with `mvn -q test --file services/local-api/pom.xml`
+- Next follow-up slice begins with the goal of reducing `vmess` transport loss during import by persisting transport-related fields from nested YAML and emitting them into generated Clash.Meta config
+- Imported-node schema has now been extended again with `vmess` transport-related fields: `network`, `serverName`, `wsPath`, and `wsHost`
+- Subscription YAML parsing now preserves nested `ws-opts` and common SNI/server-name aliases instead of flattening everything into string-only top-level keys
+- Clash.Meta config generation now emits `network`, `servername`, and nested `ws-opts.headers.Host` for imported `vmess` nodes when those fields are present
+- Integration coverage was expanded to assert both transport-field persistence and generated config output for the new `vmess` transport fields
+- Post-change verification for the transport-field upgrade passed with `mvn -q test --file services/local-api/pom.xml`

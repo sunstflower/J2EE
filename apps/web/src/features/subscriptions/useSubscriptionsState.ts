@@ -7,6 +7,7 @@ type SubscriptionsState = {
   data: Subscription[];
   loading: boolean;
   saving: boolean;
+  refreshing: boolean;
   error: string | null;
 };
 
@@ -15,6 +16,7 @@ export function useSubscriptionsState() {
     data: [],
     loading: true,
     saving: false,
+    refreshing: false,
     error: null
   });
 
@@ -33,6 +35,7 @@ export function useSubscriptionsState() {
           data,
           loading: false,
           saving: false,
+          refreshing: false,
           error: null
         });
       } catch (error) {
@@ -44,6 +47,7 @@ export function useSubscriptionsState() {
           data: [],
           loading: false,
           saving: false,
+          refreshing: false,
           error: error instanceof Error ? error.message : "Failed to load subscriptions"
         });
       }
@@ -69,6 +73,7 @@ export function useSubscriptionsState() {
         data: [created, ...current.data],
         loading: false,
         saving: false,
+        refreshing: false,
         error: null
       }));
     } catch (error) {
@@ -89,6 +94,7 @@ export function useSubscriptionsState() {
         data: current.data.map((subscription) => (subscription.id === id ? updated : subscription)),
         loading: false,
         saving: false,
+        refreshing: false,
         error: null
       }));
     } catch (error) {
@@ -109,6 +115,7 @@ export function useSubscriptionsState() {
         data: current.data.filter((subscription) => subscription.id !== id),
         loading: false,
         saving: false,
+        refreshing: false,
         error: null
       }));
     } catch (error) {
@@ -120,10 +127,55 @@ export function useSubscriptionsState() {
     }
   }
 
+  async function refresh(id: number) {
+    const service = createSubscriptionsService();
+    setState((current) => ({ ...current, refreshing: true, error: null }));
+    try {
+      const updated = await service.refreshSubscription(id);
+      setState((current) => ({
+        data: current.data.map((subscription) => (subscription.id === id ? updated : subscription)),
+        loading: false,
+        saving: false,
+        refreshing: false,
+        error: null
+      }));
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        refreshing: false,
+        error: error instanceof Error ? error.message : "Failed to refresh subscription"
+      }));
+    }
+  }
+
+  async function refreshAll() {
+    const service = createSubscriptionsService();
+    setState((current) => ({ ...current, refreshing: true, error: null }));
+    try {
+      const refreshed = await service.refreshSubscriptions();
+      const refreshedById = new Map(refreshed.map((subscription) => [subscription.id, subscription]));
+      setState((current) => ({
+        data: current.data.map((subscription) => refreshedById.get(subscription.id) ?? subscription),
+        loading: false,
+        saving: false,
+        refreshing: false,
+        error: null
+      }));
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        refreshing: false,
+        error: error instanceof Error ? error.message : "Failed to refresh subscriptions"
+      }));
+    }
+  }
+
   return {
     ...state,
     create,
     update,
-    remove
+    remove,
+    refresh,
+    refreshAll
   };
 }

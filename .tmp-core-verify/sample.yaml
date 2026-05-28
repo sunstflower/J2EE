@@ -1,0 +1,12 @@
+proxies:
+  - name: "US-Test-1"
+    type: ss
+    server: us1.example.com
+    port: 443
+  - name: "JP-Test-2"
+    type: vmess
+    server: jp2.example.com
+    port: 8443
+proxy-groups: []
+rules:
+  - MATCH,DIRECT

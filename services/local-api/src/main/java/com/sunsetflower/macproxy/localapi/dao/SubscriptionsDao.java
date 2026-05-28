@@ -4,7 +4,6 @@ import com.sunsetflower.macproxy.localapi.service.dto.SubscriptionRecord;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
@@ -41,8 +40,10 @@ public interface SubscriptionsDao {
             INSERT INTO subscriptions (name, source_url, enabled, status, last_sync)
             VALUES (#{name}, #{sourceUrl}, #{enabled}, #{status}, #{lastSync})
             """)
-    @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(SubscriptionRecord record);
+
+    @Select("SELECT last_insert_rowid()")
+    long lastInsertedId();
 
     @Update("""
             UPDATE subscriptions

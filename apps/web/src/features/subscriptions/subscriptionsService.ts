@@ -12,6 +12,8 @@ export type SubscriptionsService = {
   createSubscription: (input: SubscriptionInput) => Promise<Subscription>;
   updateSubscription: (id: number, input: SubscriptionInput) => Promise<Subscription>;
   deleteSubscription: (id: number) => Promise<void>;
+  refreshSubscription: (id: number) => Promise<Subscription>;
+  refreshSubscriptions: () => Promise<Subscription[]>;
 };
 
 class LocalApiSubscriptionsService implements SubscriptionsService {
@@ -34,6 +36,16 @@ class LocalApiSubscriptionsService implements SubscriptionsService {
 
   async deleteSubscription(id: number): Promise<void> {
     await this.client.delete(`/subscriptions/${id}`);
+  }
+
+  async refreshSubscription(id: number): Promise<Subscription> {
+    const response = await this.client.post<ApiSuccessResponse<Subscription>>(`/subscriptions/${id}/refresh`);
+    return response.data;
+  }
+
+  async refreshSubscriptions(): Promise<Subscription[]> {
+    const response = await this.client.post<ApiSuccessResponse<Subscription[]>>("/subscriptions/refresh");
+    return response.data;
   }
 }
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSubscriptionsState } from "../subscriptions/useSubscriptionsState";
 
 export function SubscriptionsPanel() {
-  const { data, loading, saving, error, create, update, remove } = useSubscriptionsState();
+  const { data, loading, saving, refreshing, error, create, update, remove, refresh, refreshAll } = useSubscriptionsState();
   const [name, setName] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
 
@@ -23,22 +23,39 @@ export function SubscriptionsPanel() {
             First real local-api backed subscription list.
           </h2>
         </div>
-        <button
-          className="rounded-full border border-slate-200 bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={saving || !name.trim() || !sourceUrl.trim()}
-          onClick={() => {
-            create({
-              name: name.trim(),
-              sourceUrl: sourceUrl.trim(),
-              enabled: true
-            });
-            setName("");
-            setSourceUrl("");
-          }}
-          type="button"
-        >
-          Add subscription
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={refreshing || saving || !data.some((subscription) => subscription.enabled)}
+            onClick={() => {
+              void refreshAll();
+            }}
+            type="button"
+          >
+            {refreshing ? "Refreshing..." : "Refresh enabled"}
+          </button>
+          <button
+            className="rounded-full border border-slate-200 bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={saving || refreshing || !name.trim() || !sourceUrl.trim()}
+            onClick={async () => {
+              const nextName = name.trim();
+              const nextSourceUrl = sourceUrl.trim();
+              try {
+                await create({
+                  name: nextName,
+                  sourceUrl: nextSourceUrl,
+                  enabled: true
+                });
+                setName("");
+                setSourceUrl("");
+              } catch {
+              }
+            }}
+            type="button"
+          >
+            Add subscription
+          </button>
+        </div>
       </div>
 
       <div className="mb-5 grid gap-4 lg:grid-cols-[1fr_1.6fr]">
@@ -76,9 +93,19 @@ export function SubscriptionsPanel() {
             <div className="flex flex-wrap gap-3">
               <button
                 className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800"
-                disabled={saving}
+                disabled={saving || refreshing}
+                onClick={() => {
+                  void refresh(subscription.id);
+                }}
+                type="button"
+              >
+                Refresh
+              </button>
+              <button
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800"
+                disabled={saving || refreshing}
                 onClick={() =>
-                  update(subscription.id, {
+                  void update(subscription.id, {
                     name: subscription.name,
                     sourceUrl: subscription.sourceUrl,
                     enabled: !subscription.enabled
@@ -90,8 +117,8 @@ export function SubscriptionsPanel() {
               </button>
               <button
                 className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700"
-                disabled={saving}
-                onClick={() => remove(subscription.id)}
+                disabled={saving || refreshing}
+                onClick={() => void remove(subscription.id)}
                 type="button"
               >
                 Delete

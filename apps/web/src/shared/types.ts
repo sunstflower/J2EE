@@ -17,6 +17,23 @@ export type ProxyGroup = {
   policy: string;
 };
 
+export type ImportedProxyNode = {
+  id: number;
+  subscriptionId: number;
+  nodeName: string;
+  nodeType: string;
+  server: string;
+  port: number;
+  importedAt: string;
+};
+
+export type ProxyGroupSelection = {
+  groupName: string;
+  selectedNodeName: string;
+  availableNodeNames: string[];
+  updatedAt: string;
+};
+
 export type Subscription = {
   id: number;
   name: string;

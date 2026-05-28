@@ -12,7 +12,23 @@ import java.util.List;
 @Service
 public class DashboardService {
 
+    private final RuntimeService runtimeService;
+    private final SubscriptionsService subscriptionsService;
+    private final ProxyGroupsService proxyGroupsService;
+
+    public DashboardService(
+            RuntimeService runtimeService,
+            SubscriptionsService subscriptionsService,
+            ProxyGroupsService proxyGroupsService
+    ) {
+        this.runtimeService = runtimeService;
+        this.subscriptionsService = subscriptionsService;
+        this.proxyGroupsService = proxyGroupsService;
+    }
+
     public DashboardStateResponse getDashboardState() {
+        var runtime = runtimeService.getRuntimeSummary();
+        var subscriptions = subscriptionsService.getSubscriptions();
         return new DashboardStateResponse(
                 List.of(
                         new NavItemResponse("overview", "Overview"),
@@ -21,19 +37,13 @@ public class DashboardService {
                         new NavItemResponse("settings", "Settings")
                 ),
                 List.of(
-                        new MetricResponse("Core status", "Idle", "text-emerald-700 bg-emerald-50 border-emerald-200"),
-                        new MetricResponse("System proxy", "Disabled", "text-amber-800 bg-amber-50 border-amber-200"),
-                        new MetricResponse("Local API", "Scaffolded", "text-sky-700 bg-sky-50 border-sky-200")
-                ),
-                List.of(
-                        new ProxyGroupResponse("Auto Select", "JP-03 Tokyo", "Latency probe"),
-                        new ProxyGroupResponse("Global", "US-01 Los Angeles", "Manual"),
-                        new ProxyGroupResponse("Streaming", "SG-02 Singapore", "Rule-based")
-                ),
-                List.of(
-                        new SubscriptionResponse(1L, "Primary feed", "https://example.com/primary", true, "Healthy", "5 min ago"),
-                        new SubscriptionResponse(2L, "Fallback nodes", "https://example.com/fallback", false, "Pending", "Not synced yet")
+                        new MetricResponse("Core status", runtime.coreStatus(), "text-emerald-700 bg-emerald-50 border-emerald-200"),
+                        new MetricResponse("System proxy", runtime.systemProxyStatus(), "text-amber-800 bg-amber-50 border-amber-200"),
+                        new MetricResponse("Local API", runtime.backendStatus(), "text-sky-700 bg-sky-50 border-sky-200")
                 )
+                ,
+                proxyGroupsService.buildDashboardGroups(),
+                subscriptions
         );
     }
 }
