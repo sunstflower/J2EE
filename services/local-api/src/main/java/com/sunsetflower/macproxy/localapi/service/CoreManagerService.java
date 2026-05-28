@@ -16,7 +16,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -56,13 +60,17 @@ public class CoreManagerService {
         String configuredPath = clashMetaProperties.getPath();
         boolean configured = configuredPath != null && !configuredPath.isBlank();
         boolean exists = configured && Files.exists(Path.of(configuredPath));
+        ProcessHandle managedProcess = resolveManagedProcessIfPresent();
+        if ((coreProcess == null || !coreProcess.isAlive()) && managedProcess != null && managedProcess.isAlive()) {
+            state = "RUNNING";
+        }
 
         String effectiveState = state;
         if (!configured) {
             effectiveState = "NOT_CONFIGURED";
         } else if (!exists) {
             effectiveState = "MISSING_BINARY";
-        } else if (coreProcess != null && coreProcess.isAlive()) {
+        } else if ((coreProcess != null && coreProcess.isAlive()) || (managedProcess != null && managedProcess.isAlive())) {
             effectiveState = "RUNNING";
         } else if ("RUNNING".equals(state)) {
             effectiveState = "EXITED";
@@ -108,11 +116,12 @@ public class CoreManagerService {
         }
 
         try {
+            Path runtimeRoot = ensureRuntimeLayout();
+            stopManagedProcesses(runtimeRoot);
             int nextMixedPort = allocateEphemeralPort();
             int nextControllerPort = allocateDistinctEphemeralPort(nextMixedPort);
             mixedPort = nextMixedPort;
             controllerPort = nextControllerPort;
-            Path runtimeRoot = ensureRuntimeLayout();
             Path configPath = writeMinimalConfig(runtimeRoot);
             Path logPath = runtimeRoot.resolve("logs").resolve("clash-meta.log");
 
@@ -127,16 +136,19 @@ public class CoreManagerService {
             processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(logPath.toFile()));
             Process process = processBuilder.start();
             coreProcess = process;
+            writeManagedPid(runtimeRoot, process.pid());
             lastExitCode = -1;
 
             process.onExit().thenRun(() -> {
                 if ("STOPPED".equals(state) || coreProcess != process) {
+                    clearManagedPidIfMatches(process.pid());
                     return;
                 }
 
                 state = "EXITED";
                 lastExitCode = process.exitValue();
                 lastError = "Clash.Meta process exited with code " + lastExitCode;
+                clearManagedPidIfMatches(process.pid());
             });
 
             verifyProcessStayedAlive(process, logPath);
@@ -154,13 +166,14 @@ public class CoreManagerService {
             state = "START_FAILED";
             lastAction = "START";
             lastError = error.getMessage();
+            clearManagedPidIfMatches(-1L);
         }
 
         return getStatus();
     }
 
     public CoreStatusResponse stop() {
-        stopProcess();
+        stopProcess(ensureRuntimeRootQuietly());
         state = "STOPPED";
         lastAction = "STOP";
         lastError = "";
@@ -182,7 +195,7 @@ public class CoreManagerService {
             return getStatus();
         }
 
-        stopProcess();
+        stopProcess(ensureRuntimeRootQuietly());
         CoreStatusResponse status = start();
         lastAction = "RELOAD";
         return new CoreStatusResponse(
@@ -243,13 +256,15 @@ public class CoreManagerService {
     }
 
     private void appendProxies(List<String> lines, List<ImportedProxyNodeRecord> importedNodes) {
-        if (importedNodes.isEmpty()) {
+        List<ImportedProxyNodeRecord> uniqueNodes = deduplicateNodesForConfig(importedNodes);
+
+        if (uniqueNodes.isEmpty()) {
             lines.add("proxies: []");
             return;
         }
 
         lines.add("proxies:");
-        for (ImportedProxyNodeRecord node : importedNodes) {
+        for (ImportedProxyNodeRecord node : uniqueNodes) {
             lines.add("  - name: \"" + escapeYaml(node.nodeName()) + "\"");
             lines.add("    type: " + node.nodeType());
             lines.add("    server: " + node.server());
@@ -282,6 +297,14 @@ public class CoreManagerService {
                 }
             }
         }
+    }
+
+    private List<ImportedProxyNodeRecord> deduplicateNodesForConfig(List<ImportedProxyNodeRecord> importedNodes) {
+        Map<String, ImportedProxyNodeRecord> nodesByName = new LinkedHashMap<>();
+        for (ImportedProxyNodeRecord node : importedNodes) {
+            nodesByName.put(node.nodeName(), node);
+        }
+        return new ArrayList<>(nodesByName.values());
     }
 
     private void appendProxyGroups(List<String> lines, List<ProxyGroupSelectionResponse> groups) {
@@ -350,34 +373,159 @@ public class CoreManagerService {
         return String.join(" | ", lines.subList(fromIndex, lines.size())).trim();
     }
 
-    private void stopProcess() {
+    private void stopProcess(Path runtimeRoot) {
         Process process = coreProcess;
         coreProcess = null;
 
-        if (process == null) {
-            return;
-        }
-
-        if (!process.isAlive()) {
-            lastExitCode = process.exitValue();
-            return;
-        }
-
-        process.destroy();
-        try {
-            if (!process.waitFor(STOP_STABILITY_WAIT_MILLIS, TimeUnit.MILLISECONDS)) {
+        if (process != null) {
+            process.destroy();
+            try {
+                if (!process.waitFor(STOP_STABILITY_WAIT_MILLIS, TimeUnit.MILLISECONDS)) {
+                    process.destroyForcibly();
+                    process.waitFor(STOP_STABILITY_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+                }
+                lastExitCode = process.exitValue();
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
                 process.destroyForcibly();
-                process.waitFor(STOP_STABILITY_WAIT_MILLIS, TimeUnit.MILLISECONDS);
             }
-        } catch (InterruptedException error) {
-            Thread.currentThread().interrupt();
-            lastError = "Interrupted while stopping Clash.Meta";
+        }
+
+        try {
+            stopManagedProcesses(runtimeRoot);
+        } catch (IOException ignored) {
+        }
+    }
+
+    private void stopManagedProcesses(Path runtimeRoot) throws IOException {
+        if (runtimeRoot == null) {
             return;
         }
 
-        if (!process.isAlive()) {
-            lastExitCode = process.exitValue();
+        for (ProcessHandle handle : findManagedProcesses(runtimeRoot)) {
+            terminateProcessHandle(handle);
         }
+        clearManagedPidIfMatches(-1L);
+    }
+
+    private void terminateProcessHandle(ProcessHandle handle) {
+        handle.destroy();
+        try {
+            handle.onExit().get(STOP_STABILITY_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (Exception ignored) {
+            handle.destroyForcibly();
+            try {
+                handle.onExit().get(STOP_STABILITY_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+            } catch (Exception ignoredAgain) {
+            }
+        }
+    }
+
+    private List<ProcessHandle> findManagedProcesses(Path runtimeRoot) throws IOException {
+        String runtimeMarker = runtimeRoot.toAbsolutePath().normalize().toString();
+        return ProcessHandle.allProcesses()
+                .filter(ProcessHandle::isAlive)
+                .filter(handle -> matchesRuntimeRoot(handle, runtimeMarker))
+                .sorted(Comparator.comparingLong(ProcessHandle::pid))
+                .toList();
+    }
+
+    private boolean matchesRuntimeRoot(ProcessHandle handle, String runtimeMarker) {
+        Optional<String> commandLine = handle.info().commandLine();
+        if (commandLine.isPresent() && commandLine.get().contains(runtimeMarker)) {
+            return true;
+        }
+
+        Optional<String[]> arguments = handle.info().arguments();
+        if (arguments.isEmpty()) {
+            return false;
+        }
+
+        for (String argument : arguments.get()) {
+            if (runtimeMarker.equals(argument) || argument.contains(runtimeMarker)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ProcessHandle resolveManagedProcessIfPresent() {
+        Path runtimeRoot = ensureRuntimeRootQuietly();
+        if (runtimeRoot == null) {
+            return null;
+        }
+
+        Path pidPath = managedPidPath(runtimeRoot);
+        if (Files.exists(pidPath)) {
+            try {
+                long pid = Long.parseLong(Files.readString(pidPath, StandardCharsets.UTF_8).trim());
+                Optional<ProcessHandle> handle = ProcessHandle.of(pid);
+                if (handle.isPresent() && handle.get().isAlive() && matchesRuntimeRoot(handle.get(), runtimeRoot.toString())) {
+                    return handle.get();
+                }
+            } catch (IOException | NumberFormatException ignored) {
+            }
+        }
+
+        try {
+            return findManagedProcesses(runtimeRoot).stream().findFirst().orElse(null);
+        } catch (IOException ignored) {
+            return null;
+        }
+    }
+
+    private void writeManagedPid(Path runtimeRoot, long pid) throws IOException {
+        Files.writeString(
+                managedPidPath(runtimeRoot),
+                Long.toString(pid),
+                StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE
+        );
+    }
+
+    private void clearManagedPidIfMatches(long expectedPid) {
+        Path runtimeRoot = ensureRuntimeRootQuietly();
+        if (runtimeRoot == null) {
+            return;
+        }
+
+        Path pidPath = managedPidPath(runtimeRoot);
+        if (!Files.exists(pidPath)) {
+            return;
+        }
+
+        try {
+            if (expectedPid >= 0) {
+                String stored = Files.readString(pidPath, StandardCharsets.UTF_8).trim();
+                if (!Long.toString(expectedPid).equals(stored)) {
+                    return;
+                }
+            }
+            Files.deleteIfExists(pidPath);
+        } catch (IOException ignored) {
+        }
+    }
+
+    private Path managedPidPath(Path runtimeRoot) {
+        return runtimeRoot.resolve("state").resolve("core.pid");
+    }
+
+    private Path ensureRuntimeRootQuietly() {
+        try {
+            return ensureRuntimeLayout();
+        } catch (IOException ignored) {
+            return null;
+        }
+    }
+
+    private int allocateDistinctEphemeralPort(int existingPort) throws IOException {
+        int candidate = allocateEphemeralPort();
+        while (candidate == existingPort) {
+            candidate = allocateEphemeralPort();
+        }
+        return candidate;
     }
 
     private int allocateEphemeralPort() throws IOException {
@@ -386,13 +534,5 @@ public class CoreManagerService {
             socket.bind(new InetSocketAddress(LOOPBACK_HOST, 0));
             return socket.getLocalPort();
         }
-    }
-
-    private int allocateDistinctEphemeralPort(int occupiedPort) throws IOException {
-        int candidate = allocateEphemeralPort();
-        while (candidate == occupiedPort) {
-            candidate = allocateEphemeralPort();
-        }
-        return candidate;
     }
 }

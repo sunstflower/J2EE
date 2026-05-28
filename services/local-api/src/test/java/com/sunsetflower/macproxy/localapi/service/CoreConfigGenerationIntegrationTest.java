@@ -12,6 +12,7 @@ import org.springframework.test.context.DynamicPropertySource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -75,6 +76,29 @@ class CoreConfigGenerationIntegrationTest {
 
         var status = coreManagerService.getStatus();
         assertEquals("MISSING_BINARY", status.state());
+    }
+
+    @Test
+    void renderedConfigDeduplicatesProxyNamesAcrossSubscriptions() throws Exception {
+        var first = subscriptionsService.createSubscription(
+                new SubscriptionRequest("Fixture-1", "file:///tmp/fixture-subscription.yaml", true)
+        );
+        var second = subscriptionsService.createSubscription(
+                new SubscriptionRequest("Fixture-2", "file:///tmp/fixture-subscription.yaml", true)
+        );
+
+        subscriptionsService.refreshSubscription(first.id());
+        subscriptionsService.refreshSubscription(second.id());
+
+        Path configPath = coreManagerService.renderConfigForCurrentState();
+        String config = Files.readString(configPath);
+
+        assertEquals(1, countOccurrences(config, "  - name: \"JP-Test-2\""));
+        assertEquals(1, countOccurrences(config, "  - name: \"US-Test-1\""));
+    }
+
+    private int countOccurrences(String content, String needle) {
+        return Pattern.compile(Pattern.quote(needle)).matcher(content).results().toArray().length;
     }
 
     @TestConfiguration

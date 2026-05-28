@@ -97,6 +97,7 @@ Already initialized:
 
 - Electron launches Spring Boot in development and captures a machine-readable ready line
 - Backend binds to random localhost port and validates a session token on `/api/v1/**` except health
+- Development-mode local API access from the Vite renderer is now allowed through explicit CORS mapping for `http://127.0.0.1:5173`, and session-token interception now lets `OPTIONS` preflight requests pass cleanly
 - SQLite persistence is active for settings and subscriptions
 - Core endpoints exist for status, start, stop, and reload
 - System proxy endpoints now integrate with macOS `networksetup`, with runtime snapshot-based restore on disable
@@ -114,6 +115,8 @@ Already initialized:
 - Electron Builder packaging scaffold now collects the web build, Spring Boot jar, and bundled Clash.Meta binary into desktop `extraResources`
 - Clash.Meta runtime ports are now allocated dynamically at start time, and system proxy targeting follows the current mixed port instead of assuming `7890`
 - Before Clash.Meta starts, its mixed/controller ports are intentionally unset, so backend and frontend logic must treat `0` as "not allocated yet" instead of falling back to historical defaults
+- Generated Clash.Meta proxy entries are now de-duplicated by effective proxy name at config-render time, so overlapping subscription content does not produce invalid duplicate-name configs during `start` or `reload`
+- Core runtime ownership now persists a runtime-root-scoped pid marker and cleans up matching stale Clash.Meta processes on `start`, `stop`, and `reload`, so backend restarts can recover and reassert control instead of leaving orphaned core instances behind
 - Runtime root and Clash.Meta path can be injected explicitly through environment variables
 - Subscription refresh, imported proxy node persistence, proxy-group selection, generated Clash.Meta config output, and local development core startup have now all been verified together against the current Electron + Spring Boot + React scaffold
 
@@ -292,6 +295,8 @@ The verified local development path is:
 6. start the core and inspect `.runtime/clash-meta/config/config.yaml` plus `.runtime/clash-meta/logs/clash-meta.log` if behavior does not match the UI
 
 This verified path proves local orchestration and generated-config startup. It does not yet prove that arbitrary remote subscription payloads contain valid live credentials.
+
+Development-mode local API fetches from the Vite renderer now depend on explicit local CORS allowance for `http://127.0.0.1:5173`, and the backend currently allows unauthenticated `OPTIONS` preflight requests so the renderer can still use the same session-protected local API during development.
 
 When attaching Electron to a Vite dev server, pass the actual renderer URL explicitly if Vite selected a different port:
 

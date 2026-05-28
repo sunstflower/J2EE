@@ -81,6 +81,15 @@ At minimum, keep these files aligned:
 - Record at least the date, baseline or branch context, and the main change or verification scope
 - If the repository is reset, rolled back, or partially restored, record that state before continuing implementation
 - Do not treat `AGENTS.md` as optional maintenance; update it as part of the change itself
+- Any business-code bug found during implementation, debugging, or verification must be recorded in `AGENTS.md`
+- Bug records should be maintained in-place when status changes, not left stale after the code has moved on
+
+## Bug Maintenance
+
+- Keep a short bug ledger in `AGENTS.md` for business-code defects that affect runtime behavior, data integrity, or user-visible workflow
+- For each recorded bug, include: date, affected area, observed symptom, root cause if known, current status, and the change or verification that addressed it
+- Update an existing bug entry when it is narrowed, reproduced, fixed, or regressed
+- Do not remove historical bug entries silently; if a bug is resolved, mark it resolved and note the validating change
 
 ## Implementation Guidelines
 
@@ -199,13 +208,14 @@ A change is not complete unless:
 - Clash.Meta config generation now emits `network`, `servername`, and nested `ws-opts.headers.Host` for imported `vmess` nodes when those fields are present
 - Integration coverage was expanded to assert both transport-field persistence and generated config output for the new `vmess` transport fields
 - Post-change verification for the transport-field upgrade passed with `mvn -q test --file services/local-api/pom.xml`
-- Local development integration verification was then run end-to-end through the actual Electron bootstrap path instead of backend-only tests
-- Verified sequence covered: Vite on `127.0.0.1:5173`, Electron desktop startup, Spring Boot random-port bootstrap with session token, subscription creation, subscription refresh, imported-node persistence, proxy-group selection persistence, generated Clash.Meta config output, and successful Clash.Meta startup from the generated config
-- The repository sample at `.tmp-core-verify/sample.yaml` has now been upgraded to include the protocol and transport fields needed for this end-to-end local verification path
-- Follow-up documentation maintenance completed for this slice in `README.md` and `docs/runtime.md` so the verified local dev flow and current limitations are recorded with the code
-- End-to-end verification then exposed a real core lifecycle bug: `reload` could return success without actually rewriting config because the previous Clash.Meta process was only signaled, not fully waited out, before `start()` checked process liveness
-- `CoreManagerService` now waits for process shutdown during stop/reload, force-kills when necessary, clears stale process references, and preserves `RELOAD` as the reported last action after a successful restart
-- Added dedicated integration coverage for the reload path to prove that updated imported-node protocol fields are written into a freshly regenerated `config.yaml` after core reload
-- Post-fix verification for the lifecycle/reload slice passed with `mvn -q test --file services/local-api/pom.xml`
-- A follow-up state-race hardening pass then prevented stale `onExit` callbacks from older Clash.Meta processes from overwriting the status of a newer running process
-- Reload integration coverage now also asserts the returned runtime status shape (`RUNNING` plus `RELOAD`) so config rewrite verification and status verification stay coupled
+- UI-side Electron point verification exposed a live runtime defect: refreshing multiple subscriptions that contain the same proxy names caused generated Clash.Meta config to emit duplicate `proxies[].name` entries, and core `start/reload` then failed with `Parse config error: proxy JP-Test-2 is the duplicate name`
+- Root cause was in backend config generation, not in the UI buttons: imported nodes from different subscriptions were merged into the runtime config without any de-duplication by effective Clash.Meta proxy name
+- Fix slice completed: generated Clash.Meta `proxies` entries are now deduplicated by effective node name at config-render time so core lifecycle actions can tolerate overlapping subscription content instead of producing invalid config
+- Verification for the duplicate-name fix passed in two layers: `mvn -q test --file services/local-api/pom.xml` passed with new coverage for cross-subscription duplicate names, and a live `POST /api/v1/core/start` against the existing `.runtime` dataset returned `RUNNING` instead of reproducing the previous Clash.Meta parse failure
+- `AGENTS.md` maintenance rules were tightened in the same slice so future business-code bugs must be recorded here when discovered and updated as their status changes
+- Follow-up runtime defect also confirmed: repeated local-api restarts could leave orphaned Clash.Meta processes under the same runtime root because the service only tracked the in-memory `Process` handle and had no persisted runtime ownership or cleanup path after backend restarts
+- Fix slice now extends core runtime ownership with runtime-root-scoped PID tracking and startup/stop cleanup of matching Clash.Meta processes so `start/stop/reload` can recover control of the managed core after backend restarts instead of accumulating orphan processes
+- Verification for the orphan-process fix passed against the live `.runtime` dataset: before the fix, the same runtime root still had 3 stale Clash.Meta processes; after the fix, one `core/start` request cleaned those stale instances and started a single managed core, and `core/stop` then reduced the runtime-root process count to 0 while removing the persisted `core.pid`
+- Repository health convergence slice completed: previously deleted but still expected regression tests and top-level runtime docs were restored so the worktree no longer contains unexplained missing controller/test/doc files
+- Post-convergence verification passed with `mvn -q test --file services/local-api/pom.xml`, including the restored subscription-controller and core-reload integration coverage
+- Rules/implementation alignment slice completed: `README.md` and `docs/runtime.md` now explicitly reflect the current development-mode CORS/preflight behavior, generated-config duplicate-name de-duplication, runtime-root pid tracking, and stale core-process cleanup semantics already present in the backend implementation

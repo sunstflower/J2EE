@@ -119,6 +119,8 @@ Current development scaffold:
   - `APP_SESSION_TOKEN`
   - `APP_RUNTIME_ROOT`
   - `APP_CORE_CLASH_META_PATH`
+- Vite-based renderer development currently runs at `http://127.0.0.1:5173`, so local-api CORS explicitly allows that origin
+- Session-token interception now permits unauthenticated `OPTIONS` preflight requests so development-mode browser fetches can reach the same session-protected local API
 
 ## Recommended Launch Parameters
 
@@ -193,6 +195,7 @@ Current scaffold status:
 - the local SQLite file currently lives at `<runtime-root>/local-api/local-api.db`
 - current subscription/proxy integration has now been verified end-to-end in development: Electron starts Spring Boot, Spring Boot imports subscription nodes into SQLite, generated Clash.Meta config is written under the runtime root, and the bundled Clash.Meta binary can start successfully from that generated file
 - a repository fixture at `.tmp-core-verify/sample.yaml` is now maintained as the canonical local development sample for file-based subscription import checks
+- overlapping subscription content is now normalized at config-render time by de-duplicating generated proxy entries on effective Clash.Meta proxy name, preventing duplicate-name startup failures during `core/start` and `core/reload`
 
 ### Logs
 
@@ -233,6 +236,12 @@ Examples:
 - active non-VPN interface detection from `scutil --nwi`, used to bias recommendation toward the current live path
 - persisted confirmed recommendation snapshot for selected-mode service targeting in SQLite settings
 
+Current scaffold status:
+
+- `CoreManagerService` now writes a runtime-root-scoped pid marker at `clash-meta/state/core.pid` for the currently managed Clash.Meta process
+- `core/start` now cleans up stale matching Clash.Meta processes under the same runtime root before launching a new managed instance
+- `core/stop` removes both the active managed process and the persisted pid marker so later backend restarts do not inherit stale runtime ownership data
+
 ## Failure Handling Expectations
 
 1. If Spring Boot fails to start, Electron should surface a backend startup error
@@ -256,15 +265,8 @@ The currently verified local development sequence is:
    - imported rows appear in `<runtime-root>/local-api/local-api.db`
    - generated nodes appear in `<runtime-root>/clash-meta/config/config.yaml`
    - Clash.Meta startup logs appear in `<runtime-root>/clash-meta/logs/clash-meta.log`
+   - `clash-meta/state/core.pid` appears while core is running and disappears after `core/stop`
 
 Current limitation:
-
-- this verified path proves local orchestration, import, config generation, and core startup, but it does not by itself prove that remote upstream proxy credentials are valid or reachable
-
-## Open Implementation Choices
-
-These are still implementation details, not architecture blockers:
-
-1. Whether Spring Boot readiness is detected from structured stdout, a health endpoint, or both
-2. Whether Electron uses preload plus IPC for renderer access from the first iteration
-3. Exact log rolling policy and retention counts
+- log rotation is still not implemented
+- duplicate subscription node names are tolerated only at generated-config level; imported SQLite rows are still stored per subscription and may legitimately repeat names across sources

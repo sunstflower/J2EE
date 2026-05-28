@@ -17,6 +17,11 @@ public class SessionTokenInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            return true;
+        }
+
         String configuredToken = sessionProperties.getToken();
 
         if (configuredToken == null || configuredToken.isBlank()) {
