@@ -50,6 +50,22 @@ public class SubscriptionsController {
         );
     }
 
+    @PostMapping("/subscriptions/{subscriptionId}/refresh")
+    public Map<String, Object> refreshSubscription(@PathVariable long subscriptionId) {
+        return Map.of(
+                "success", true,
+                "data", subscriptionsService.refreshSubscription(subscriptionId)
+        );
+    }
+
+    @PostMapping("/subscriptions/refresh")
+    public Map<String, Object> refreshEnabledSubscriptions() {
+        return Map.of(
+                "success", true,
+                "data", subscriptionsService.refreshEnabledSubscriptions()
+        );
+    }
+
     @DeleteMapping("/subscriptions/{subscriptionId}")
     public Map<String, Object> deleteSubscription(@PathVariable long subscriptionId) {
         subscriptionsService.deleteSubscription(subscriptionId);
