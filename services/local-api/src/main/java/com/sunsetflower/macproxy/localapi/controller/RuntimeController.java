@@ -33,4 +33,12 @@ public class RuntimeController {
                 "data", runtimeService.getRuntimeLogs(limit)
         );
     }
+
+    @GetMapping("/runtime/errors")
+    public Map<String, Object> getRuntimeErrors() {
+        return Map.of(
+                "success", true,
+                "data", runtimeService.getRuntimeErrors()
+        );
+    }
 }

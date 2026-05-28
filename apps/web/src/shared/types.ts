@@ -67,6 +67,29 @@ export type RuntimeSummary = {
   logLevel: string;
 };
 
+export type RuntimeLogLine = {
+  lineNumber: number;
+  content: string;
+};
+
+export type RuntimeLogs = {
+  logFile: string;
+  available: boolean;
+  lineCount: number;
+  lines: RuntimeLogLine[];
+};
+
+export type RuntimeError = {
+  source: string;
+  severity: string;
+  message: string;
+};
+
+export type RuntimeErrors = {
+  errorCount: number;
+  errors: RuntimeError[];
+};
+
 export type SystemProxyStatus = {
   enabled: boolean;
   managed: boolean;

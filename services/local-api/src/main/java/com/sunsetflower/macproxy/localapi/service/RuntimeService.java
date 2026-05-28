@@ -1,6 +1,8 @@
 package com.sunsetflower.macproxy.localapi.service;
 
 import com.sunsetflower.macproxy.localapi.config.AppRuntimeProperties;
+import com.sunsetflower.macproxy.localapi.service.dto.RuntimeErrorResponse;
+import com.sunsetflower.macproxy.localapi.service.dto.RuntimeErrorsResponse;
 import com.sunsetflower.macproxy.localapi.service.dto.RuntimeLogLineResponse;
 import com.sunsetflower.macproxy.localapi.service.dto.RuntimeLogsResponse;
 import com.sunsetflower.macproxy.localapi.service.dto.RuntimeSummaryResponse;
@@ -10,6 +12,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -81,6 +84,31 @@ public class RuntimeService {
         } catch (IOException error) {
             throw new IllegalStateException("Failed to read runtime log file: " + error.getMessage(), error);
         }
+    }
+
+    public RuntimeErrorsResponse getRuntimeErrors() {
+        List<RuntimeErrorResponse> errors = new ArrayList<>();
+
+        var coreStatus = coreManagerService.getStatus();
+        if (coreStatus.lastError() != null && !coreStatus.lastError().isBlank()) {
+            errors.add(new RuntimeErrorResponse("core", "error", coreStatus.lastError()));
+        }
+
+        var systemProxyStatus = systemProxyService.getStatus();
+        if (systemProxyStatus.lastError() != null && !systemProxyStatus.lastError().isBlank()) {
+            errors.add(new RuntimeErrorResponse("systemProxy", "error", systemProxyStatus.lastError()));
+        }
+
+        RuntimeLogsResponse runtimeLogs = getRuntimeLogs(50);
+        for (RuntimeLogLineResponse line : runtimeLogs.lines()) {
+            String normalized = line.content().toLowerCase();
+            if (normalized.contains(" level=error ") || normalized.contains(" level=fatal ")) {
+                String severity = normalized.contains(" level=fatal ") ? "fatal" : "error";
+                errors.add(new RuntimeErrorResponse("coreLog", severity, line.content()));
+            }
+        }
+
+        return new RuntimeErrorsResponse(errors.size(), errors);
     }
 
     private int normalizeLogLimit(Integer limit) {

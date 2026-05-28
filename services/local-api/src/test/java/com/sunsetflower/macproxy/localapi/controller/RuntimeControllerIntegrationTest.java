@@ -63,4 +63,26 @@ class RuntimeControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.lines").isArray())
                 .andExpect(jsonPath("$.data.lines").isEmpty());
     }
+
+    @Test
+    void runtimeErrorsEndpointReturnsExtractedCoreLogErrors() throws Exception {
+        Path logFile = runtimeRoot.resolve("clash-meta").resolve("logs").resolve("clash-meta.log");
+        Files.createDirectories(logFile.getParent());
+        Files.writeString(
+                logFile,
+                """
+                time="2026-05-28T10:22:45.653504000+08:00" level=info msg="Start initial configuration in progress"
+                time="2026-05-28T10:22:45.653750000+08:00" level=fatal msg="Parse config error: proxy JP-Test-2 is the duplicate name"
+                """.stripIndent()
+        );
+
+        mockMvc.perform(get("/api/v1/runtime/errors")
+                        .header("Authorization", "Bearer test-session-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.errorCount").value(1))
+                .andExpect(jsonPath("$.data.errors[0].source").value("coreLog"))
+                .andExpect(jsonPath("$.data.errors[0].severity").value("fatal"))
+                .andExpect(jsonPath("$.data.errors[0].message").value(org.hamcrest.Matchers.containsString("duplicate name")));
+    }
 }
