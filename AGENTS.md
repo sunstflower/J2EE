@@ -199,3 +199,13 @@ A change is not complete unless:
 - Clash.Meta config generation now emits `network`, `servername`, and nested `ws-opts.headers.Host` for imported `vmess` nodes when those fields are present
 - Integration coverage was expanded to assert both transport-field persistence and generated config output for the new `vmess` transport fields
 - Post-change verification for the transport-field upgrade passed with `mvn -q test --file services/local-api/pom.xml`
+- Local development integration verification was then run end-to-end through the actual Electron bootstrap path instead of backend-only tests
+- Verified sequence covered: Vite on `127.0.0.1:5173`, Electron desktop startup, Spring Boot random-port bootstrap with session token, subscription creation, subscription refresh, imported-node persistence, proxy-group selection persistence, generated Clash.Meta config output, and successful Clash.Meta startup from the generated config
+- The repository sample at `.tmp-core-verify/sample.yaml` has now been upgraded to include the protocol and transport fields needed for this end-to-end local verification path
+- Follow-up documentation maintenance completed for this slice in `README.md` and `docs/runtime.md` so the verified local dev flow and current limitations are recorded with the code
+- End-to-end verification then exposed a real core lifecycle bug: `reload` could return success without actually rewriting config because the previous Clash.Meta process was only signaled, not fully waited out, before `start()` checked process liveness
+- `CoreManagerService` now waits for process shutdown during stop/reload, force-kills when necessary, clears stale process references, and preserves `RELOAD` as the reported last action after a successful restart
+- Added dedicated integration coverage for the reload path to prove that updated imported-node protocol fields are written into a freshly regenerated `config.yaml` after core reload
+- Post-fix verification for the lifecycle/reload slice passed with `mvn -q test --file services/local-api/pom.xml`
+- A follow-up state-race hardening pass then prevented stale `onExit` callbacks from older Clash.Meta processes from overwriting the status of a newer running process
+- Reload integration coverage now also asserts the returned runtime status shape (`RUNNING` plus `RELOAD`) so config rewrite verification and status verification stay coupled

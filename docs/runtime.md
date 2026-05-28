@@ -191,6 +191,8 @@ Current scaffold status:
 - `CoreManagerService` currently writes a minimal generated config to `clash-meta/config/config.yaml`
 - `Clash.Meta` is started with explicit `-f <config-file> -d <runtime-root>/clash-meta`
 - the local SQLite file currently lives at `<runtime-root>/local-api/local-api.db`
+- current subscription/proxy integration has now been verified end-to-end in development: Electron starts Spring Boot, Spring Boot imports subscription nodes into SQLite, generated Clash.Meta config is written under the runtime root, and the bundled Clash.Meta binary can start successfully from that generated file
+- a repository fixture at `.tmp-core-verify/sample.yaml` is now maintained as the canonical local development sample for file-based subscription import checks
 
 ### Logs
 
@@ -210,6 +212,7 @@ Current scaffold status:
 
 - the first lifecycle implementation appends core process output to `clash-meta/logs/clash-meta.log`
 - log rotation is not implemented yet
+- local development verification should inspect `clash-meta/logs/clash-meta.log` together with `clash-meta/config/config.yaml` when confirming whether imported subscription nodes actually reached the running core
 
 ### State
 
@@ -236,6 +239,27 @@ Examples:
 2. If the port or token handoff fails, React should not be initialized against guessed defaults
 3. If Clash.Meta path resolution fails, Spring Boot should not try fallback guesses silently
 4. If runtime directory creation fails, startup should stop with a clear error
+
+## Verified Development Flow
+
+The currently verified local development sequence is:
+
+1. Vendor or import the bundled Clash.Meta binary into `runtime-assets/clash-meta/bin/clash-meta`
+2. Start the Vite renderer on `127.0.0.1:5173`
+3. Start `npm run dev:desktop`
+4. Let Electron launch Spring Boot and inject:
+   - `APP_SESSION_TOKEN`
+   - `APP_RUNTIME_ROOT`
+   - `APP_CORE_CLASH_META_PATH`
+5. Use the subscriptions UI or local API to import `.tmp-core-verify/sample.yaml` through a `file://` subscription
+6. Verify that:
+   - imported rows appear in `<runtime-root>/local-api/local-api.db`
+   - generated nodes appear in `<runtime-root>/clash-meta/config/config.yaml`
+   - Clash.Meta startup logs appear in `<runtime-root>/clash-meta/logs/clash-meta.log`
+
+Current limitation:
+
+- this verified path proves local orchestration, import, config generation, and core startup, but it does not by itself prove that remote upstream proxy credentials are valid or reachable
 
 ## Open Implementation Choices
 

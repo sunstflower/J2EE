@@ -17,12 +17,14 @@ import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class CoreManagerService {
 
     private static final String LOOPBACK_HOST = "127.0.0.1";
     private static final long START_STABILITY_WAIT_MILLIS = 400L;
+    private static final long STOP_STABILITY_WAIT_MILLIS = 2_000L;
 
     private final AppRuntimeProperties appRuntimeProperties;
     private final ClashMetaProperties clashMetaProperties;
@@ -128,7 +130,7 @@ public class CoreManagerService {
             lastExitCode = -1;
 
             process.onExit().thenRun(() -> {
-                if ("STOPPED".equals(state)) {
+                if ("STOPPED".equals(state) || coreProcess != process) {
                     return;
                 }
 
@@ -158,10 +160,7 @@ public class CoreManagerService {
     }
 
     public CoreStatusResponse stop() {
-        if (coreProcess != null && coreProcess.isAlive()) {
-            coreProcess.destroy();
-        }
-
+        stopProcess();
         state = "STOPPED";
         lastAction = "STOP";
         lastError = "";
@@ -183,9 +182,19 @@ public class CoreManagerService {
             return getStatus();
         }
 
-        stop();
+        stopProcess();
+        CoreStatusResponse status = start();
         lastAction = "RELOAD";
-        return start();
+        return new CoreStatusResponse(
+                status.state(),
+                status.configuredPath(),
+                status.binaryExists(),
+                status.mixedPort(),
+                status.controllerPort(),
+                "RELOAD",
+                status.lastStartedAt(),
+                status.lastError()
+        );
     }
 
     public int getEffectiveMixedPort() {
@@ -339,6 +348,36 @@ public class CoreManagerService {
         List<String> lines = Files.readAllLines(logPath, StandardCharsets.UTF_8);
         int fromIndex = Math.max(0, lines.size() - 6);
         return String.join(" | ", lines.subList(fromIndex, lines.size())).trim();
+    }
+
+    private void stopProcess() {
+        Process process = coreProcess;
+        coreProcess = null;
+
+        if (process == null) {
+            return;
+        }
+
+        if (!process.isAlive()) {
+            lastExitCode = process.exitValue();
+            return;
+        }
+
+        process.destroy();
+        try {
+            if (!process.waitFor(STOP_STABILITY_WAIT_MILLIS, TimeUnit.MILLISECONDS)) {
+                process.destroyForcibly();
+                process.waitFor(STOP_STABILITY_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+            }
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            lastError = "Interrupted while stopping Clash.Meta";
+            return;
+        }
+
+        if (!process.isAlive()) {
+            lastExitCode = process.exitValue();
+        }
     }
 
     private int allocateEphemeralPort() throws IOException {

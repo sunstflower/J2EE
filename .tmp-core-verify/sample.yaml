@@ -3,10 +3,22 @@ proxies:
     type: ss
     server: us1.example.com
     port: 443
+    cipher: aes-128-gcm
+    password: fixture-password
   - name: "JP-Test-2"
     type: vmess
     server: jp2.example.com
     port: 8443
+    uuid: 00000000-0000-0000-0000-000000000000
+    alterId: 0
+    cipher: auto
+    tls: true
+    network: ws
+    servername: jp.example.com
+    ws-opts:
+      path: /proxy
+      headers:
+        Host: ws.jp.example.com
 proxy-groups: []
 rules:
   - MATCH,DIRECT

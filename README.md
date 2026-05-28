@@ -115,6 +115,7 @@ Already initialized:
 - Clash.Meta runtime ports are now allocated dynamically at start time, and system proxy targeting follows the current mixed port instead of assuming `7890`
 - Before Clash.Meta starts, its mixed/controller ports are intentionally unset, so backend and frontend logic must treat `0` as "not allocated yet" instead of falling back to historical defaults
 - Runtime root and Clash.Meta path can be injected explicitly through environment variables
+- Subscription refresh, imported proxy node persistence, proxy-group selection, generated Clash.Meta config output, and local development core startup have now all been verified together against the current Electron + Spring Boot + React scaffold
 
 ## Planned Module Boundaries
 
@@ -281,6 +282,17 @@ Run the desktop scaffold:
 npm run dev:desktop
 ```
 
+The verified local development path is:
+
+1. keep the renderer on `127.0.0.1:5173`
+2. run `npm run dev:desktop`
+3. let Electron launch Spring Boot automatically
+4. import the maintained sample subscription fixture at `file:///Users/sunsetflower/myJobs/Java/mac-proxy-client/.tmp-core-verify/sample.yaml` or copy it to another absolute `file://` path if needed
+5. refresh that subscription and confirm imported nodes in the Proxies view
+6. start the core and inspect `.runtime/clash-meta/config/config.yaml` plus `.runtime/clash-meta/logs/clash-meta.log` if behavior does not match the UI
+
+This verified path proves local orchestration and generated-config startup. It does not yet prove that arbitrary remote subscription payloads contain valid live credentials.
+
 When attaching Electron to a Vite dev server, pass the actual renderer URL explicitly if Vite selected a different port:
 
 ```bash
@@ -347,6 +359,12 @@ The pinned vendor version lives in:
 
 ```text
 runtime-assets/clash-meta/version.txt
+```
+
+The maintained repository sample for local subscription import verification lives in:
+
+```text
+.tmp-core-verify/sample.yaml
 ```
 
 For packaged desktop builds, Electron now expects the following generated bundle staging layout before `electron-builder` runs:
