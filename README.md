@@ -88,10 +88,10 @@ Current scaffolds:
 
 Not implemented yet:
 
-- full Clash.Meta config generation from subscriptions and selections
 - signed and notarized desktop distribution
 - release update channel integration
-- log retention and diagnostics workflows
+- log rotation and retention policies
+- Electron development-mode preload bridge hardening and troubleshooting guidance
 
 Already initialized:
 
@@ -119,6 +119,8 @@ Already initialized:
 - Core runtime ownership now persists a runtime-root-scoped pid marker and cleans up matching stale Clash.Meta processes on `start`, `stop`, and `reload`, so backend restarts can recover and reassert control instead of leaving orphaned core instances behind
 - Runtime root and Clash.Meta path can be injected explicitly through environment variables
 - Subscription refresh, imported proxy node persistence, proxy-group selection, generated Clash.Meta config output, and local development core startup have now all been verified together against the current Electron + Spring Boot + React scaffold
+- Overview now includes a minimal diagnostics surface backed by `/api/v1/runtime`, `/api/v1/runtime/logs`, and `/api/v1/runtime/errors`
+- Electron point testing has now exercised Overview core `Start` / `Reload` / `Stop`, Subscriptions refresh flows, and Proxies group selection against a live local-api session
 
 ## Planned Module Boundaries
 
@@ -279,6 +281,14 @@ npm run dev:web
 
 The Vite dev server is pinned to `127.0.0.1:5173` with `strictPort: true`. If that port is already occupied, stop the conflicting process instead of letting Vite drift to a different port.
 
+If you need to attach the web UI to an already-running local API for debugging or Electron point testing, you can inject the local API connection explicitly:
+
+```bash
+VITE_LOCAL_API_BASE_URL=http://127.0.0.1:<port>/api/v1 \
+VITE_LOCAL_API_SESSION_TOKEN=<token> \
+npm run dev:web
+```
+
 Run the desktop scaffold:
 
 ```bash
@@ -292,7 +302,9 @@ The verified local development path is:
 3. let Electron launch Spring Boot automatically
 4. import the maintained sample subscription fixture at `file:///Users/sunsetflower/myJobs/Java/mac-proxy-client/.tmp-core-verify/sample.yaml` or copy it to another absolute `file://` path if needed
 5. refresh that subscription and confirm imported nodes in the Proxies view
-6. start the core and inspect `.runtime/clash-meta/config/config.yaml` plus `.runtime/clash-meta/logs/clash-meta.log` if behavior does not match the UI
+6. change a proxy group selection in the Proxies view and confirm it persists
+7. start, reload, and stop the core from Overview
+8. inspect Overview diagnostics plus `.runtime/clash-meta/config/config.yaml` and `.runtime/clash-meta/logs/clash-meta.log` if behavior does not match the UI
 
 This verified path proves local orchestration and generated-config startup. It does not yet prove that arbitrary remote subscription payloads contain valid live credentials.
 
@@ -305,6 +317,36 @@ MAC_PROXY_RENDERER_URL=http://127.0.0.1:5174 npm run dev:web --workspace @mac-pr
 ```
 
 That override is now mainly for intentionally custom renderer URLs. The default development path expects the standard `5173` port to stay stable.
+
+## Current Usage Surface
+
+The current scaffold is already usable for the following local workflows:
+
+1. Add or refresh `file://`, `http://`, or `https://` subscriptions into the local SQLite store
+2. Import subscription nodes and render them into generated Clash.Meta runtime config
+3. Select proxy-group targets in the Proxies view and persist the selection
+4. Start, reload, and stop the bundled Clash.Meta core from the Overview panel
+5. Toggle system proxy state through the backend-managed macOS `networksetup` integration
+6. Inspect runtime summary, recent runtime errors, and the core log tail from Overview diagnostics
+
+## Local Verification Checklist
+
+For a final local smoke test before packaging or review, verify the following in order:
+
+1. `npm run build:web`
+2. `cd services/local-api && mvn test`
+3. `npm run dev:web`
+4. `npm run dev:desktop`
+5. In Electron:
+   - refresh at least one subscription
+   - confirm imported nodes appear in Proxies
+   - change one proxy-group selection
+   - execute `Start`, `Reload`, and `Stop` from Overview
+   - confirm diagnostics shows runtime errors or core log lines when available
+
+## Known Development Limitation
+
+Electron development-mode point testing exposed an open bootstrap issue: in some runs the renderer does not receive the preload-provided `window.desktopRuntime` bridge even though the Electron window and local API are both up. When that happens, keep the local API session usable by starting Vite with explicit `VITE_LOCAL_API_BASE_URL` and `VITE_LOCAL_API_SESSION_TOKEN` overrides as shown above. This limitation affects developer bootstrap convenience, but it did not block the verified business flows listed in this document.
 
 Build desktop distribution prerequisites:
 
@@ -429,7 +471,7 @@ Source SVG files live in `apps/desktop/assets/tray/svg/default` and `apps/deskto
 
 ## Next Recommended Work
 
-1. Add signed packaged builds that embed `Clash.Meta` and tray assets into the distributable app bundle
-2. Introduce actual Clash.Meta config generation and profile rendering instead of lifecycle-only backend wiring
-3. Add subscription fetch, parse, and persistence flows with refresh scheduling
-4. Expand end-to-end verification for backend startup, token-authenticated API access, and macOS system proxy transitions
+1. Isolate and fix the Electron development-mode `window.desktopRuntime` preload bridge gap
+2. Add signed packaged builds that embed `Clash.Meta` and tray assets into the distributable app bundle
+3. Add log rotation, exported diagnostics, and retention controls around runtime logs
+4. Expand end-to-end verification for packaged desktop startup and macOS system proxy transitions

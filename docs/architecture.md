@@ -19,6 +19,7 @@ This project follows a local multi-process desktop architecture:
 - Ships the bundled Clash.Meta binary within the desktop application
 - Renders the React application
 - Provides tray, notification, and window management
+- Supplies the renderer with the local API base URL and session token through preload instead of exposing backend discovery logic to React
 
 ### Local API
 
@@ -29,6 +30,7 @@ This project follows a local multi-process desktop architecture:
 - Tracks runtime state
 - Integrates with and manages Clash.Meta
 - Owns core startup, shutdown, reload, health checks, and log capture
+- Exposes runtime diagnostics for the renderer, including runtime summary, recent surfaced errors, and core log tail
 
 ### Proxy Core
 
@@ -88,5 +90,5 @@ The project uses the following default runtime layout unless later adjusted for 
 ## Remaining Open Questions
 
 1. How the bundled Clash.Meta binary is versioned and upgraded
-2. Whether Electron should use preload plus renderer IPC from the first scaffold
-3. What packaging layout best fits macOS signing and notarization
+2. What packaging layout best fits macOS signing and notarization
+3. Why the Electron development-mode renderer occasionally fails to observe the expected preload-provided `window.desktopRuntime` bridge during point testing

@@ -121,6 +121,7 @@ Current development scaffold:
   - `APP_CORE_CLASH_META_PATH`
 - Vite-based renderer development currently runs at `http://127.0.0.1:5173`, so local-api CORS explicitly allows that origin
 - Session-token interception now permits unauthenticated `OPTIONS` preflight requests so development-mode browser fetches can reach the same session-protected local API
+- The intended development path is still: Electron supplies local API runtime context to the renderer through preload, and React consumes that desktop-managed connection context instead of discovering connection details itself
 
 ## Recommended Launch Parameters
 
@@ -162,6 +163,7 @@ Current scaffold status:
   - `VITE_LOCAL_API_SESSION_TOKEN`
 - Electron development shell now starts Spring Boot, generates a session token, parses the bound port from startup logs, and exposes both values to the renderer preload bridge
 - Electron development shell also resolves the development Clash.Meta path from `runtime-assets/clash-meta/bin/clash-meta` when no explicit override is provided
+- During recent development-mode Electron point testing, business flows still worked against a live local API, but one run did not expose `window.desktopRuntime` in the renderer; until that bootstrap defect is isolated, explicit `VITE_LOCAL_API_BASE_URL` and `VITE_LOCAL_API_SESSION_TOKEN` overrides remain the fallback debug path
 
 ## Local API Binding
 
@@ -196,6 +198,11 @@ Current scaffold status:
 - current subscription/proxy integration has now been verified end-to-end in development: Electron starts Spring Boot, Spring Boot imports subscription nodes into SQLite, generated Clash.Meta config is written under the runtime root, and the bundled Clash.Meta binary can start successfully from that generated file
 - a repository fixture at `.tmp-core-verify/sample.yaml` is now maintained as the canonical local development sample for file-based subscription import checks
 - overlapping subscription content is now normalized at config-render time by de-duplicating generated proxy entries on effective Clash.Meta proxy name, preventing duplicate-name startup failures during `core/start` and `core/reload`
+- runtime diagnostics are now available through:
+  - `GET /api/v1/runtime`
+  - `GET /api/v1/runtime/logs`
+  - `GET /api/v1/runtime/errors`
+- the Overview panel consumes those endpoints to show runtime summary, recent surfaced errors, and the core log tail during local verification
 
 ### Logs
 
@@ -266,7 +273,13 @@ The currently verified local development sequence is:
    - generated nodes appear in `<runtime-root>/clash-meta/config/config.yaml`
    - Clash.Meta startup logs appear in `<runtime-root>/clash-meta/logs/clash-meta.log`
    - `clash-meta/state/core.pid` appears while core is running and disappears after `core/stop`
+   - Overview diagnostics can read runtime summary, runtime errors, and the core log tail
+7. In the Electron window, verify:
+   - subscription `Refresh` and `Refresh enabled`
+   - proxy-group selection persistence
+   - core `Start`, `Reload`, and `Stop`
 
 Current limitation:
 - log rotation is still not implemented
 - duplicate subscription node names are tolerated only at generated-config level; imported SQLite rows are still stored per subscription and may legitimately repeat names across sources
+- Electron development-mode renderer bootstrap may still need explicit Vite local-api env overrides if the preload bridge does not attach during a given run
