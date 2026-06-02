@@ -40,6 +40,45 @@
 
 ## 4. 变更记录
 
+### 2026-06-02 10:10
+- 会话目标：初始化后端公共基础与数据库业务表，为后续模块开发做准备
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/architecture.md`
+  - `backend/src/main/java/com/example/drugmanagement/common/config/MybatisConfig.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/dto/PageQuery.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/entity/BaseEntity.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/entity/AuditEntity.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/enums/DoctorApprovalStatus.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/enums/InventoryRecordType.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/enums/PrescriptionStatus.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/enums/RoleType.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/enums/WarningStatus.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/enums/WarningType.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/exception/BusinessException.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/exception/GlobalExceptionHandler.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/response/ApiResponse.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/response/PageResponse.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/response/ResponseCode.java`
+  - `backend/src/main/java/com/example/drugmanagement/entity/Drug.java`
+  - `backend/src/main/java/com/example/drugmanagement/entity/Inventory.java`
+  - `backend/src/main/java/com/example/drugmanagement/entity/InventoryRecord.java`
+  - `backend/src/main/java/com/example/drugmanagement/entity/Prescription.java`
+  - `backend/src/main/java/com/example/drugmanagement/entity/PrescriptionItem.java`
+  - `backend/src/main/java/com/example/drugmanagement/entity/WarningRecord.java`
+  - `backend/src/main/resources/application.yml`
+  - `backend/src/test/java/com/example/drugmanagement/common/ApiResponseTest.java`
+  - `docker/mysql/init/002_schema.sql`
+  - `docker/mysql/init/003_seed.sql`
+- 主要变更：
+  - 初始化后端统一错误码、分页对象、基础实体、业务枚举与 MyBatis 基础配置
+  - 补充药品、库存、库存流水、处方、处方明细、预警记录等实体类骨架
+  - 创建数据库业务表、索引、约束及示例种子数据脚本
+  - 补充基础响应测试并验证后端测试通过
+- 备注：
+  - 当前已完成公共基础与表结构初始化，尚未实现具体业务 Mapper/Service/Controller
+
 ### 2026-06-02 09:31
 - 会话目标：初始化项目工程骨架，为后续业务开发与测试落地做准备
 - 修改文件：

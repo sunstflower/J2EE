@@ -1,6 +1,6 @@
 # 药物管理系统
 
-一个基于 J2EE 技术栈落地的药物管理系统项目文档，当前阶段只定义项目方案、架构、接口与协作规范，不编写和编译业务代码。
+一个基于 J2EE 技术栈落地的药物管理系统项目，当前已完成项目文档、前后端工程骨架，以及后端公共基础与数据库业务表初始化。
 
 ## 1. 项目目标
 
@@ -51,7 +51,8 @@ J2EE/
 说明：
 
 - 当前已完成前后端工程骨架、测试目录与容器化基础文件初始化。
-- 业务模块、数据库正式表结构、认证授权与页面功能仍待后续开发。
+- 当前已完成数据库业务表 DDL、初始化种子数据与后端公共响应/异常/基础实体定义。
+- 业务模块、认证授权与页面功能仍待后续开发。
 
 ## 4. 业务模块设计
 
@@ -244,6 +245,12 @@ backend/src/main/java/com/example/drugmanagement/
 
 详细设计见 [docs/architecture.md](/Users/sunsetflower/myJobs/Java/J2EE/docs/architecture.md)。
 
+当前已初始化的数据库脚本：
+
+- [001_init.sql](/Users/sunsetflower/myJobs/Java/J2EE/docker/mysql/init/001_init.sql)：创建数据库与业务账号
+- [002_schema.sql](/Users/sunsetflower/myJobs/Java/J2EE/docker/mysql/init/002_schema.sql)：创建业务表、索引、主外键与基础约束
+- [003_seed.sql](/Users/sunsetflower/myJobs/Java/J2EE/docker/mysql/init/003_seed.sql)：写入示例药品种子数据
+
 ## 8. Docker 容器化要求
 
 建议使用 `docker-compose` 编排以下服务：
@@ -409,11 +416,13 @@ frontend/src/
 - `docker-compose.yml` 与 MySQL/Nginx 基础配置
 - 后端健康检查接口与前端占位首页
 - 基础测试目录与示例测试
+- 后端公共响应、错误码、分页查询对象、基础实体与业务枚举
+- 数据库业务表初始化脚本与示例种子数据
 
 当前仍不包含：
 
 - 药品、库存、预警、处方等正式业务实现
-- MyBatis Mapper XML 与数据库业务表脚本
+- MyBatis Mapper XML 与数据访问实现
 - 登录鉴权、角色权限、审计日志落库实现
 - 前端业务页面、接口封装与状态管理
 

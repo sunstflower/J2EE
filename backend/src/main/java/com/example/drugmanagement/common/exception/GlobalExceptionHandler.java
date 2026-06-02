@@ -1,6 +1,7 @@
 package com.example.drugmanagement.common.exception;
 
 import com.example.drugmanagement.common.response.ApiResponse;
+import com.example.drugmanagement.common.response.ResponseCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,12 +24,12 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .map(error -> error.getField() + " " + error.getDefaultMessage())
                 .orElse("invalid request");
-        return ApiResponse.failure(400, message);
+        return ApiResponse.failure(ResponseCode.VALIDATION_ERROR.getCode(), message);
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<Void> handleUnexpectedException(Exception exception) {
-        return ApiResponse.failure(500, "internal server error");
+        return ApiResponse.failure(ResponseCode.INTERNAL_SERVER_ERROR);
     }
 }
