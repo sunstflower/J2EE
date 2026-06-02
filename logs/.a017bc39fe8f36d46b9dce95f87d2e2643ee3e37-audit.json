@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/sunsetflower/myJobs/Java/J2EE/logs/.a017bc39fe8f36d46b9dce95f87d2e2643ee3e37-audit.json",
+    "files": [
+        {
+            "date": 1780361017356,
+            "name": "/Users/sunsetflower/myJobs/Java/J2EE/logs/mcp-puppeteer-2026-06-02.log",
+            "hash": "fcfe3eb5537631472ab34b63b726bd5b105b7a1f433cc94451a521465934e56e"
+        }
+    ],
+    "hashType": "sha256"
+}

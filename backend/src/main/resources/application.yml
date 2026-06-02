@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: drug-management-backend
+  datasource:
+    url: jdbc:mysql://localhost:3306/drug_management?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: drug_user
+    password: drug_pass
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.example.drugmanagement.entity
+
+server:
+  port: 8080
