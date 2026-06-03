@@ -4,6 +4,7 @@ public enum ResponseCode {
     SUCCESS(0, "success"),
     BAD_REQUEST(400, "bad request"),
     VALIDATION_ERROR(4001, "validation error"),
+    UNAUTHORIZED(4010, "unauthorized"),
     RESOURCE_NOT_FOUND(4040, "resource not found"),
     BUSINESS_RULE_VIOLATION(4002, "business rule violation"),
     INTERNAL_SERVER_ERROR(5000, "internal server error");

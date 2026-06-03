@@ -58,6 +58,9 @@ class WarningControllerTest {
         when(warningService.queryLowStockWarnings(1, 10)).thenReturn(PageResponse.of(List.of(warningVO), 1, 1, 10));
 
         mockMvc.perform(get("/api/warnings/low-stock")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .param("pageNum", "1")
                         .param("pageSize", "10"))
                 .andExpect(status().isOk())
@@ -71,6 +74,9 @@ class WarningControllerTest {
         when(warningService.queryExpiryWarnings(any())).thenReturn(PageResponse.of(List.of(warningVO), 1, 1, 10));
 
         mockMvc.perform(get("/api/warnings/expiry")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .param("pageNum", "1")
                         .param("pageSize", "10")
                         .param("expiryDays", "30"))
@@ -81,6 +87,9 @@ class WarningControllerTest {
     @Test
     void shouldRejectExpiryWarningsWhenExpiryDaysInvalid() throws Exception {
         mockMvc.perform(get("/api/warnings/expiry")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .param("pageNum", "1")
                         .param("pageSize", "10")
                         .param("expiryDays", "-1"))

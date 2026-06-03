@@ -58,6 +58,9 @@ class InventoryControllerAdditionalTest {
         doNothing().when(inventoryService).outbound(any());
 
         mockMvc.perform(post("/api/inventories/outbound")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -77,6 +80,9 @@ class InventoryControllerAdditionalTest {
         doNothing().when(inventoryService).check(any());
 
         mockMvc.perform(post("/api/inventories/check")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -99,6 +105,9 @@ class InventoryControllerAdditionalTest {
         when(inventoryService.queryInventoryRecords(any())).thenReturn(PageResponse.of(List.of(recordVO), 1, 1, 10));
 
         mockMvc.perform(get("/api/inventories/records")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .param("pageNum", "1")
                         .param("pageSize", "10"))
                 .andExpect(status().isOk())

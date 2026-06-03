@@ -58,6 +58,9 @@ class PrescriptionControllerTest {
         when(prescriptionService.createPrescription(any())).thenReturn(1L);
 
         mockMvc.perform(post("/api/prescriptions")
+                        .header("X-User-Id", "100")
+                        .header("X-User-Name", "医生王")
+                        .header("X-User-Role", "DOCTOR")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -90,6 +93,9 @@ class PrescriptionControllerTest {
         when(prescriptionService.queryPrescriptions(any())).thenReturn(PageResponse.of(List.of(vo), 1, 1, 10));
 
         mockMvc.perform(get("/api/prescriptions")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "药师李")
+                        .header("X-User-Role", "PHARMACIST")
                         .param("pageNum", "1")
                         .param("pageSize", "10"))
                 .andExpect(status().isOk())
@@ -101,6 +107,9 @@ class PrescriptionControllerTest {
         doNothing().when(prescriptionService).doctorApprove(any(), any());
 
         mockMvc.perform(post("/api/prescriptions/1/doctor-approve")
+                        .header("X-User-Id", "100")
+                        .header("X-User-Name", "医生王")
+                        .header("X-User-Role", "DOCTOR")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -118,6 +127,9 @@ class PrescriptionControllerTest {
         doNothing().when(prescriptionService).audit(any(), any());
 
         mockMvc.perform(post("/api/prescriptions/1/audit")
+                        .header("X-User-Id", "300")
+                        .header("X-User-Name", "药师李")
+                        .header("X-User-Role", "PHARMACIST")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -134,6 +146,9 @@ class PrescriptionControllerTest {
         doNothing().when(prescriptionService).dispense(any(), any());
 
         mockMvc.perform(post("/api/prescriptions/1/dispense")
+                        .header("X-User-Id", "300")
+                        .header("X-User-Name", "药师李")
+                        .header("X-User-Role", "PHARMACIST")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

@@ -63,6 +63,9 @@ class DrugControllerTest {
         when(drugService.queryDrugs(any())).thenReturn(PageResponse.of(List.of(drugVO), 1, 1, 10));
 
         mockMvc.perform(get("/api/drugs")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .param("pageNum", "1")
                         .param("pageSize", "10"))
                 .andExpect(status().isOk())
@@ -74,7 +77,10 @@ class DrugControllerTest {
     void shouldReturnDrugDetail() throws Exception {
         when(drugService.getDrugById(1L)).thenReturn(buildDrugVO());
 
-        mockMvc.perform(get("/api/drugs/1"))
+        mockMvc.perform(get("/api/drugs/1")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(1))
                 .andExpect(jsonPath("$.data.drugName").value("感冒灵颗粒"));
@@ -85,6 +91,9 @@ class DrugControllerTest {
         when(drugService.createDrug(any())).thenReturn(1L);
 
         mockMvc.perform(post("/api/drugs")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -109,6 +118,9 @@ class DrugControllerTest {
     @Test
     void shouldRejectCreateDrugWhenDrugCodeMissing() throws Exception {
         mockMvc.perform(post("/api/drugs")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -129,6 +141,9 @@ class DrugControllerTest {
         doNothing().when(drugService).updateDrug(eq(1L), any());
 
         mockMvc.perform(put("/api/drugs/1")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -153,7 +168,10 @@ class DrugControllerTest {
     void shouldDeleteDrug() throws Exception {
         doNothing().when(drugService).deleteDrug(1L);
 
-        mockMvc.perform(delete("/api/drugs/1"))
+        mockMvc.perform(delete("/api/drugs/1")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0));
     }

@@ -57,6 +57,9 @@ class InventoryControllerTest {
         when(inventoryService.inbound(any())).thenReturn(10L);
 
         mockMvc.perform(post("/api/inventories/inbound")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -77,6 +80,9 @@ class InventoryControllerTest {
     @Test
     void shouldRejectInboundWhenQuantityMissing() throws Exception {
         mockMvc.perform(post("/api/inventories/inbound")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -99,6 +105,9 @@ class InventoryControllerTest {
         when(inventoryService.queryInventories(any())).thenReturn(PageResponse.of(List.of(inventoryVO), 1, 1, 10));
 
         mockMvc.perform(get("/api/inventories")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST")
                         .param("pageNum", "1")
                         .param("pageSize", "10"))
                 .andExpect(status().isOk())
@@ -112,7 +121,10 @@ class InventoryControllerTest {
         inventoryVO.setBatchNo("BATCH-001");
         when(inventoryService.getInventoryById(10L)).thenReturn(inventoryVO);
 
-        mockMvc.perform(get("/api/inventories/10"))
+        mockMvc.perform(get("/api/inventories/10")
+                        .header("X-User-Id", "200")
+                        .header("X-User-Name", "张药师")
+                        .header("X-User-Role", "PHARMACIST"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.batchNo").value("BATCH-001"));
     }
