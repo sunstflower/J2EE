@@ -8,6 +8,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
 
@@ -30,7 +33,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         try {
             Long userId = Long.valueOf(userIdHeader);
             RoleType roleType = RoleType.valueOf(userRole);
-            CurrentUserHolder.set(new CurrentUser(userId, userName, roleType));
+            CurrentUserHolder.set(new CurrentUser(userId, decodeHeader(userName), roleType));
             return true;
         } catch (IllegalArgumentException exception) {
             throw BusinessException.of(ResponseCode.UNAUTHORIZED);
@@ -43,5 +46,9 @@ public class AuthInterceptor implements HandlerInterceptor {
                                 Object handler,
                                 Exception ex) {
         CurrentUserHolder.clear();
+    }
+
+    private String decodeHeader(String value) {
+        return URLDecoder.decode(value, StandardCharsets.UTF_8);
     }
 }

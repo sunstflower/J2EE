@@ -7,6 +7,20 @@ import { clearCurrentUser } from "../../auth";
 describe("App", () => {
   beforeEach(() => {
     clearCurrentUser();
+    global.fetch = () =>
+      Promise.resolve({
+        ok: true,
+        json: async () => ({
+          code: 0,
+          message: "success",
+          data: {
+            records: [],
+            total: 0,
+            pageNum: 1,
+            pageSize: 10,
+          },
+        }),
+      });
   });
 
   afterEach(() => {
@@ -26,5 +40,6 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "药物管理系统主功能联调准备已就绪" })).toBeInTheDocument();
     expect(screen.getByText("当前身份：王医生（DOCTOR）")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "药品页面联调" })).toBeInTheDocument();
   });
 });

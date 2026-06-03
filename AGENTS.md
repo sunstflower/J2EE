@@ -40,6 +40,30 @@
 
 ## 4. 变更记录
 
+### 2026-06-03 19:20（药品页面联调）
+- 会话目标：进入前端统一请求头注入与药品页面联调
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/api.md`
+  - `docs/frontend-integration.md`
+  - `backend/src/main/java/com/example/drugmanagement/common/auth/AuthInterceptor.java`
+  - `frontend/src/api/client.js`
+  - `frontend/src/api/drugs.js`
+  - `frontend/src/pages/DrugPage.jsx`
+  - `frontend/src/pages/HomePage.jsx`
+  - `frontend/src/pages/__tests__/App.test.jsx`
+  - `frontend/src/pages/__tests__/DrugPage.test.jsx`
+  - `frontend/src/styles.css`
+- 主要变更：
+  - 新增前端统一 `api client` 与药品模块 API 封装，自动注入当前用户请求头
+  - 新增药品联调页面，完成药品列表查询、新增药品、删除药品的最小前端闭环
+  - 修复浏览器中文请求头限制问题，前端对 `X-User-Name` 进行 URL 编码，后端拦截器统一解码
+  - 同步 README、前端联调文档与 API 文档，明确当前联调基线和请求头约定
+  - 执行 `frontend npm test` 与 `backend mvn test`，验证前端 4 个测试和后端 56 个测试全部通过
+- 备注：
+  - 当前尚未引入路由与更多页面，后续建议沿用同一请求层继续进入库存模块联调
+
 ### 2026-06-03 11:47（认证基线恢复编码）
 - 会话目标：恢复编码，收口最小认证基线并修复前端测试
 - 修改文件：
