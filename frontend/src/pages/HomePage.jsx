@@ -1,4 +1,5 @@
 import DrugPage from "./DrugPage";
+import InventoryPage from "./InventoryPage";
 
 function HomePage({ currentUser, onLogout }) {
   return (
@@ -22,7 +23,7 @@ function HomePage({ currentUser, onLogout }) {
             </article>
             <article className="status-card">
               <h2>联调顺序</h2>
-              <p>当前优先打通药品模块，后续依次进入库存、预警、处方。</p>
+              <p>当前已进入库存联调，后续依次推进预警和处方。</p>
             </article>
             <article className="status-card">
               <h2>演示目标</h2>
@@ -31,6 +32,7 @@ function HomePage({ currentUser, onLogout }) {
           </div>
         </section>
         <DrugPage />
+        <InventoryPage />
       </section>
     </main>
   );

@@ -41,5 +41,6 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "药物管理系统主功能联调准备已就绪" })).toBeInTheDocument();
     expect(screen.getByText("当前身份：王医生（DOCTOR）")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "药品页面联调" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "库存模块联调" })).toBeInTheDocument();
   });
 });

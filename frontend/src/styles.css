@@ -183,6 +183,18 @@ body {
   margin-top: 20px;
 }
 
+.inventory-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.module-stack {
+  display: flex;
+  flex-direction: column;
+}
+
 .module-card {
   margin-top: 20px;
   padding: 24px;
@@ -197,6 +209,14 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
   margin: 16px 0 18px;
+}
+
+.compact-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.two-column-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .field {
@@ -237,13 +257,17 @@ body {
   color: #64748b;
 }
 
-.drug-list {
+.drug-list,
+.inventory-list,
+.record-list {
   display: grid;
   gap: 14px;
   margin-top: 18px;
 }
 
-.drug-card {
+.drug-card,
+.inventory-card,
+.record-card {
   display: flex;
   justify-content: space-between;
   gap: 16px;
@@ -278,6 +302,24 @@ body {
   gap: 12px;
 }
 
+.button-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inline-filter {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+  align-items: end;
+}
+
+.inline-field {
+  margin-top: 0;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -298,7 +340,10 @@ body {
 }
 
 @media (max-width: 900px) {
-  .module-layout {
+  .module-layout,
+  .inventory-layout,
+  .two-column-grid,
+  .inline-filter {
     grid-template-columns: 1fr;
   }
 
@@ -309,7 +354,9 @@ body {
 
   .section-heading,
   .list-header,
-  .drug-card {
+  .drug-card,
+  .inventory-card,
+  .record-card {
     flex-direction: column;
     align-items: flex-start;
   }

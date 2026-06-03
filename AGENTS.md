@@ -40,6 +40,28 @@
 
 ## 4. 变更记录
 
+### 2026-06-03 19:27（库存模块联调）
+- 会话目标：按文档要求完成库存模块的前端联调和实现
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/api.md`
+  - `docs/frontend-integration.md`
+  - `frontend/src/api/inventories.js`
+  - `frontend/src/pages/HomePage.jsx`
+  - `frontend/src/pages/InventoryPage.jsx`
+  - `frontend/src/pages/__tests__/App.test.jsx`
+  - `frontend/src/pages/__tests__/InventoryPage.test.jsx`
+  - `frontend/src/styles.css`
+- 主要变更：
+  - 新增库存模块 API 封装，接入库存查询、库存流水查询、入库、出库、盘点接口
+  - 新增库存联调页面，完成库存列表、流水列表及三类库存操作的最小前端闭环
+  - 在库存请求中自动使用当前登录用户填充 `operatorName`，保持与现有后端接口契约一致
+  - 同步 README、前端联调文档与 API 文档，记录库存联调现状及后续字段收口约束
+  - 执行 `frontend npm test`，验证前端 6 个测试全部通过
+- 备注：
+  - 当前未改动后端库存业务代码；`operatorName` 仍是现有后端请求体字段，后续可再按认证文档继续收口
+
 ### 2026-06-03 19:20（药品页面联调）
 - 会话目标：进入前端统一请求头注入与药品页面联调
 - 修改文件：
