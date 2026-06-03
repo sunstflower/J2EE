@@ -57,6 +57,14 @@
 3. 保存药品主数据
 4. 支持后续修改、停用、删除
 
+当前已完成的后端实现范围：
+
+- 药品新增
+- 药品分页查询
+- 药品详情查询
+- 药品更新
+- 药品逻辑删除
+
 ### 2.2 库存入库
 
 1. 选择药品
@@ -344,6 +352,13 @@
 - `PrescriptionServiceTest`
 - `PrescriptionFlowIntegrationTest`
 
+当前已完成的测试：
+
+- `DrugControllerTest`
+- `DrugServiceTest`
+- `HealthControllerTest`
+- `ApiResponseTest`
+
 建议重点断言：
 
 - 状态是否按预期流转
@@ -420,6 +435,7 @@
   - MyBatis 基础配置
   - 基础实体父类与业务枚举
   - 健康检查接口
+  - 药品模块 DTO、VO、Mapper、Service、Controller
   - 基础测试样例
 - 前端：
   - Vite + React 基础入口
@@ -442,3 +458,8 @@
 - 权限认证模块
 - 业务页面路由与 API 调用层
 - 具体业务模块的 Mapper/Service/Controller
+
+说明：
+
+- 药品模块的 MyBatis XML 映射已完成
+- 其余库存、预警、处方模块仍待继续实现

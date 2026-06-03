@@ -40,6 +40,33 @@
 
 ## 4. 变更记录
 
+### 2026-06-03 10:17
+- 会话目标：继续实现药品模块 CRUD，并补充对应测试
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/architecture.md`
+  - `backend/src/main/java/com/example/drugmanagement/common/dto/PageQuery.java`
+  - `backend/src/main/java/com/example/drugmanagement/controller/DrugController.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/drug/CreateDrugRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/drug/DrugQueryRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/drug/UpdateDrugRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/mapper/DrugMapper.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/DrugService.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/impl/DrugServiceImpl.java`
+  - `backend/src/main/java/com/example/drugmanagement/vo/drug/DrugVO.java`
+  - `backend/src/main/resources/mapper/DrugMapper.xml`
+  - `backend/src/test/java/com/example/drugmanagement/controller/DrugControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/HealthControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/service/DrugServiceTest.java`
+- 主要变更：
+  - 实现药品模块新增、分页查询、详情查询、更新、逻辑删除接口
+  - 增加药品模块 DTO、VO、MyBatis Mapper 与 XML 映射
+  - 实现药品编码唯一性校验、逻辑删除与分页偏移计算
+  - 补充药品模块控制器测试和服务层单元测试，并验证 `mvn test` 通过
+- 备注：
+  - 当前药品模块已具备基础 CRUD 能力，库存与处方模块尚未开始实现
+
 ### 2026-06-02 10:10
 - 会话目标：初始化后端公共基础与数据库业务表，为后续模块开发做准备
 - 修改文件：
