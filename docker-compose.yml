@@ -35,11 +35,11 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        VITE_API_BASE_URL: ""
     container_name: drug-management-frontend
-    ports:
-      - "5173:5173"
-    depends_on:
-      - backend
+    expose:
+      - "80"
 
   nginx:
     image: nginx:1.27-alpine

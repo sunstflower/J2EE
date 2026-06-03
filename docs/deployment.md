@@ -40,6 +40,7 @@
 - 端口 `3306`、`8080`、`5173`、`80` 未冲突
 - `docker/mysql/init` 中脚本顺序正确
 - 前后端构建文件存在
+- 当前机器可拉取 `mysql`、`maven`、`nginx`、`node` 基础镜像
 
 ## 5. 部署后验证项
 
@@ -50,6 +51,13 @@
 - 前端页面可访问
 - Nginx 能代理前端与 API
 - 主功能链路可演示
+
+推荐验证命令：
+
+```bash
+docker compose ps
+curl http://localhost/api/health
+```
 
 ## 6. 主功能验收
 
@@ -79,9 +87,28 @@
 
 为了让部署说明真正可执行，后续还应补齐：
 
-- 具体启动命令
-- 停止命令
-- 重启命令
-- 数据重置命令
 - 日志查看命令
 - 常见故障排查
+
+当前最小部署命令：
+
+```bash
+docker compose up --build -d
+```
+
+当前停止命令：
+
+```bash
+docker compose down
+```
+
+当前数据重置命令：
+
+```bash
+docker compose down -v
+```
+
+当前验证备注：
+
+- 本仓库已完成前端生产构建、后端打包、Compose 结构和 Nginx 配置语法校验
+- 若要完成最终部署验收，仍需在安装了 Docker 的机器上执行实际 `docker compose up --build -d`

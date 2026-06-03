@@ -40,6 +40,40 @@
 
 ## 4. 变更记录
 
+### 2026-06-03 20:30（容器化交付收口）
+- 会话目标：以容器化演示为目标继续推进，收口前端镜像和 Docker 文档
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docker-compose.yml`
+  - `docs/deployment.md`
+  - `docs/docker.md`
+  - `frontend/Dockerfile`
+  - `frontend/src/api/client.js`
+- 主要变更：
+  - 将前端镜像改为多阶段构建并输出静态页面，避免容器演示依赖 `vite dev server`
+  - 将前端默认 API 基地址调整为 `/api`，配合 Nginx 统一入口适配容器环境
+  - 调整 Compose 中前端服务暴露方式，明确由 Nginx 作为对外统一入口
+  - 补充 Docker 与部署文档中的启动、停止、重置、验证和排障命令
+- 备注：
+  - 本轮优先完成“容器化交付收口”，并修正前端 API 基地址与现有 `/api/**` 路径重复拼接的问题；尚未在当前会话中实际执行 `docker compose up` 验证容器运行结果
+
+### 2026-06-03 20:33（容器化验证）
+- 会话目标：进行容器化验证，继续完成 Docker 演示落地
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docker/nginx/default.conf`
+  - `docs/deployment.md`
+  - `docs/docker.md`
+- 主要变更：
+  - 尝试执行 `docker compose up --build -d`，确认当前环境缺少 `docker` 命令，阻塞实际容器启动验证
+  - 补充非 Docker-socket 验证结果：前端生产构建通过、后端打包通过、Compose 结构校验通过、Nginx 配置语法校验通过
+  - 在 Docker 和部署文档中明确记录当前阻塞原因、已完成校验项和后续实跑要求
+  - 在实际容器验证中修复外层 Nginx 仍指向 `frontend:5173` 的问题，改为代理前端静态容器的 `80` 端口
+- 备注：
+  - 当前已在具备 Docker 的环境中完成首次容器启动；后续可继续补充更细的演示脚本级验证
+
 ### 2026-06-03 20:00（处方链路联调收口）
 - 会话目标：按文档要求完成处方前端主链路联调，并同步收口项目状态文档
 - 修改文件：
