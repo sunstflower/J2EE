@@ -40,6 +40,30 @@
 
 ## 4. 变更记录
 
+### 2026-06-03 11:01
+- 会话目标：对照现有文档要求补全处方链路与测试验证
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/architecture.md`
+  - `backend/pom.xml`
+  - `backend/src/main/java/com/example/drugmanagement/mapper/PrescriptionMapper.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/impl/PrescriptionServiceImpl.java`
+  - `backend/src/main/resources/mapper/PrescriptionMapper.xml`
+  - `backend/src/test/java/com/example/drugmanagement/mapper/PrescriptionMapperTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/service/PrescriptionFlowIntegrationTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/service/PrescriptionServiceTest.java`
+  - `backend/src/test/resources/h2/prescription-flow-init.sql`
+  - `backend/src/test/resources/h2/prescription-mapper-init.sql`
+- 主要变更：
+  - 为处方发药补充基于当前状态的条件更新，增强重复发药场景下的链路保护
+  - 新增处方 Mapper 测试，覆盖分页筛选、详情查询与状态更新 SQL 映射
+  - 新增基于 H2 的处方链路集成测试，覆盖代开授权、审核、发药、库存扣减与 `DISPENSE` 流水写入
+  - 扩展处方服务层测试，补充过期批次不可发药和发药状态迁移失败场景
+  - 执行 `mvn test`，验证后端 54 个测试全部通过
+- 备注：
+  - 当前环境不可用 Docker socket，因此链路测试采用 H2 落地而非 Testcontainers；后续如进入容器化联调阶段，可再补 MySQL 方言级测试
+
 ### 2026-06-03 10:42
 - 会话目标：完成处方模块，并在模块完成后执行测试且同步文档设计约束
 - 修改文件：

@@ -287,8 +287,9 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             }
         }
 
-        prescriptionMapper.updateStatus(
+        int updatedRows = prescriptionMapper.updateStatusByCurrentStatus(
                 id,
+                PrescriptionStatus.APPROVED.name(),
                 PrescriptionStatus.DISPENSED.name(),
                 prescription.getDoctorApprovalStatus(),
                 prescription.getDoctorApprovedAt(),
@@ -299,6 +300,10 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 null,
                 request.getOperatorName()
         );
+
+        if (updatedRows != 1) {
+            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
+        }
     }
 
     @Override

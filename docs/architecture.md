@@ -397,7 +397,9 @@
 - `InventoryControllerTest`
 - `InventoryControllerAdditionalTest`
 - `InventoryServiceTest`
+- `PrescriptionMapperTest`
 - `PrescriptionControllerTest`
+- `PrescriptionFlowIntegrationTest`
 - `PrescriptionServiceTest`
 - `WarningControllerTest`
 - `WarningServiceTest`
@@ -406,9 +408,9 @@
 
 下一步建议补充的测试：
 
-- `PrescriptionMapperTest`：覆盖分页筛选、详情查询和状态更新映射
-- `PrescriptionFlowIntegrationTest`：覆盖代开授权、审核、发药与库存流水一致性
-- `PrescriptionServiceTest` 异常分支扩展：库存不足、全部批次过期、医生越权审批、已发药重复发药
+- `PrescriptionServiceTest` 异常分支扩展：库存不足、医生越权审批、已发药重复发药
+- 更细粒度事务失败回滚测试：模拟发药状态更新失败、库存流水写入失败
+- 前后端联调阶段补充接口级集成测试：覆盖分页筛选参数与统一错误响应
 
 建议重点断言：
 

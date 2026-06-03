@@ -36,6 +36,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -169,11 +170,77 @@ class PrescriptionServiceTest {
         request.setOperatorId(300L);
         request.setOperatorName("药师李");
 
+        when(prescriptionMapper.updateStatusByCurrentStatus(eq(1L), eq(PrescriptionStatus.APPROVED.name()),
+                eq(PrescriptionStatus.DISPENSED.name()), any(), any(), any(), any(), eq("药师李"), any(), eq(null), eq("药师李")))
+                .thenReturn(1);
+
         prescriptionService.dispense(1L, request);
 
         verify(inventoryMapper).decreaseQuantity(101L, 10, "药师李");
-        verify(prescriptionMapper).updateStatus(eq(1L), eq(PrescriptionStatus.DISPENSED.name()),
-                any(), any(), any(), any(), eq("药师李"), any(), eq(null), eq("药师李"));
+        verify(prescriptionMapper).updateStatusByCurrentStatus(eq(1L), eq(PrescriptionStatus.APPROVED.name()),
+                eq(PrescriptionStatus.DISPENSED.name()), any(), any(), any(), any(), eq("药师李"), any(), eq(null), eq("药师李"));
+    }
+
+    @Test
+    void shouldRejectDispenseWhenAllInventoryExpired() {
+        Prescription prescription = new Prescription();
+        prescription.setId(1L);
+        prescription.setPrescriptionNo("RX-1");
+        prescription.setStatus(PrescriptionStatus.APPROVED.name());
+        when(prescriptionMapper.findEntityById(1L)).thenReturn(prescription);
+
+        PrescriptionItemVO item = new PrescriptionItemVO();
+        item.setDrugId(1L);
+        item.setQuantity(10);
+        when(prescriptionItemMapper.findByPrescriptionId(1L)).thenReturn(List.of(item));
+        when(drugMapper.findEntityById(1L)).thenReturn(enabledDrug(1L));
+
+        Inventory expiredInventory = new Inventory();
+        expiredInventory.setId(101L);
+        expiredInventory.setDrugId(1L);
+        expiredInventory.setQuantity(20);
+        expiredInventory.setLockedQuantity(0);
+        expiredInventory.setExpiryDate(java.time.LocalDate.now().minusDays(1));
+        when(inventoryMapper.findAvailableByDrugIdOrderByExpiry(1L)).thenReturn(List.of(expiredInventory));
+
+        PrescriptionDispenseRequest request = new PrescriptionDispenseRequest();
+        request.setOperatorId(300L);
+        request.setOperatorName("药师李");
+
+        assertThrows(BusinessException.class, () -> prescriptionService.dispense(1L, request));
+        verify(inventoryMapper, never()).decreaseQuantity(anyLong(), any(), any());
+    }
+
+    @Test
+    void shouldRejectDispenseWhenStatusTransitionFails() {
+        Prescription prescription = new Prescription();
+        prescription.setId(1L);
+        prescription.setPrescriptionNo("RX-1");
+        prescription.setStatus(PrescriptionStatus.APPROVED.name());
+        when(prescriptionMapper.findEntityById(1L)).thenReturn(prescription);
+
+        PrescriptionItemVO item = new PrescriptionItemVO();
+        item.setDrugId(1L);
+        item.setQuantity(5);
+        when(prescriptionItemMapper.findByPrescriptionId(1L)).thenReturn(List.of(item));
+        when(drugMapper.findEntityById(1L)).thenReturn(enabledDrug(1L));
+
+        Inventory inventory = new Inventory();
+        inventory.setId(101L);
+        inventory.setDrugId(1L);
+        inventory.setQuantity(20);
+        inventory.setLockedQuantity(0);
+        inventory.setExpiryDate(java.time.LocalDate.now().plusDays(5));
+        when(inventoryMapper.findAvailableByDrugIdOrderByExpiry(1L)).thenReturn(List.of(inventory));
+        when(prescriptionMapper.updateStatusByCurrentStatus(eq(1L), eq(PrescriptionStatus.APPROVED.name()),
+                eq(PrescriptionStatus.DISPENSED.name()), any(), any(), any(), any(), eq("药师李"), any(), eq(null), eq("药师李")))
+                .thenReturn(0);
+
+        PrescriptionDispenseRequest request = new PrescriptionDispenseRequest();
+        request.setOperatorId(300L);
+        request.setOperatorName("药师李");
+
+        assertThrows(BusinessException.class, () -> prescriptionService.dispense(1L, request));
     }
 
     @Test

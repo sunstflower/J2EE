@@ -84,6 +84,22 @@
           AND deleted = 0
     </update>
 
+    <update id="updateStatusByCurrentStatus">
+        UPDATE prescription
+        SET status = #{status},
+            doctor_approval_status = #{doctorApprovalStatus},
+            doctor_approved_at = #{doctorApprovedAt},
+            audit_by = #{auditBy},
+            audit_time = #{auditTime},
+            dispense_by = #{dispenseBy},
+            dispense_time = #{dispenseTime},
+            reject_reason = #{rejectReason},
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+          AND status = #{currentStatus}
+          AND deleted = 0
+    </update>
+
     <select id="findEntityById" resultType="com.example.drugmanagement.entity.Prescription">
         SELECT
             id,
