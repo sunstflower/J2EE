@@ -40,6 +40,27 @@
 
 ## 4. 变更记录
 
+### 2026-06-03 19:32（预警模块联调）
+- 会话目标：优先进行预警前端页并接上真实查询
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/frontend-integration.md`
+  - `docs/execution-checklist.md`
+  - `frontend/src/api/warnings.js`
+  - `frontend/src/pages/HomePage.jsx`
+  - `frontend/src/pages/WarningPage.jsx`
+  - `frontend/src/pages/__tests__/App.test.jsx`
+  - `frontend/src/pages/__tests__/WarningPage.test.jsx`
+  - `frontend/src/styles.css`
+- 主要变更：
+  - 新增预警模块 API 封装，接入低库存预警与临期/过期预警真实查询
+  - 新增预警联调页面，完成低库存展示、效期预警展示与自定义临期天数筛选
+  - 将预警页面接入首页联调工作台，并同步更新联调与执行清单文档状态
+  - 执行 `frontend npm test`，验证前端 8 个测试全部通过
+- 备注：
+  - 当前预警模块为查询型页面，下一步应直接进入处方模块前端联调
+
 ### 2026-06-03 19:27（库存模块联调）
 - 会话目标：按文档要求完成库存模块的前端联调和实现
 - 修改文件：
