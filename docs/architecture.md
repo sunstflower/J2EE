@@ -90,7 +90,21 @@
 4. 更新库存
 5. 记录盘点流水
 
-### 2.4 处方发药
+### 2.4 预警查询
+
+1. 汇总药品可用库存
+2. 对比药品最低库存阈值，筛选低库存药品
+3. 扫描库存批次有效期
+4. 标记临期或过期批次
+5. 返回预警分页列表
+
+当前已完成的后端实现范围：
+
+- 低库存预警分页查询
+- 临期预警分页查询
+- 过期预警分页查询
+
+### 2.5 处方发药
 
 1. 医生直接创建处方，或药师输入医生 ID 发起代开申请
 2. 填写处方药品明细
@@ -369,6 +383,8 @@
 - `InventoryControllerTest`
 - `InventoryControllerAdditionalTest`
 - `InventoryServiceTest`
+- `WarningControllerTest`
+- `WarningServiceTest`
 - `HealthControllerTest`
 - `ApiResponseTest`
 
@@ -450,6 +466,7 @@
   - 健康检查接口
   - 药品模块 DTO、VO、Mapper、Service、Controller
   - 库存模块 DTO、VO、Mapper、Service、Controller
+  - 预警模块 DTO、VO、Mapper、Service、Controller
   - 基础测试样例
 - 前端：
   - Vite + React 基础入口
@@ -477,4 +494,5 @@
 
 - 药品模块的 MyBatis XML 映射已完成
 - 库存模块相关 MyBatis XML 映射已完成
-- 预警、处方模块仍待继续实现
+- 预警模块相关 MyBatis XML 映射已完成
+- 处方模块仍待继续实现

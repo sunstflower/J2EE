@@ -40,6 +40,36 @@
 
 ## 4. 变更记录
 
+### 2026-06-03 10:30
+- 会话目标：完成预警模块，并在模块完成后执行测试
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/architecture.md`
+  - `backend/src/main/java/com/example/drugmanagement/controller/DrugController.java`
+  - `backend/src/main/java/com/example/drugmanagement/controller/HealthController.java`
+  - `backend/src/main/java/com/example/drugmanagement/controller/InventoryControllerAdditionalTest.java`
+  - `backend/src/main/java/com/example/drugmanagement/controller/InventoryControllerTest.java`
+  - `backend/src/main/java/com/example/drugmanagement/controller/WarningController.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/warning/ExpiryWarningQueryRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/mapper/WarningMapper.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/WarningService.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/impl/WarningServiceImpl.java`
+  - `backend/src/main/java/com/example/drugmanagement/vo/warning/ExpiryWarningVO.java`
+  - `backend/src/main/java/com/example/drugmanagement/vo/warning/LowStockWarningVO.java`
+  - `backend/src/main/resources/mapper/WarningMapper.xml`
+  - `backend/src/test/java/com/example/drugmanagement/controller/DrugControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/HealthControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/WarningControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/service/WarningServiceTest.java`
+- 主要变更：
+  - 实现低库存预警、临期预警和过期预警分页查询
+  - 新增预警模块 DTO、VO、Mapper、Service、Controller 与 MyBatis XML 映射
+  - 修复 `WarningMapper.xml` 中的 XML 转义问题，并补齐控制器测试对 `WarningMapper` 的 mock 隔离
+  - 执行 `mvn test`，验证药品、库存、预警模块测试全部通过
+- 备注：
+  - 当前预警模块已完成，下一步可进入处方模块开发
+
 ### 2026-06-03 10:28
 - 会话目标：完成库存模块，并在模块完成后执行测试
 - 修改文件：

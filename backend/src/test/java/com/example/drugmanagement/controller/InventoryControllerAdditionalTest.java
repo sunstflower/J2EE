@@ -4,6 +4,7 @@ import com.example.drugmanagement.common.response.PageResponse;
 import com.example.drugmanagement.mapper.DrugMapper;
 import com.example.drugmanagement.mapper.InventoryMapper;
 import com.example.drugmanagement.mapper.InventoryRecordMapper;
+import com.example.drugmanagement.mapper.WarningMapper;
 import com.example.drugmanagement.service.InventoryService;
 import com.example.drugmanagement.vo.inventory.InventoryRecordVO;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class InventoryControllerAdditionalTest {
 
     @MockBean
     private InventoryRecordMapper inventoryRecordMapper;
+
+    @MockBean
+    private WarningMapper warningMapper;
 
     @Test
     void shouldOutboundInventory() throws Exception {

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.drugmanagement.mapper.WarningMapper">
+
+    <resultMap id="LowStockWarningResultMap" type="com.example.drugmanagement.vo.warning.LowStockWarningVO">
+        <id property="drugId" column="drug_id"/>
+        <result property="drugCode" column="drug_code"/>
+        <result property="drugName" column="drug_name"/>
+        <result property="lowStockThreshold" column="low_stock_threshold"/>
+        <result property="availableQuantity" column="available_quantity"/>
+    </resultMap>
+
+    <resultMap id="ExpiryWarningResultMap" type="com.example.drugmanagement.vo.warning.ExpiryWarningVO">
+        <id property="inventoryId" column="inventory_id"/>
+        <result property="drugId" column="drug_id"/>
+        <result property="drugCode" column="drug_code"/>
+        <result property="drugName" column="drug_name"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="expiryDate" column="expiry_date"/>
+        <result property="quantity" column="quantity"/>
+        <result property="daysToExpiry" column="days_to_expiry"/>
+        <result property="warningType" column="warning_type"/>
+    </resultMap>
+
+    <select id="findLowStockWarnings" resultMap="LowStockWarningResultMap">
+        SELECT
+            d.id AS drug_id,
+            d.drug_code,
+            d.drug_name,
+            d.low_stock_threshold,
+            COALESCE(SUM(i.quantity - i.locked_quantity), 0) AS available_quantity
+        FROM drug d
+        LEFT JOIN inventory i ON i.drug_id = d.id AND i.deleted = 0
+        WHERE d.deleted = 0
+          AND d.enabled = 1
+        GROUP BY d.id, d.drug_code, d.drug_name, d.low_stock_threshold
+        HAVING COALESCE(SUM(i.quantity - i.locked_quantity), 0) &lt; d.low_stock_threshold
+        ORDER BY available_quantity ASC, d.id ASC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countLowStockWarnings" resultType="long">
+        SELECT COUNT(1)
+        FROM (
+            SELECT d.id
+            FROM drug d
+            LEFT JOIN inventory i ON i.drug_id = d.id AND i.deleted = 0
+            WHERE d.deleted = 0
+              AND d.enabled = 1
+            GROUP BY d.id, d.low_stock_threshold
+            HAVING COALESCE(SUM(i.quantity - i.locked_quantity), 0) &lt; d.low_stock_threshold
+        ) t
+    </select>
+
+    <select id="findExpiryWarnings" resultMap="ExpiryWarningResultMap">
+        SELECT
+            i.id AS inventory_id,
+            d.id AS drug_id,
+            d.drug_code,
+            d.drug_name,
+            i.batch_no,
+            i.expiry_date,
+            i.quantity,
+            DATEDIFF(i.expiry_date, CURRENT_DATE) AS days_to_expiry,
+            CASE
+                WHEN i.expiry_date &lt; CURRENT_DATE THEN 'EXPIRED'
+                ELSE 'EXPIRY'
+            END AS warning_type
+        FROM inventory i
+        INNER JOIN drug d ON d.id = i.drug_id
+        WHERE i.deleted = 0
+          AND d.deleted = 0
+          AND i.quantity > 0
+          AND (
+                i.expiry_date &lt; CURRENT_DATE
+                OR DATEDIFF(i.expiry_date, CURRENT_DATE) &lt;= #{expiryDays}
+          )
+        ORDER BY i.expiry_date ASC, i.id ASC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countExpiryWarnings" resultType="long">
+        SELECT COUNT(1)
+        FROM inventory i
+        INNER JOIN drug d ON d.id = i.drug_id
+        WHERE i.deleted = 0
+          AND d.deleted = 0
+          AND i.quantity > 0
+          AND (
+                i.expiry_date &lt; CURRENT_DATE
+                OR DATEDIFF(i.expiry_date, CURRENT_DATE) &lt;= #{expiryDays}
+          )
+    </select>
+</mapper>
