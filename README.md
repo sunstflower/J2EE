@@ -1,6 +1,6 @@
 # 药物管理系统
 
-一个基于 J2EE 技术栈落地的药物管理系统项目，当前已完成项目文档、前后端工程骨架，以及后端公共基础与数据库业务表初始化。
+一个基于 J2EE 技术栈落地的药物管理系统项目，当前已完成前后端工程骨架、后端核心业务主链路与阶段性测试验证；现阶段优先补全文档与实现路线，为后续认证、前端联调和容器化演示做准备。
 
 ## 1. 项目目标
 
@@ -57,6 +57,23 @@ J2EE/
 - 当前已完成预警模块的后端查询能力：低库存预警、临期预警、过期预警及测试。
 - 当前已完成处方模块的后端闭环实现：建方、医生授权、提交审核、审核、发药、取消及测试。
 - 认证授权与前端页面功能仍待后续开发。
+
+### 3.1 当前阶段定位
+
+当前项目已经完成“后端核心业务闭环”的第一阶段目标，但尚未进入“可直接面向演示交付”的完成态。
+
+当前可以明确分成两部分：
+
+- 已完成部分：后端业务主链路、核心测试基线、数据库初始化脚本、容器化骨架
+- 待完成部分：认证授权、前端页面、前后端联调、Docker 演示说明、部署与回归文档
+
+### 3.2 后续推进原则
+
+后续实现建议遵循以下原则：
+
+1. 先补文档和运行路径，再继续新增功能
+2. 每一阶段都同时产出代码、测试、文档和验证步骤
+3. 容器化目标用于演示和交付，不强行替代当前所有本地测试手段
 
 ## 4. 业务模块设计
 
@@ -244,6 +261,30 @@ J2EE/
 - 已补充基于 H2 的集成测试：`代开授权 -> 审核 -> 发药 -> 扣库存 -> 写流水` 完整事务链路
 - 后续可继续补充更细粒度异常分支：库存不足、医生越权审批、非法状态重复提交
 
+### 4.5 当前文档优先事项
+
+在继续业务代码前，建议优先补齐以下说明：
+
+- Docker 使用说明
+- 数据库初始化与重置说明
+- API 文档
+- 测试说明
+- 演示脚本
+- 部署说明
+
+当前已补充的落地文档：
+
+- [架构设计说明](/Users/sunsetflower/myJobs/Java/J2EE/docs/architecture.md)
+- [Docker 使用说明](/Users/sunsetflower/myJobs/Java/J2EE/docs/docker.md)
+- [数据库初始化说明](/Users/sunsetflower/myJobs/Java/J2EE/docs/database-init.md)
+- [测试说明](/Users/sunsetflower/myJobs/Java/J2EE/docs/testing.md)
+- [API 文档](/Users/sunsetflower/myJobs/Java/J2EE/docs/api.md)
+- [演示脚本](/Users/sunsetflower/myJobs/Java/J2EE/docs/demo-script.md)
+- [认证方案说明](/Users/sunsetflower/myJobs/Java/J2EE/docs/authentication.md)
+- [前端联调约定](/Users/sunsetflower/myJobs/Java/J2EE/docs/frontend-integration.md)
+- [部署说明](/Users/sunsetflower/myJobs/Java/J2EE/docs/deployment.md)
+- [项目执行清单](/Users/sunsetflower/myJobs/Java/J2EE/docs/execution-checklist.md)
+
 ## 5. 分层架构要求
 
 后端采用经典分层结构：
@@ -304,7 +345,6 @@ backend/src/main/java/com/example/drugmanagement/
 - `GET /api/prescriptions`：查询处方列表
 - `GET /api/prescriptions/{id}`：查询处方详情
 - `POST /api/prescriptions`：创建处方
-- `POST /api/prescriptions/proxy-request`：药师发起代开申请
 - `POST /api/prescriptions/{id}/doctor-approve`：医生确认药师代开
 - `POST /api/prescriptions/{id}/submit`：提交处方
 - `POST /api/prescriptions/{id}/audit`：审核处方
@@ -318,7 +358,41 @@ backend/src/main/java/com/example/drugmanagement/
 - 医生确认代开前，处方不得进入审核流程
 - 系统必须保留“谁录入、谁授权、谁审核、谁发药”的完整操作链路
 
-## 7. 数据库设计概览
+## 7. 测试与容器化边界
+
+为避免后续目标混淆，当前约定如下：
+
+- Docker 的主要目标是项目运行、联调、演示和交付
+- 当前自动化测试以本地稳定执行为优先，允许使用 `H2` 完成快速集成验证
+- 后续进入联调与演示阶段后，应补一套基于 MySQL 容器的运行验证，用于对齐真实演示环境
+
+建议保持三层验证策略：
+
+1. `JUnit + Mockito`：验证 service 业务规则
+2. `H2` 集成测试：验证主链路与 Mapper 映射
+3. `Docker Compose + MySQL`：验证演示环境和启动路径
+
+## 8. 主功能落地路线
+
+后续实现只围绕主功能闭环推进：
+
+1. 认证授权接入
+2. 药品管理页面落地
+3. 库存管理页面落地
+4. 预警页面落地
+5. 处方管理页面落地
+6. 前后端联调
+7. Docker 演示验证
+
+每一阶段的最低验收标准应保持一致：
+
+- 功能可访问
+- 主接口可调用
+- 关键链路可演示
+- 测试可执行
+- 文档可复现
+
+## 9. 数据库设计概览
 
 核心表建议：
 
@@ -337,7 +411,7 @@ backend/src/main/java/com/example/drugmanagement/
 - [002_schema.sql](/Users/sunsetflower/myJobs/Java/J2EE/docker/mysql/init/002_schema.sql)：创建业务表、索引、主外键与基础约束
 - [003_seed.sql](/Users/sunsetflower/myJobs/Java/J2EE/docker/mysql/init/003_seed.sql)：写入示例药品种子数据
 
-## 8. Docker 容器化要求
+## 10. Docker 容器化要求
 
 建议使用 `docker-compose` 编排以下服务：
 
@@ -363,7 +437,17 @@ MYSQL_PASSWORD=drug_pass
 SPRING_PROFILES_ACTIVE=dev
 ```
 
-## 9. 单元测试要求
+### 9.1 后续容器化文档目标
+
+后续建议单独补齐以下面向演示的内容：
+
+- 一键启动命令与关闭命令
+- 数据初始化验证步骤
+- 后端连接 MySQL 容器的配置说明
+- 前端访问路径与 Nginx 代理说明
+- 从药品建档到发药完成的演示顺序
+
+## 11. 单元测试要求
 
 后端至少覆盖以下测试场景：
 
@@ -391,6 +475,11 @@ SPRING_PROFILES_ACTIVE=dev
 - 集成测试：
   - 关注“处方审核后发药并扣减库存”这类跨模块主流程
   - 建议在项目进入开发中后期补充
+
+当前测试补充说明：
+
+- 已存在 `H2` 集成测试用于覆盖处方与库存联动主链路
+- 后续若运行环境具备 Docker socket，可再补 MySQL 容器级测试
 
 后端测试命名建议：
 
