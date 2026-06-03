@@ -43,5 +43,6 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "药品页面联调" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "库存模块联调" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "预警模块联调" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "处方模块联调" })).toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import DrugPage from "./DrugPage";
 import InventoryPage from "./InventoryPage";
+import PrescriptionPage from "./PrescriptionPage";
 import WarningPage from "./WarningPage";
 
 function HomePage({ currentUser, onLogout }) {
@@ -24,7 +25,7 @@ function HomePage({ currentUser, onLogout }) {
             </article>
             <article className="status-card">
               <h2>联调顺序</h2>
-              <p>当前已接入预警查询，后续继续推进处方全链路联调。</p>
+              <p>当前已进入处方联调，目标是收口建方、授权、审核、发药完整链路。</p>
             </article>
             <article className="status-card">
               <h2>演示目标</h2>
@@ -35,6 +36,7 @@ function HomePage({ currentUser, onLogout }) {
         <DrugPage />
         <InventoryPage />
         <WarningPage />
+        <PrescriptionPage />
       </section>
     </main>
   );

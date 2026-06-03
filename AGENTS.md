@@ -40,6 +40,27 @@
 
 ## 4. 变更记录
 
+### 2026-06-03 20:00（处方链路联调收口）
+- 会话目标：按文档要求完成处方前端主链路联调，并同步收口项目状态文档
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/frontend-integration.md`
+  - `docs/execution-checklist.md`
+  - `frontend/src/api/prescriptions.js`
+  - `frontend/src/pages/HomePage.jsx`
+  - `frontend/src/pages/PrescriptionPage.jsx`
+  - `frontend/src/pages/__tests__/App.test.jsx`
+  - `frontend/src/pages/__tests__/PrescriptionPage.test.jsx`
+  - `frontend/src/styles.css`
+- 主要变更：
+  - 新增处方模块 API 封装与处方联调工作台，打通查询、详情、建方、授权、提交、审核、发药、取消全链路
+  - 将处方模块接入首页联调工作台，并按医生/药师角色动态控制可操作按钮
+  - 补充处方页面测试并重新执行前端测试，验证 5 个测试文件、10 个用例全部通过
+  - 同步 README、前端联调文档和执行清单，将项目状态收口为“主链路已完成，下一步转入 Docker 与部署验证”
+- 备注：
+  - 当前处方相关请求体中的部分 `createdBy*`、`operator*` 字段仍由前端按现有接口契约传递，后续可继续按认证方案向后端上下文收口
+
 ### 2026-06-03 19:32（预警模块联调）
 - 会话目标：优先进行预警前端页并接上真实查询
 - 修改文件：
