@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.drugmanagement.mapper.PrescriptionMapper">
+
+    <resultMap id="PrescriptionVoResultMap" type="com.example.drugmanagement.vo.prescription.PrescriptionVO">
+        <id property="id" column="id"/>
+        <result property="prescriptionNo" column="prescription_no"/>
+        <result property="patientName" column="patient_name"/>
+        <result property="createdByUserId" column="created_by_user_id"/>
+        <result property="createdByRole" column="created_by_role"/>
+        <result property="doctorId" column="doctor_id"/>
+        <result property="doctorName" column="doctor_name"/>
+        <result property="status" column="status"/>
+        <result property="doctorApprovalStatus" column="doctor_approval_status"/>
+        <result property="doctorApprovedAt" column="doctor_approved_at"/>
+        <result property="pharmacistOperatorId" column="pharmacist_operator_id"/>
+        <result property="auditBy" column="audit_by"/>
+        <result property="auditTime" column="audit_time"/>
+        <result property="dispenseBy" column="dispense_by"/>
+        <result property="dispenseTime" column="dispense_time"/>
+        <result property="rejectReason" column="reject_reason"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.example.drugmanagement.entity.Prescription" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO prescription (
+            prescription_no,
+            patient_name,
+            created_by_user_id,
+            created_by_role,
+            doctor_id,
+            doctor_name,
+            status,
+            doctor_approval_status,
+            doctor_approved_at,
+            pharmacist_operator_id,
+            audit_by,
+            audit_time,
+            dispense_by,
+            dispense_time,
+            reject_reason,
+            remark,
+            created_by,
+            updated_by,
+            deleted
+        ) VALUES (
+            #{prescriptionNo},
+            #{patientName},
+            #{createdByUserId},
+            #{createdByRole},
+            #{doctorId},
+            #{doctorName},
+            #{status},
+            #{doctorApprovalStatus},
+            #{doctorApprovedAt},
+            #{pharmacistOperatorId},
+            #{auditBy},
+            #{auditTime},
+            #{dispenseBy},
+            #{dispenseTime},
+            #{rejectReason},
+            #{remark},
+            #{createdBy},
+            #{updatedBy},
+            #{deleted}
+        )
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE prescription
+        SET status = #{status},
+            doctor_approval_status = #{doctorApprovalStatus},
+            doctor_approved_at = #{doctorApprovedAt},
+            audit_by = #{auditBy},
+            audit_time = #{auditTime},
+            dispense_by = #{dispenseBy},
+            dispense_time = #{dispenseTime},
+            reject_reason = #{rejectReason},
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+
+    <select id="findEntityById" resultType="com.example.drugmanagement.entity.Prescription">
+        SELECT
+            id,
+            prescription_no,
+            patient_name,
+            created_by_user_id,
+            created_by_role,
+            doctor_id,
+            doctor_name,
+            status,
+            doctor_approval_status,
+            doctor_approved_at,
+            pharmacist_operator_id,
+            audit_by,
+            audit_time,
+            dispense_by,
+            dispense_time,
+            reject_reason,
+            remark,
+            created_by,
+            updated_by,
+            deleted,
+            created_at,
+            updated_at
+        FROM prescription
+        WHERE id = #{id}
+          AND deleted = 0
+    </select>
+
+    <select id="findById" resultMap="PrescriptionVoResultMap">
+        SELECT
+            id,
+            prescription_no,
+            patient_name,
+            created_by_user_id,
+            created_by_role,
+            doctor_id,
+            doctor_name,
+            status,
+            doctor_approval_status,
+            doctor_approved_at,
+            pharmacist_operator_id,
+            audit_by,
+            audit_time,
+            dispense_by,
+            dispense_time,
+            reject_reason,
+            created_at,
+            updated_at
+        FROM prescription
+        WHERE id = #{id}
+          AND deleted = 0
+    </select>
+
+    <select id="findPage" resultMap="PrescriptionVoResultMap">
+        SELECT
+            id,
+            prescription_no,
+            patient_name,
+            created_by_user_id,
+            created_by_role,
+            doctor_id,
+            doctor_name,
+            status,
+            doctor_approval_status,
+            doctor_approved_at,
+            pharmacist_operator_id,
+            audit_by,
+            audit_time,
+            dispense_by,
+            dispense_time,
+            reject_reason,
+            created_at,
+            updated_at
+        FROM prescription
+        WHERE deleted = 0
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        <if test="doctorId != null">
+            AND doctor_id = #{doctorId}
+        </if>
+        <if test="patientName != null and patientName != ''">
+            AND patient_name LIKE CONCAT('%', #{patientName}, '%')
+        </if>
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(1)
+        FROM prescription
+        WHERE deleted = 0
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        <if test="doctorId != null">
+            AND doctor_id = #{doctorId}
+        </if>
+        <if test="patientName != null and patientName != ''">
+            AND patient_name LIKE CONCAT('%', #{patientName}, '%')
+        </if>
+    </select>
+</mapper>

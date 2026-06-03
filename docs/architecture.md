@@ -125,6 +125,18 @@
 - 发药药师
 - 每一步对应操作时间
 
+当前已完成的后端实现范围：
+
+- 处方创建与处方明细保存
+- 医生直接建方草稿流转
+- 药师代开待医生授权流转
+- 医生确认/拒绝代开
+- 处方提交审核
+- 药师审核通过/驳回
+- 发药扣减库存并写入 `DISPENSE` 流水
+- 处方详情与分页查询
+- 未发药处方取消
+
 ## 3. 数据表设计建议
 
 ### 3.1 `drug`
@@ -294,6 +306,8 @@
 - 只有 `APPROVED` 状态的处方允许发药
 - 发药动作必须与库存扣减处于同一事务
 - 已发药处方不可重复发药
+- 发药时必须排除已过期批次，并优先扣减最早到期批次
+- 发药前必须再次校验处方明细中的药品仍为启用状态
 
 ### 5.4 审计与可追溯规则
 
@@ -383,10 +397,18 @@
 - `InventoryControllerTest`
 - `InventoryControllerAdditionalTest`
 - `InventoryServiceTest`
+- `PrescriptionControllerTest`
+- `PrescriptionServiceTest`
 - `WarningControllerTest`
 - `WarningServiceTest`
 - `HealthControllerTest`
 - `ApiResponseTest`
+
+下一步建议补充的测试：
+
+- `PrescriptionMapperTest`：覆盖分页筛选、详情查询和状态更新映射
+- `PrescriptionFlowIntegrationTest`：覆盖代开授权、审核、发药与库存流水一致性
+- `PrescriptionServiceTest` 异常分支扩展：库存不足、全部批次过期、医生越权审批、已发药重复发药
 
 建议重点断言：
 

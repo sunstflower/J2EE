@@ -55,7 +55,8 @@ J2EE/
 - 当前已完成药品模块 CRUD 的后端接口、服务、Mapper 与基础测试。
 - 当前已完成库存模块的后端闭环实现：入库、出库、盘点、库存查询、库存流水查询及测试。
 - 当前已完成预警模块的后端查询能力：低库存预警、临期预警、过期预警及测试。
-- 处方、认证授权与页面功能仍待后续开发。
+- 当前已完成处方模块的后端闭环实现：建方、医生授权、提交审核、审核、发药、取消及测试。
+- 认证授权与前端页面功能仍待后续开发。
 
 ## 4. 业务模块设计
 
@@ -211,6 +212,36 @@ J2EE/
 - `doctor_approval_status`：医生授权状态
 - `doctor_approved_at`：医生授权时间
 - `pharmacist_operator_id`：代开药师 ID，可空
+
+当前已实现的后端能力：
+
+- `POST /api/prescriptions`：创建处方
+- `GET /api/prescriptions`：分页查询处方，支持状态、医生 ID、患者姓名筛选
+- `GET /api/prescriptions/{id}`：查询处方详情及明细
+- `POST /api/prescriptions/{id}/doctor-approve`：医生确认或拒绝代开
+- `POST /api/prescriptions/{id}/submit`：提交处方进入审核
+- `POST /api/prescriptions/{id}/audit`：药师审核通过或驳回
+- `POST /api/prescriptions/{id}/dispense`：发药并扣减库存
+- `POST /api/prescriptions/{id}/cancel`：取消未发药处方
+
+当前已落地的处方规则：
+
+- 医生创建处方后初始状态为 `DRAFT`
+- 药师代开处方后初始状态为 `PENDING_DOCTOR_APPROVAL`
+- 药师不得以本人医生身份直接开方
+- 医生仅可审批归属到本人的代开处方
+- 医生同意代开后流转到 `SUBMITTED`
+- 只有 `SUBMITTED` 状态允许审核
+- 只有 `APPROVED` 状态允许发药
+- 发药时会校验药品启用状态，并跳过已过期批次
+- 发药按最早到期批次优先扣减库存，并写入 `inventory_record` 的 `DISPENSE` 流水
+- 模块完成后已执行后端测试验证
+
+后续测试规划：
+
+- 增加处方服务层异常分支测试：库存不足、过期批次全部不可用、重复发药、非法状态提交
+- 增加 Mapper 层测试：处方分页筛选、明细查询、状态更新 SQL 映射
+- 增加集成测试：`代开授权 -> 审核 -> 发药 -> 扣库存 -> 写流水` 完整事务链路
 
 ## 5. 分层架构要求
 

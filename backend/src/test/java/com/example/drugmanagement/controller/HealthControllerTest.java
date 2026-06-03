@@ -3,6 +3,8 @@ package com.example.drugmanagement.controller;
 import com.example.drugmanagement.mapper.DrugMapper;
 import com.example.drugmanagement.mapper.InventoryMapper;
 import com.example.drugmanagement.mapper.InventoryRecordMapper;
+import com.example.drugmanagement.mapper.PrescriptionItemMapper;
+import com.example.drugmanagement.mapper.PrescriptionMapper;
 import com.example.drugmanagement.mapper.WarningMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,12 @@ class HealthControllerTest {
 
     @MockBean
     private WarningMapper warningMapper;
+
+    @MockBean
+    private PrescriptionMapper prescriptionMapper;
+
+    @MockBean
+    private PrescriptionItemMapper prescriptionItemMapper;
 
     @Test
     void shouldReturnHealthResponse() throws Exception {

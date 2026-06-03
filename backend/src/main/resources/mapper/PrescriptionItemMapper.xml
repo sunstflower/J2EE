@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.drugmanagement.mapper.PrescriptionItemMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO prescription_item (
+            prescription_id,
+            drug_id,
+            dosage,
+            frequency,
+            days,
+            quantity,
+            created_by,
+            updated_by,
+            deleted
+        )
+        VALUES
+        <foreach collection="items" item="item" separator=",">
+            (
+                #{item.prescriptionId},
+                #{item.drugId},
+                #{item.dosage},
+                #{item.frequency},
+                #{item.days},
+                #{item.quantity},
+                #{item.createdBy},
+                #{item.updatedBy},
+                #{item.deleted}
+            )
+        </foreach>
+    </insert>
+
+    <select id="findByPrescriptionId" resultType="com.example.drugmanagement.vo.prescription.PrescriptionItemVO">
+        SELECT
+            pi.id,
+            pi.drug_id,
+            d.drug_code,
+            d.drug_name,
+            pi.dosage,
+            pi.frequency,
+            pi.days,
+            pi.quantity
+        FROM prescription_item pi
+        INNER JOIN drug d ON d.id = pi.drug_id
+        WHERE pi.prescription_id = #{prescriptionId}
+          AND pi.deleted = 0
+          AND d.deleted = 0
+        ORDER BY pi.id ASC
+    </select>
+</mapper>

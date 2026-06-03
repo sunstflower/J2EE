@@ -40,6 +40,43 @@
 
 ## 4. 变更记录
 
+### 2026-06-03 10:42
+- 会话目标：完成处方模块，并在模块完成后执行测试且同步文档设计约束
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/architecture.md`
+  - `backend/src/main/java/com/example/drugmanagement/controller/PrescriptionController.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/CreatePrescriptionRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionAuditRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionDispenseRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionDoctorApprovalRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionItemRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionQueryRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/mapper/PrescriptionItemMapper.java`
+  - `backend/src/main/java/com/example/drugmanagement/mapper/PrescriptionMapper.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/PrescriptionService.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/impl/PrescriptionServiceImpl.java`
+  - `backend/src/main/java/com/example/drugmanagement/vo/prescription/PrescriptionItemVO.java`
+  - `backend/src/main/java/com/example/drugmanagement/vo/prescription/PrescriptionVO.java`
+  - `backend/src/main/resources/mapper/PrescriptionItemMapper.xml`
+  - `backend/src/main/resources/mapper/PrescriptionMapper.xml`
+  - `backend/src/test/java/com/example/drugmanagement/controller/DrugControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/HealthControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerAdditionalTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/PrescriptionControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/WarningControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/service/PrescriptionServiceTest.java`
+- 主要变更：
+  - 实现处方模块创建、详情、分页、医生授权、提交审核、药师审核、发药、取消完整后端流程
+  - 落地医生直接开方与药师代开两条状态流转，并补充库存扣减与 `DISPENSE` 流水联动
+  - 新增处方模块 DTO、VO、Mapper、MyBatis XML、Controller、Service 与单元测试
+  - 为适配新增处方 Mapper，补齐现有 `@WebMvcTest` 控制器测试中的 mapper mock 隔离
+  - 执行 `mvn test`，验证后端 49 个测试全部通过
+- 备注：
+  - 当前处方模块已按文档中的角色与状态机约束完成基础闭环，后续应优先补齐 Mapper 层与集成链路测试
+
 ### 2026-06-03 10:30
 - 会话目标：完成预警模块，并在模块完成后执行测试
 - 修改文件：
