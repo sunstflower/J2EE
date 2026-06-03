@@ -1,6 +1,8 @@
 package com.example.drugmanagement.controller;
 
 import com.example.drugmanagement.mapper.DrugMapper;
+import com.example.drugmanagement.mapper.InventoryMapper;
+import com.example.drugmanagement.mapper.InventoryRecordMapper;
 import com.example.drugmanagement.common.response.PageResponse;
 import com.example.drugmanagement.service.DrugService;
 import com.example.drugmanagement.vo.drug.DrugVO;
@@ -36,6 +38,12 @@ class DrugControllerTest {
 
     @MockBean
     private DrugMapper drugMapper;
+
+    @MockBean
+    private InventoryMapper inventoryMapper;
+
+    @MockBean
+    private InventoryRecordMapper inventoryRecordMapper;
 
     @Test
     void shouldReturnDrugPage() throws Exception {

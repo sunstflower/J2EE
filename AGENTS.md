@@ -40,6 +40,34 @@
 
 ## 4. 变更记录
 
+### 2026-06-03 10:20
+- 会话目标：进行库存入库模型的业务代码编写，并在模块完成后执行测试
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/architecture.md`
+  - `backend/src/main/java/com/example/drugmanagement/controller/InventoryController.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryInboundRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/InventoryQueryRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/mapper/InventoryMapper.java`
+  - `backend/src/main/java/com/example/drugmanagement/mapper/InventoryRecordMapper.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/InventoryService.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/impl/InventoryServiceImpl.java`
+  - `backend/src/main/java/com/example/drugmanagement/vo/inventory/InventoryVO.java`
+  - `backend/src/main/resources/mapper/InventoryMapper.xml`
+  - `backend/src/main/resources/mapper/InventoryRecordMapper.xml`
+  - `backend/src/test/java/com/example/drugmanagement/controller/DrugControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/HealthControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/service/InventoryServiceTest.java`
+- 主要变更：
+  - 实现库存入库、库存分页查询、库存详情查询与库存流水写入
+  - 增加入库请求 DTO、库存展示 VO、Inventory/InventoryRecord Mapper 与 XML 映射
+  - 实现同批次同效期库存累加与首次入库建档逻辑
+  - 补充库存模块控制器测试和服务层单元测试，并执行 `mvn test` 验证通过
+- 备注：
+  - 当前已完成库存入库能力，库存出库、盘点和预警模块仍待继续开发
+
 ### 2026-06-03 10:17
 - 会话目标：继续实现药品模块 CRUD，并补充对应测试
 - 修改文件：

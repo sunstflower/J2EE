@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.drugmanagement.mapper.InventoryMapper">
+
+    <resultMap id="InventoryVoResultMap" type="com.example.drugmanagement.vo.inventory.InventoryVO">
+        <id property="id" column="id"/>
+        <result property="drugId" column="drug_id"/>
+        <result property="drugCode" column="drug_code"/>
+        <result property="drugName" column="drug_name"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="expiryDate" column="expiry_date"/>
+        <result property="quantity" column="quantity"/>
+        <result property="lockedQuantity" column="locked_quantity"/>
+        <result property="locationCode" column="location_code"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="BaseInventoryColumns">
+        i.id,
+        i.drug_id,
+        i.batch_no,
+        i.expiry_date,
+        i.quantity,
+        i.locked_quantity,
+        i.location_code,
+        i.created_by,
+        i.updated_by,
+        i.deleted,
+        i.created_at,
+        i.updated_at
+    </sql>
+
+    <insert id="insert" parameterType="com.example.drugmanagement.entity.Inventory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO inventory (
+            drug_id,
+            batch_no,
+            expiry_date,
+            quantity,
+            locked_quantity,
+            location_code,
+            created_by,
+            updated_by,
+            deleted
+        ) VALUES (
+            #{drugId},
+            #{batchNo},
+            #{expiryDate},
+            #{quantity},
+            #{lockedQuantity},
+            #{locationCode},
+            #{createdBy},
+            #{updatedBy},
+            #{deleted}
+        )
+    </insert>
+
+    <update id="increaseQuantity">
+        UPDATE inventory
+        SET quantity = quantity + #{quantity},
+            location_code = COALESCE(#{locationCode}, location_code),
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+
+    <select id="findById" resultType="com.example.drugmanagement.entity.Inventory">
+        SELECT
+            id,
+            drug_id,
+            batch_no,
+            expiry_date,
+            quantity,
+            locked_quantity,
+            location_code,
+            created_by,
+            updated_by,
+            deleted,
+            created_at,
+            updated_at
+        FROM inventory
+        WHERE id = #{id}
+          AND deleted = 0
+    </select>
+
+    <select id="findByDrugBatchAndExpiry" resultType="com.example.drugmanagement.entity.Inventory">
+        SELECT
+            id,
+            drug_id,
+            batch_no,
+            expiry_date,
+            quantity,
+            locked_quantity,
+            location_code,
+            created_by,
+            updated_by,
+            deleted,
+            created_at,
+            updated_at
+        FROM inventory
+        WHERE drug_id = #{drugId}
+          AND batch_no = #{batchNo}
+          AND expiry_date = #{expiryDate}
+          AND deleted = 0
+    </select>
+
+    <select id="findPage" resultMap="InventoryVoResultMap">
+        SELECT
+            i.id,
+            i.drug_id,
+            d.drug_code,
+            d.drug_name,
+            i.batch_no,
+            i.expiry_date,
+            i.quantity,
+            i.locked_quantity,
+            i.location_code,
+            i.created_at,
+            i.updated_at
+        FROM inventory i
+        INNER JOIN drug d ON d.id = i.drug_id
+        WHERE i.deleted = 0
+          AND d.deleted = 0
+        <if test="drugId != null">
+            AND i.drug_id = #{drugId}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+                d.drug_code LIKE CONCAT('%', #{keyword}, '%')
+                OR d.drug_name LIKE CONCAT('%', #{keyword}, '%')
+                OR i.batch_no LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        ORDER BY i.updated_at DESC, i.id DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(1)
+        FROM inventory i
+        INNER JOIN drug d ON d.id = i.drug_id
+        WHERE i.deleted = 0
+          AND d.deleted = 0
+        <if test="drugId != null">
+            AND i.drug_id = #{drugId}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+                d.drug_code LIKE CONCAT('%', #{keyword}, '%')
+                OR d.drug_name LIKE CONCAT('%', #{keyword}, '%')
+                OR i.batch_no LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+    </select>
+
+    <select id="findVoById" resultMap="InventoryVoResultMap">
+        SELECT
+            i.id,
+            i.drug_id,
+            d.drug_code,
+            d.drug_name,
+            i.batch_no,
+            i.expiry_date,
+            i.quantity,
+            i.locked_quantity,
+            i.location_code,
+            i.created_at,
+            i.updated_at
+        FROM inventory i
+        INNER JOIN drug d ON d.id = i.drug_id
+        WHERE i.id = #{id}
+          AND i.deleted = 0
+          AND d.deleted = 0
+    </select>
+</mapper>

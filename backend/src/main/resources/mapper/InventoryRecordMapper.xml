@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.drugmanagement.mapper.InventoryRecordMapper">
+
+    <insert id="insert" parameterType="com.example.drugmanagement.entity.InventoryRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO inventory_record (
+            drug_id,
+            inventory_id,
+            record_type,
+            quantity_change,
+            before_quantity,
+            after_quantity,
+            biz_no,
+            operator_name,
+            operated_at,
+            remark,
+            created_by,
+            updated_by,
+            deleted
+        ) VALUES (
+            #{drugId},
+            #{inventoryId},
+            #{recordType},
+            #{quantityChange},
+            #{beforeQuantity},
+            #{afterQuantity},
+            #{bizNo},
+            #{operatorName},
+            #{operatedAt},
+            #{remark},
+            #{createdBy},
+            #{updatedBy},
+            #{deleted}
+        )
+    </insert>
+</mapper>
