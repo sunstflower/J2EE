@@ -40,6 +40,33 @@
 
 ## 4. 变更记录
 
+### 2026-06-03 10:28
+- 会话目标：完成库存模块，并在模块完成后执行测试
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/architecture.md`
+  - `backend/src/main/java/com/example/drugmanagement/controller/InventoryController.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryCheckRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryOutboundRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/InventoryRecordQueryRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/mapper/InventoryMapper.java`
+  - `backend/src/main/java/com/example/drugmanagement/mapper/InventoryRecordMapper.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/InventoryService.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/impl/InventoryServiceImpl.java`
+  - `backend/src/main/java/com/example/drugmanagement/vo/inventory/InventoryRecordVO.java`
+  - `backend/src/main/resources/mapper/InventoryMapper.xml`
+  - `backend/src/main/resources/mapper/InventoryRecordMapper.xml`
+  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerAdditionalTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/service/InventoryServiceTest.java`
+- 主要变更：
+  - 补齐库存出库、库存盘点、库存流水分页查询能力
+  - 实现按最早到期批次优先扣减库存、库存不足拦截和盘点差异流水写入
+  - 扩展库存模块 DTO、VO、Mapper 与 XML 映射
+  - 执行 `mvn test`，验证药品模块与库存模块测试全部通过
+- 备注：
+  - 当前库存模块已形成完整后端闭环，下一步可进入预警模块或处方模块开发
+
 ### 2026-06-03 10:20
 - 会话目标：进行库存入库模型的业务代码编写，并在模块完成后执行测试
 - 修改文件：

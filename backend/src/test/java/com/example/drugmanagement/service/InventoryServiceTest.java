@@ -3,8 +3,11 @@ package com.example.drugmanagement.service;
 import com.example.drugmanagement.common.enums.InventoryRecordType;
 import com.example.drugmanagement.common.exception.BusinessException;
 import com.example.drugmanagement.common.response.PageResponse;
+import com.example.drugmanagement.dto.inventory.CreateInventoryCheckRequest;
 import com.example.drugmanagement.dto.inventory.CreateInventoryInboundRequest;
 import com.example.drugmanagement.dto.inventory.InventoryQueryRequest;
+import com.example.drugmanagement.dto.inventory.CreateInventoryOutboundRequest;
+import com.example.drugmanagement.dto.inventory.InventoryRecordQueryRequest;
 import com.example.drugmanagement.entity.Drug;
 import com.example.drugmanagement.entity.Inventory;
 import com.example.drugmanagement.entity.InventoryRecord;
@@ -12,6 +15,7 @@ import com.example.drugmanagement.mapper.DrugMapper;
 import com.example.drugmanagement.mapper.InventoryMapper;
 import com.example.drugmanagement.mapper.InventoryRecordMapper;
 import com.example.drugmanagement.service.impl.InventoryServiceImpl;
+import com.example.drugmanagement.vo.inventory.InventoryRecordVO;
 import com.example.drugmanagement.vo.inventory.InventoryVO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -123,6 +127,99 @@ class InventoryServiceTest {
         InventoryVO result = inventoryService.getInventoryById(1L);
 
         assertEquals(1L, result.getId());
+    }
+
+    @Test
+    void shouldOutboundByEarliestExpiryFirst() {
+        CreateInventoryOutboundRequest request = new CreateInventoryOutboundRequest();
+        request.setDrugId(1L);
+        request.setQuantity(60);
+        request.setBizNo("OUT-20260603-001");
+        request.setOperatorName("药师李四");
+        request.setRemark("窗口发药");
+
+        Drug drug = new Drug();
+        drug.setId(1L);
+        Inventory inventory1 = new Inventory();
+        inventory1.setId(100L);
+        inventory1.setDrugId(1L);
+        inventory1.setQuantity(30);
+        inventory1.setLockedQuantity(0);
+        Inventory inventory2 = new Inventory();
+        inventory2.setId(101L);
+        inventory2.setDrugId(1L);
+        inventory2.setQuantity(50);
+        inventory2.setLockedQuantity(0);
+
+        when(drugMapper.findEntityById(1L)).thenReturn(drug);
+        when(inventoryMapper.findAvailableByDrugIdOrderByExpiry(1L)).thenReturn(List.of(inventory1, inventory2));
+
+        inventoryService.outbound(request);
+
+        verify(inventoryMapper).decreaseQuantity(100L, 30, "药师李四");
+        verify(inventoryMapper).decreaseQuantity(101L, 30, "药师李四");
+    }
+
+    @Test
+    void shouldRejectOutboundWhenInventoryInsufficient() {
+        CreateInventoryOutboundRequest request = new CreateInventoryOutboundRequest();
+        request.setDrugId(1L);
+        request.setQuantity(100);
+        request.setBizNo("OUT-20260603-001");
+        request.setOperatorName("药师李四");
+
+        Drug drug = new Drug();
+        drug.setId(1L);
+        Inventory inventory = new Inventory();
+        inventory.setId(100L);
+        inventory.setDrugId(1L);
+        inventory.setQuantity(20);
+        inventory.setLockedQuantity(0);
+
+        when(drugMapper.findEntityById(1L)).thenReturn(drug);
+        when(inventoryMapper.findAvailableByDrugIdOrderByExpiry(1L)).thenReturn(List.of(inventory));
+
+        assertThrows(BusinessException.class, () -> inventoryService.outbound(request));
+    }
+
+    @Test
+    void shouldCheckInventoryAndWriteRecord() {
+        CreateInventoryCheckRequest request = new CreateInventoryCheckRequest();
+        request.setInventoryId(10L);
+        request.setActualQuantity(18);
+        request.setBizNo("CHK-20260603-001");
+        request.setOperatorName("药师李四");
+        request.setRemark("月度盘点");
+
+        Inventory inventory = new Inventory();
+        inventory.setId(10L);
+        inventory.setDrugId(1L);
+        inventory.setQuantity(20);
+        when(inventoryMapper.findById(10L)).thenReturn(inventory);
+
+        inventoryService.check(request);
+
+        verify(inventoryMapper).updateQuantityByCheck(10L, 18, "药师李四");
+        ArgumentCaptor<InventoryRecord> recordCaptor = ArgumentCaptor.forClass(InventoryRecord.class);
+        verify(inventoryRecordMapper).insert(recordCaptor.capture());
+        assertEquals(InventoryRecordType.CHECK.name(), recordCaptor.getValue().getRecordType());
+        assertEquals(-2, recordCaptor.getValue().getQuantityChange());
+    }
+
+    @Test
+    void shouldReturnInventoryRecordPage() {
+        InventoryRecordQueryRequest request = new InventoryRecordQueryRequest();
+        request.setPageNum(1);
+        request.setPageSize(10);
+        InventoryRecordVO recordVO = new InventoryRecordVO();
+        recordVO.setId(1L);
+        when(inventoryRecordMapper.findPage(request)).thenReturn(List.of(recordVO));
+        when(inventoryRecordMapper.count(request)).thenReturn(1L);
+
+        PageResponse<InventoryRecordVO> response = inventoryService.queryInventoryRecords(request);
+
+        assertEquals(1, response.records().size());
+        assertEquals(1L, response.total());
     }
 
     private CreateInventoryInboundRequest buildInboundRequest() {

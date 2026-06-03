@@ -35,4 +35,75 @@
             #{deleted}
         )
     </insert>
+
+    <resultMap id="InventoryRecordVoResultMap" type="com.example.drugmanagement.vo.inventory.InventoryRecordVO">
+        <id property="id" column="id"/>
+        <result property="drugId" column="drug_id"/>
+        <result property="drugCode" column="drug_code"/>
+        <result property="drugName" column="drug_name"/>
+        <result property="inventoryId" column="inventory_id"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="recordType" column="record_type"/>
+        <result property="quantityChange" column="quantity_change"/>
+        <result property="beforeQuantity" column="before_quantity"/>
+        <result property="afterQuantity" column="after_quantity"/>
+        <result property="bizNo" column="biz_no"/>
+        <result property="operatorName" column="operator_name"/>
+        <result property="remark" column="remark"/>
+        <result property="operatedAt" column="operated_at"/>
+    </resultMap>
+
+    <select id="findPage" resultMap="InventoryRecordVoResultMap">
+        SELECT
+            ir.id,
+            ir.drug_id,
+            d.drug_code,
+            d.drug_name,
+            ir.inventory_id,
+            i.batch_no,
+            ir.record_type,
+            ir.quantity_change,
+            ir.before_quantity,
+            ir.after_quantity,
+            ir.biz_no,
+            ir.operator_name,
+            ir.remark,
+            ir.operated_at
+        FROM inventory_record ir
+        INNER JOIN drug d ON d.id = ir.drug_id
+        INNER JOIN inventory i ON i.id = ir.inventory_id
+        WHERE ir.deleted = 0
+          AND d.deleted = 0
+          AND i.deleted = 0
+        <if test="drugId != null">
+            AND ir.drug_id = #{drugId}
+        </if>
+        <if test="recordType != null and recordType != ''">
+            AND ir.record_type = #{recordType}
+        </if>
+        <if test="bizNo != null and bizNo != ''">
+            AND ir.biz_no = #{bizNo}
+        </if>
+        ORDER BY ir.operated_at DESC, ir.id DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(1)
+        FROM inventory_record ir
+        INNER JOIN drug d ON d.id = ir.drug_id
+        INNER JOIN inventory i ON i.id = ir.inventory_id
+        WHERE ir.deleted = 0
+          AND d.deleted = 0
+          AND i.deleted = 0
+        <if test="drugId != null">
+            AND ir.drug_id = #{drugId}
+        </if>
+        <if test="recordType != null and recordType != ''">
+            AND ir.record_type = #{recordType}
+        </if>
+        <if test="bizNo != null and bizNo != ''">
+            AND ir.biz_no = #{bizNo}
+        </if>
+    </select>
 </mapper>

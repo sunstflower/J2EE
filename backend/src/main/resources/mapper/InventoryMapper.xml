@@ -66,6 +66,23 @@
           AND deleted = 0
     </update>
 
+    <update id="decreaseQuantity">
+        UPDATE inventory
+        SET quantity = quantity - #{quantity},
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+          AND deleted = 0
+          AND quantity >= #{quantity}
+    </update>
+
+    <update id="updateQuantityByCheck">
+        UPDATE inventory
+        SET quantity = #{actualQuantity},
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+
     <select id="findById" resultType="com.example.drugmanagement.entity.Inventory">
         SELECT
             id,
@@ -104,6 +121,27 @@
           AND batch_no = #{batchNo}
           AND expiry_date = #{expiryDate}
           AND deleted = 0
+    </select>
+
+    <select id="findAvailableByDrugIdOrderByExpiry" resultType="com.example.drugmanagement.entity.Inventory">
+        SELECT
+            id,
+            drug_id,
+            batch_no,
+            expiry_date,
+            quantity,
+            locked_quantity,
+            location_code,
+            created_by,
+            updated_by,
+            deleted,
+            created_at,
+            updated_at
+        FROM inventory
+        WHERE drug_id = #{drugId}
+          AND deleted = 0
+          AND quantity > 0
+        ORDER BY expiry_date ASC, id ASC
     </select>
 
     <select id="findPage" resultMap="InventoryVoResultMap">

@@ -75,9 +75,12 @@
 当前已完成的后端实现范围：
 
 - 库存入库
+- 库存出库
+- 库存盘点
 - 库存分页查询
 - 库存详情查询
-- 入库流水写入
+- 库存流水分页查询
+- 入库/出库/盘点流水写入
 
 ### 2.3 库存盘点
 
@@ -364,6 +367,7 @@
 - `DrugControllerTest`
 - `DrugServiceTest`
 - `InventoryControllerTest`
+- `InventoryControllerAdditionalTest`
 - `InventoryServiceTest`
 - `HealthControllerTest`
 - `ApiResponseTest`
@@ -445,7 +449,7 @@
   - 基础实体父类与业务枚举
   - 健康检查接口
   - 药品模块 DTO、VO、Mapper、Service、Controller
-  - 库存入库模块 DTO、VO、Mapper、Service、Controller
+  - 库存模块 DTO、VO、Mapper、Service、Controller
   - 基础测试样例
 - 前端：
   - Vite + React 基础入口
@@ -472,5 +476,5 @@
 说明：
 
 - 药品模块的 MyBatis XML 映射已完成
-- 库存入库相关 MyBatis XML 映射已完成
-- 其余库存出库、盘点、预警、处方模块仍待继续实现
+- 库存模块相关 MyBatis XML 映射已完成
+- 预警、处方模块仍待继续实现

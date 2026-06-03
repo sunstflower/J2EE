@@ -25,6 +25,16 @@ public interface InventoryMapper {
                          @Param("locationCode") String locationCode,
                          @Param("updatedBy") String updatedBy);
 
+    int decreaseQuantity(@Param("id") Long id,
+                         @Param("quantity") Integer quantity,
+                         @Param("updatedBy") String updatedBy);
+
+    int updateQuantityByCheck(@Param("id") Long id,
+                              @Param("actualQuantity") Integer actualQuantity,
+                              @Param("updatedBy") String updatedBy);
+
+    List<Inventory> findAvailableByDrugIdOrderByExpiry(@Param("drugId") Long drugId);
+
     List<InventoryVO> findPage(InventoryQueryRequest request);
 
     long count(InventoryQueryRequest request);
