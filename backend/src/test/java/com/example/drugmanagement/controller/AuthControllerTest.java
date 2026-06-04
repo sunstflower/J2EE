@@ -1,18 +1,24 @@
 package com.example.drugmanagement.controller;
 
+import com.example.drugmanagement.common.auth.AuthSessionService;
+import com.example.drugmanagement.common.auth.CurrentUser;
+import com.example.drugmanagement.common.enums.RoleType;
 import com.example.drugmanagement.mapper.DrugMapper;
 import com.example.drugmanagement.mapper.InventoryMapper;
 import com.example.drugmanagement.mapper.InventoryRecordMapper;
 import com.example.drugmanagement.mapper.PrescriptionItemMapper;
 import com.example.drugmanagement.mapper.PrescriptionMapper;
 import com.example.drugmanagement.mapper.WarningMapper;
+import org.springframework.http.MediaType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -39,6 +45,29 @@ class AuthControllerTest {
 
     @MockBean
     private PrescriptionItemMapper prescriptionItemMapper;
+
+    @MockBean
+    private AuthSessionService authSessionService;
+
+    @Test
+    void shouldLoginWithDemoUser() throws Exception {
+        given(authSessionService.login(1001L, "pharm123")).willReturn("demo-token");
+        given(authSessionService.getCurrentUser("demo-token"))
+                .willReturn(new CurrentUser(1001L, "张药师", RoleType.PHARMACIST));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "userId": 1001,
+                                  "password": "pharm123"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.token").isNotEmpty())
+                .andExpect(jsonPath("$.data.user.userId").value(1001))
+                .andExpect(jsonPath("$.data.user.role").value("PHARMACIST"));
+    }
 
     @Test
     void shouldReturnCurrentUser() throws Exception {

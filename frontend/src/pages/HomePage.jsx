@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 function buildNavigation(role) {
   if (role === "DOCTOR") {
@@ -23,6 +23,7 @@ function buildNavigation(role) {
 }
 
 function HomePage({ currentUser, onLogout }) {
+  const navigate = useNavigate();
   const items = buildNavigation(currentUser.role);
 
   return (
@@ -32,7 +33,7 @@ function HomePage({ currentUser, onLogout }) {
           <p className="eyebrow">Workspace</p>
           <h1>药物管理系统</h1>
           <p className="sidebar-user">
-            {currentUser.userName} / {currentUser.role}
+            {currentUser.userName} / {currentUser.role} / 用户号 {currentUser.userId}
           </p>
         </div>
         <nav className="sidebar-nav">
@@ -47,8 +48,20 @@ function HomePage({ currentUser, onLogout }) {
             </NavLink>
           ))}
         </nav>
+        <div className="sidebar-shortcuts">
+          <button className="secondary-action" onClick={() => navigate("/drugs")} type="button">
+            药物管理
+          </button>
+          <button
+            className="secondary-action"
+            onClick={() => navigate("/inventories")}
+            type="button"
+          >
+            库存管理
+          </button>
+        </div>
         <button className="secondary-action" onClick={onLogout} type="button">
-          切换身份
+          退出登录
         </button>
       </aside>
       <section className="content-shell">

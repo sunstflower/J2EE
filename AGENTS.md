@@ -40,6 +40,80 @@
 
 ## 4. 变更记录
 
+### 2026-06-04 14:34
+- 会话目标：按优先级修复前端假路由、前端本地认证、错误处理与消息提示问题
+- 修改文件：
+  - `backend/src/main/java/com/example/drugmanagement/common/auth/AuthInterceptor.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/auth/AuthSessionService.java`
+  - `backend/src/main/java/com/example/drugmanagement/common/config/WebMvcConfig.java`
+  - `backend/src/main/java/com/example/drugmanagement/controller/AuthController.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/auth/LoginRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/vo/auth/LoginVO.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/AuthControllerTest.java`
+  - `frontend/src/App.jsx`
+  - `frontend/src/auth.js`
+  - `frontend/src/api/auth.js`
+  - `frontend/src/api/client.js`
+  - `frontend/src/components/FeedbackMessage.jsx`
+  - `frontend/src/components/RequireRole.jsx`
+  - `frontend/src/hooks/useFlashMessage.js`
+  - `frontend/src/pages/DrugPage.jsx`
+  - `frontend/src/pages/InventoryPage.jsx`
+  - `frontend/src/pages/InventoryRecordsPage.jsx`
+  - `frontend/src/pages/PrescriptionCreatePage.jsx`
+  - `frontend/src/pages/PrescriptionDetailPage.jsx`
+  - `frontend/src/pages/PrescriptionPage.jsx`
+  - `frontend/src/pages/WarningPage.jsx`
+  - `frontend/src/pages/__tests__/App.test.jsx`
+  - `frontend/src/pages/__tests__/InventoryPage.test.jsx`
+  - `frontend/src/pages/__tests__/PrescriptionPage.test.jsx`
+  - `frontend/src/pages/__tests__/WarningPage.test.jsx`
+  - `frontend/src/styles.css`
+  - `README.md`
+  - `docs/architecture.md`
+  - `AGENTS.md`
+- 主要变更：
+  - 新增后端 `POST /api/auth/login` 演示登录接口与基于 token 的会话解析
+  - 前端改为通过后端登录接口获取 token，不再在浏览器端保存明文密码
+  - 将 `/inventories/records`、`/prescriptions/new`、`/prescriptions/:id` 改为真实职责页
+  - 为药品、库存、预警、处方页面补充 loading / error / success 提示
+  - 修复库存出库、盘点仍显示“入库成功”的错误文案
+- 备注：
+  - 本次前端测试结果：`4` 个测试文件，`7` 个测试全部通过
+  - 本次后端测试结果：`AuthControllerTest` 通过
+
+### 2026-06-04 14:10
+- 会话目标：调整注册页密码输入显示方式
+- 修改文件：
+  - `frontend/src/App.jsx`
+  - `AGENTS.md`
+- 主要变更：
+  - 将注册态密码输入从隐藏改为明文显示
+  - 保持登录态密码输入仍为隐藏模式
+  - 执行前端测试回归并确认通过
+- 备注：
+  - 本次前端测试结果：`4` 个测试文件，`7` 个测试全部通过
+
+### 2026-06-04 14:00
+- 会话目标：调整前端登录入口与主路由结构，补足登录/注册和模块入口设计
+- 修改文件：
+  - `frontend/src/auth.js`
+  - `frontend/src/App.jsx`
+  - `frontend/src/pages/HomePage.jsx`
+  - `frontend/src/pages/DashboardPage.jsx`
+  - `frontend/src/pages/__tests__/App.test.jsx`
+  - `frontend/src/styles.css`
+  - `README.md`
+  - `docs/architecture.md`
+  - `AGENTS.md`
+- 主要变更：
+  - 将前端入口从“演示身份切换”改为“登录 / 注册”页
+  - 增加用户号首位判定规则：`1` 开头为药师，`2` 开头为医生
+  - 将首页总览收敛为主路由入口页，提供模块按钮跳转到各业务分路由
+  - 补充认证入口与主路由前端测试，并验证前端测试通过
+- 备注：
+  - 本次前端测试结果：`4` 个测试文件，`7` 个测试全部通过
+
 ### 2026-06-03 20:30（容器化交付收口）
 - 会话目标：以容器化演示为目标继续推进，收口前端镜像和 Docker 文档
 - 修改文件：

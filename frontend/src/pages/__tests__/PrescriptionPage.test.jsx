@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import PrescriptionPage from "../PrescriptionPage";
-import { clearCurrentUser, saveCurrentUser } from "../../auth";
+import { clearCurrentUser, saveAuthSession } from "../../auth";
 
 function mockJsonResponse(data) {
   return Promise.resolve({
@@ -60,7 +60,10 @@ describe("PrescriptionPage", () => {
   });
 
   it("creates doctor prescription with current user payload", async () => {
-    saveCurrentUser({ userId: 100, userName: "王医生", role: "DOCTOR" });
+    saveAuthSession({
+      token: "doctor-token",
+      user: { userId: 100, userName: "王医生", role: "DOCTOR" },
+    });
     const user = userEvent.setup();
 
     global.fetch = vi
@@ -159,7 +162,10 @@ describe("PrescriptionPage", () => {
   });
 
   it("shows pharmacist actions and sends audit payload", async () => {
-    saveCurrentUser({ userId: 200, userName: "张药师", role: "PHARMACIST" });
+    saveAuthSession({
+      token: "pharmacist-token",
+      user: { userId: 200, userName: "张药师", role: "PHARMACIST" },
+    });
     const user = userEvent.setup();
 
     global.fetch = vi

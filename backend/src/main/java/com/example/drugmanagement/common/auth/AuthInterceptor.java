@@ -14,12 +14,26 @@ import java.nio.charset.StandardCharsets;
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
 
+    private static final String HEADER_AUTHORIZATION = "Authorization";
     private static final String HEADER_USER_ID = "X-User-Id";
     private static final String HEADER_USER_NAME = "X-User-Name";
     private static final String HEADER_USER_ROLE = "X-User-Role";
+    private static final String BEARER_PREFIX = "Bearer ";
+
+    private final AuthSessionService authSessionService;
+
+    public AuthInterceptor(AuthSessionService authSessionService) {
+        this.authSessionService = authSessionService;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        String authorization = request.getHeader(HEADER_AUTHORIZATION);
+        if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {
+            CurrentUserHolder.set(authSessionService.getCurrentUser(authorization.substring(BEARER_PREFIX.length())));
+            return true;
+        }
+
         String userIdHeader = request.getHeader(HEADER_USER_ID);
         String userName = request.getHeader(HEADER_USER_NAME);
         String userRole = request.getHeader(HEADER_USER_ROLE);

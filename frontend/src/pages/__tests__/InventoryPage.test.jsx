@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import InventoryPage from "../InventoryPage";
-import { clearCurrentUser, saveCurrentUser } from "../../auth";
+import { clearCurrentUser, saveAuthSession } from "../../auth";
 
 function mockJsonResponse(data) {
   return Promise.resolve({
@@ -67,7 +67,10 @@ function buildRecordPageData() {
 describe("InventoryPage", () => {
   beforeEach(() => {
     clearCurrentUser();
-    saveCurrentUser({ userId: 200, userName: "张药师", role: "PHARMACIST" });
+    saveAuthSession({
+      token: "inventory-token",
+      user: { userId: 200, userName: "张药师", role: "PHARMACIST" },
+    });
   });
 
   afterEach(() => {
@@ -76,7 +79,7 @@ describe("InventoryPage", () => {
     clearCurrentUser();
   });
 
-  it("loads inventories and records with current user headers", async () => {
+  it("loads inventories and records with bearer token", async () => {
     global.fetch = vi
       .fn()
       .mockImplementationOnce(() => mockJsonResponse(buildInventoryPageData()))
@@ -104,9 +107,7 @@ describe("InventoryPage", () => {
     );
 
     const requestOptions = global.fetch.mock.calls[0][1];
-    expect(requestOptions.headers.get("X-User-Id")).toBe("200");
-    expect(requestOptions.headers.get("X-User-Name")).toBe(encodeURIComponent("张药师"));
-    expect(requestOptions.headers.get("X-User-Role")).toBe("PHARMACIST");
+    expect(requestOptions.headers.get("Authorization")).toBe("Bearer inventory-token");
   });
 
   it("submits inbound request with operator name from current user", async () => {

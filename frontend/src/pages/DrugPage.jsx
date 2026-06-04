@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Pagination from "../components/Pagination";
+import FeedbackMessage from "../components/FeedbackMessage";
 import { createDrug, deleteDrug, queryDrugs } from "../api/drugs";
+import useFlashMessage from "../hooks/useFlashMessage";
 
 function buildInitialForm() {
   return {
@@ -23,12 +25,20 @@ function DrugPage() {
   const [pageNum, setPageNum] = useState(1);
   const [pageData, setPageData] = useState({ records: [], total: 0, pageSize: 10 });
   const [form, setForm] = useState(buildInitialForm());
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { message, showError, showSuccess } = useFlashMessage();
 
   async function loadData(targetPage = pageNum) {
-    const data = await queryDrugs({ pageNum: targetPage, pageSize: 10 });
-    setPageNum(data.pageNum);
-    setPageData(data);
+    setLoading(true);
+    try {
+      const data = await queryDrugs({ pageNum: targetPage, pageSize: 10 });
+      setPageNum(data.pageNum);
+      setPageData(data);
+    } catch (error) {
+      showError(error.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -37,24 +47,32 @@ function DrugPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    await createDrug({
-      ...form,
-      purchasePrice: Number(form.purchasePrice),
-      salePrice: Number(form.salePrice),
-      lowStockThreshold: Number(form.lowStockThreshold),
-    });
-    setMessage("药品创建成功，列表已刷新。");
-    setForm(buildInitialForm());
-    await loadData(1);
+    try {
+      await createDrug({
+        ...form,
+        purchasePrice: Number(form.purchasePrice),
+        salePrice: Number(form.salePrice),
+        lowStockThreshold: Number(form.lowStockThreshold),
+      });
+      showSuccess("药品创建成功，列表已刷新。");
+      setForm(buildInitialForm());
+      await loadData(1);
+    } catch (error) {
+      showError(error.message);
+    }
   }
 
   async function handleDelete(id) {
     if (!window.confirm("确认删除该药品吗？")) {
       return;
     }
-    await deleteDrug(id);
-    setMessage("药品删除成功，列表已刷新。");
-    await loadData(pageNum);
+    try {
+      await deleteDrug(id);
+      showSuccess("药品删除成功，列表已刷新。");
+      await loadData(pageNum);
+    } catch (error) {
+      showError(error.message);
+    }
   }
 
   return (
@@ -62,7 +80,8 @@ function DrugPage() {
       <article className="panel">
         <p className="eyebrow">Drug</p>
         <h2>药品模块联调</h2>
-        {message ? <p className="message success">{message}</p> : null}
+        <FeedbackMessage message={message} />
+        {loading ? <p>加载中...</p> : null}
         <div className="table-list">
           {pageData.records.map((drug) => (
             <article className="list-card" key={drug.id}>

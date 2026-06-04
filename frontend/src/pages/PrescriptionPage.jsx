@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import FeedbackMessage from "../components/FeedbackMessage";
 import Pagination from "../components/Pagination";
 import {
   auditPrescription,
@@ -8,6 +9,7 @@ import {
 } from "../api/prescriptions";
 import { queryDrugs } from "../api/drugs";
 import { loadCurrentUser } from "../auth";
+import useFlashMessage from "../hooks/useFlashMessage";
 
 function buildCreateForm(currentUser) {
   return {
@@ -36,8 +38,9 @@ function PrescriptionPage() {
   const [drugs, setDrugs] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [detail, setDetail] = useState(null);
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(() => buildCreateForm(currentUser));
+  const { message, showError, showSuccess } = useFlashMessage();
 
   async function loadList(targetPage = pageNum) {
     const data = await queryPrescriptions({ pageNum: targetPage, pageSize: 10 });
@@ -73,10 +76,17 @@ function PrescriptionPage() {
 
   useEffect(() => {
     async function initialize() {
-      const listData = await loadList(1);
-      await loadDrugs();
-      if (listData.records.length > 0) {
-        await loadDetail(listData.records[0].id);
+      setLoading(true);
+      try {
+        const listData = await loadList(1);
+        await loadDrugs();
+        if (listData.records.length > 0) {
+          await loadDetail(listData.records[0].id);
+        }
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -85,24 +95,28 @@ function PrescriptionPage() {
 
   async function handleCreate(event) {
     event.preventDefault();
-    const payload = {
-      ...form,
-      doctorId: Number(form.doctorId),
-      createdByUserId: Number(form.createdByUserId),
-      items: form.items.map((item) => ({
-        ...item,
-        drugId: Number(item.drugId),
-        days: Number(item.days),
-        quantity: Number(item.quantity),
-      })),
-    };
-    const newId = await createPrescription(payload);
-    setMessage("处方创建成功，列表和详情已刷新。");
-    setForm(buildCreateForm(currentUser));
-    const listData = await loadList(1);
-    setSelectedId(newId || listData.records[0]?.id || null);
-    if (newId) {
-      await loadDetail(newId);
+    try {
+      const payload = {
+        ...form,
+        doctorId: Number(form.doctorId),
+        createdByUserId: Number(form.createdByUserId),
+        items: form.items.map((item) => ({
+          ...item,
+          drugId: Number(item.drugId),
+          days: Number(item.days),
+          quantity: Number(item.quantity),
+        })),
+      };
+      const newId = await createPrescription(payload);
+      showSuccess("处方创建成功，列表和详情已刷新。");
+      setForm(buildCreateForm(currentUser));
+      const listData = await loadList(1);
+      setSelectedId(newId || listData.records[0]?.id || null);
+      if (newId) {
+        await loadDetail(newId);
+      }
+    } catch (error) {
+      showError(error.message);
     }
   }
 
@@ -110,14 +124,18 @@ function PrescriptionPage() {
     if (!selectedId) {
       return;
     }
-    await auditPrescription(selectedId, {
-      action,
-      operatorId: currentUser.userId,
-      operatorName: currentUser.userName,
-    });
-    setMessage("处方状态已更新，详情已刷新。");
-    await loadList(1);
-    await loadDetail(selectedId);
+    try {
+      await auditPrescription(selectedId, {
+        action,
+        operatorId: currentUser.userId,
+        operatorName: currentUser.userName,
+      });
+      showSuccess("处方状态已更新，详情已刷新。");
+      await loadList(1);
+      await loadDetail(selectedId);
+    } catch (error) {
+      showError(error.message);
+    }
   }
 
   const currentItem = form.items[0];
@@ -127,7 +145,8 @@ function PrescriptionPage() {
       <article className="panel">
         <p className="eyebrow">Prescription</p>
         <h2>处方工作台</h2>
-        {message ? <p className="message success">{message}</p> : null}
+        <FeedbackMessage message={message} />
+        {loading ? <p>加载中...</p> : null}
         <div className="two-column">
           <div>
             <h3>处方列表</h3>

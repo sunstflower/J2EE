@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import FeedbackMessage from "../components/FeedbackMessage";
 import Pagination from "../components/Pagination";
 import {
   checkInventory,
@@ -8,6 +9,7 @@ import {
   queryInventoryRecords,
 } from "../api/inventories";
 import { loadCurrentUser } from "../auth";
+import useFlashMessage from "../hooks/useFlashMessage";
 
 function InventoryActionForm({
   title,
@@ -92,7 +94,8 @@ function InventoryPage() {
   const [recordData, setRecordData] = useState({ records: [], total: 0, pageSize: 10 });
   const [inventoryPageNum, setInventoryPageNum] = useState(1);
   const [recordPageNum, setRecordPageNum] = useState(1);
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { message, showError, showSuccess } = useFlashMessage();
 
   async function loadInventories(targetPage = inventoryPageNum) {
     const data = await queryInventories({ pageNum: targetPage, pageSize: 10 });
@@ -107,7 +110,14 @@ function InventoryPage() {
   }
 
   async function refreshAll() {
-    await Promise.all([loadInventories(1), loadRecords(1)]);
+    setLoading(true);
+    try {
+      await Promise.all([loadInventories(1), loadRecords(1)]);
+    } catch (error) {
+      showError(error.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -116,7 +126,7 @@ function InventoryPage() {
 
   const currentUser = loadCurrentUser();
 
-  async function handleInventoryAction(action, form, reset) {
+  async function handleInventoryAction(action, form, reset, successText) {
     const payload = {
       ...form,
       drugId: Number(form.drugId),
@@ -124,10 +134,14 @@ function InventoryPage() {
       operatorName: currentUser?.userName || "",
     };
 
-    await action(payload);
-    reset();
-    setMessage("入库成功，库存和流水已刷新。");
-    await refreshAll();
+    try {
+      await action(payload);
+      reset();
+      showSuccess(successText);
+      await refreshAll();
+    } catch (error) {
+      showError(error.message);
+    }
   }
 
   return (
@@ -135,7 +149,8 @@ function InventoryPage() {
       <article className="panel">
         <p className="eyebrow">Inventory</p>
         <h2>库存模块联调</h2>
-        {message ? <p className="message success">{message}</p> : null}
+        <FeedbackMessage message={message} />
+        {loading ? <p>加载中...</p> : null}
         <div className="two-column">
           <div>
             <h3>库存列表</h3>
@@ -193,7 +208,9 @@ function InventoryPage() {
             bizNo: "",
             remark: "",
           }}
-          onSubmit={(form, reset) => handleInventoryAction(inboundInventory, form, reset)}
+          onSubmit={(form, reset) =>
+            handleInventoryAction(inboundInventory, form, reset, "入库成功，库存和流水已刷新。")
+          }
           submitText="提交入库"
           title="库存入库"
         />
@@ -204,7 +221,9 @@ function InventoryPage() {
             bizNo: "",
             remark: "",
           }}
-          onSubmit={(form, reset) => handleInventoryAction(outboundInventory, form, reset)}
+          onSubmit={(form, reset) =>
+            handleInventoryAction(outboundInventory, form, reset, "出库成功，库存和流水已刷新。")
+          }
           submitText="提交出库"
           title="库存出库"
         />
@@ -215,7 +234,9 @@ function InventoryPage() {
             bizNo: "",
             remark: "",
           }}
-          onSubmit={(form, reset) => handleInventoryAction(checkInventory, form, reset)}
+          onSubmit={(form, reset) =>
+            handleInventoryAction(checkInventory, form, reset, "盘点成功，库存和流水已刷新。")
+          }
           submitText="提交盘点"
           title="库存盘点"
         />

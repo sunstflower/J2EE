@@ -19,6 +19,10 @@ button {
   cursor: pointer;
 }
 
+strong {
+  color: inherit;
+}
+
 .login-shell,
 .app-shell {
   min-height: 100vh;
@@ -44,6 +48,55 @@ button {
 .hero-card {
   max-width: 760px;
   padding: 40px;
+}
+
+.auth-switch {
+  display: inline-flex;
+  gap: 8px;
+  margin: 24px 0 16px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #edf4eb;
+}
+
+.auth-tab {
+  border: 0;
+  background: transparent;
+  color: #436654;
+  padding: 10px 18px;
+  border-radius: 999px;
+}
+
+.auth-tab.active-tab {
+  background: #1f6b4f;
+  color: #ffffff;
+}
+
+.auth-form {
+  display: grid;
+  gap: 14px;
+}
+
+.primary-action {
+  border: 0;
+  background: #1f6b4f;
+  color: #ffffff;
+  padding: 13px 16px;
+  border-radius: 14px;
+}
+
+.role-hint {
+  margin: 0;
+  color: #50705e;
+  font-size: 14px;
+}
+
+.demo-hint {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #f3f8f3;
+  color: #355646;
 }
 
 .hero-copy,
@@ -130,6 +183,12 @@ button {
   margin: 24px 0;
 }
 
+.sidebar-shortcuts {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
 .nav-link {
   padding: 14px 16px;
   color: #e7f4ea;
@@ -179,6 +238,19 @@ button {
 .stat-card {
   border: 1px solid #dbe8dc;
   padding: 18px;
+}
+
+.module-card {
+  display: grid;
+  gap: 12px;
+}
+
+.module-card button {
+  border: 0;
+  background: #1f6b4f;
+  color: #ffffff;
+  padding: 12px 14px;
+  border-radius: 12px;
 }
 
 .form-panel,
@@ -241,8 +313,21 @@ select {
   margin-top: 16px;
 }
 
-.message.success {
+.message {
   margin-top: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #eef5ef;
+}
+
+.message.success {
+  color: #1f6b4f;
+  background: #eaf7ef;
+}
+
+.message.error {
+  color: #9e2f2f;
+  background: #fdecec;
 }
 
 .pagination {

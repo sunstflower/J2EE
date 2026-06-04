@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WarningPage from "../WarningPage";
-import { clearCurrentUser, saveCurrentUser } from "../../auth";
+import { clearCurrentUser, saveAuthSession } from "../../auth";
 
 function mockJsonResponse(data) {
   return Promise.resolve({
@@ -14,7 +14,10 @@ function mockJsonResponse(data) {
 describe("WarningPage", () => {
   beforeEach(() => {
     clearCurrentUser();
-    saveCurrentUser({ userId: 200, userName: "张药师", role: "PHARMACIST" });
+    saveAuthSession({
+      token: "warning-token",
+      user: { userId: 200, userName: "张药师", role: "PHARMACIST" },
+    });
   });
 
   afterEach(() => {

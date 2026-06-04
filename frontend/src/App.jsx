@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { clearCurrentUser, DEMO_USERS, loadCurrentUser, saveCurrentUser } from "./auth";
+import { login } from "./api/auth";
+import RequireRole from "./components/RequireRole";
+import {
+  clearCurrentUser,
+  inferRoleFromUserId,
+  loadCurrentUser,
+  saveAuthSession,
+} from "./auth";
 import DashboardPage from "./pages/DashboardPage";
 import DrugPage from "./pages/DrugPage";
 import HomePage from "./pages/HomePage";
@@ -12,25 +19,86 @@ import PrescriptionDetailPage from "./pages/PrescriptionDetailPage";
 import PrescriptionPage from "./pages/PrescriptionPage";
 import WarningPage from "./pages/WarningPage";
 
-function LoginPage({ onSelectUser }) {
+function LoginPage({ onLogin }) {
+  const [form, setForm] = useState({
+    userId: "",
+    password: "",
+  });
+  const [message, setMessage] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  function updateField(key, value) {
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const data = await login({
+        userId: Number(form.userId),
+        password: form.password,
+      });
+      onLogin(data);
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  let roleHint = "用户号需以 1 或 2 开头";
+  if (form.userId.trim()) {
+    try {
+      roleHint = `当前识别角色：${
+        inferRoleFromUserId(form.userId) === "DOCTOR" ? "医生" : "药师"
+      }`;
+    } catch (error) {
+      roleHint = error.message;
+    }
+  }
+
   return (
     <main className="login-shell">
       <section className="hero-card">
         <p className="eyebrow">Drug Management System</p>
-        <h1>药物管理系统联调入口</h1>
-        <p className="hero-copy">当前阶段使用最小登录态切换医生与药师身份，便于前后端联调与容器演示。</p>
-        <div className="login-grid">
-          {DEMO_USERS.map((user) => (
-            <button
-              className="login-card"
-              key={user.userId}
-              onClick={() => onSelectUser(user)}
-              type="button"
-            >
-              <strong>{user.userName}</strong>
-              <span>{user.role === "DOCTOR" ? "医生身份" : "药师身份"}</span>
-            </button>
-          ))}
+        <h1>药物管理系统登录</h1>
+        <p className="hero-copy">
+          当前演示环境通过后端登录接口签发会话。用户号以 1 开头为药师，以 2 开头为医生。
+        </p>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <label>
+            用户号
+            <input
+              onChange={(event) => updateField("userId", event.target.value)}
+              placeholder="例如 1001 / 2001"
+              value={form.userId}
+            />
+          </label>
+          <label>
+            密码
+            <input
+              onChange={(event) => updateField("password", event.target.value)}
+              placeholder="请输入密码"
+              type="password"
+              value={form.password}
+            />
+          </label>
+          <p className="role-hint">{roleHint}</p>
+          {message ? <p className={`message ${message.type}`}>{message.text}</p> : null}
+          <button className="primary-action" disabled={loading} type="submit">
+            {loading ? "登录中..." : "登录"}
+          </button>
+        </form>
+        <div className="demo-hint">
+          <p>演示账号</p>
+          <p>药师：1001 / pharm123</p>
+          <p>医生：2001 / doctor123</p>
         </div>
       </section>
     </main>
@@ -43,9 +111,9 @@ function App() {
   if (!currentUser) {
     return (
       <LoginPage
-        onSelectUser={(user) => {
-          saveCurrentUser(user);
-          setCurrentUser(user);
+        onLogin={(session) => {
+          saveAuthSession(session);
+          setCurrentUser(session.user);
         }}
       />
     );
@@ -72,7 +140,9 @@ function App() {
           <Route element={<InventoryRecordsPage />} path="inventories/records" />
           <Route element={<WarningPage />} path="warnings" />
           <Route element={<PrescriptionPage />} path="prescriptions" />
-          <Route element={<PrescriptionCreatePage />} path="prescriptions/new" />
+          <Route element={<RequireRole roles={["DOCTOR"]} />} path="prescriptions/new">
+            <Route element={<PrescriptionCreatePage />} index />
+          </Route>
           <Route element={<PrescriptionDetailPage />} path="prescriptions/:id" />
           <Route element={<Navigate replace to="/" />} path="dashboard" />
           <Route element={<NotFoundPage />} path="*" />

@@ -1,4 +1,4 @@
-import { loadCurrentUser } from "../auth";
+import { loadAccessToken, loadCurrentUser } from "../auth";
 
 const DEFAULT_API_BASE_URL = "http://localhost:8080";
 
@@ -15,9 +15,14 @@ function buildHeaders(body, headers = {}) {
   }
 
   if (currentUser) {
-    nextHeaders.set("X-User-Id", String(currentUser.userId));
-    nextHeaders.set("X-User-Name", encodeURIComponent(currentUser.userName));
-    nextHeaders.set("X-User-Role", currentUser.role);
+    const token = loadAccessToken();
+    if (token) {
+      nextHeaders.set("Authorization", `Bearer ${token}`);
+    } else {
+      nextHeaders.set("X-User-Id", String(currentUser.userId));
+      nextHeaders.set("X-User-Name", encodeURIComponent(currentUser.userName));
+      nextHeaders.set("X-User-Role", currentUser.role);
+    }
   }
 
   return nextHeaders;
@@ -46,4 +51,12 @@ export async function apiRequest(path, options = {}) {
   });
 
   return parseResponse(response);
+}
+
+export function postPublic(path, body) {
+  return apiRequest(path, {
+    method: "POST",
+    body,
+    headers: {},
+  });
 }

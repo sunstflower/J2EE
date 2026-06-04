@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Pagination from "../components/Pagination";
+import FeedbackMessage from "../components/FeedbackMessage";
 import { queryExpiryWarnings, queryLowStockWarnings } from "../api/warnings";
+import useFlashMessage from "../hooks/useFlashMessage";
 
 function WarningPage() {
   const [lowStockData, setLowStockData] = useState({ records: [], total: 0, pageSize: 10 });
@@ -8,21 +10,37 @@ function WarningPage() {
   const [lowStockPageNum, setLowStockPageNum] = useState(1);
   const [expiryPageNum, setExpiryPageNum] = useState(1);
   const [expiryDays, setExpiryDays] = useState("30");
+  const [loading, setLoading] = useState(false);
+  const { message, showError } = useFlashMessage();
 
   async function loadLowStock(targetPage = lowStockPageNum) {
-    const data = await queryLowStockWarnings({ pageNum: targetPage, pageSize: 10 });
-    setLowStockPageNum(data.pageNum);
-    setLowStockData(data);
+    setLoading(true);
+    try {
+      const data = await queryLowStockWarnings({ pageNum: targetPage, pageSize: 10 });
+      setLowStockPageNum(data.pageNum);
+      setLowStockData(data);
+    } catch (error) {
+      showError(error.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function loadExpiry(targetPage = expiryPageNum, targetDays = expiryDays) {
-    const data = await queryExpiryWarnings({
-      pageNum: targetPage,
-      pageSize: 10,
-      expiryDays: targetDays,
-    });
-    setExpiryPageNum(data.pageNum);
-    setExpiryData(data);
+    setLoading(true);
+    try {
+      const data = await queryExpiryWarnings({
+        pageNum: targetPage,
+        pageSize: 10,
+        expiryDays: targetDays,
+      });
+      setExpiryPageNum(data.pageNum);
+      setExpiryData(data);
+    } catch (error) {
+      showError(error.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -35,6 +53,8 @@ function WarningPage() {
       <article className="panel">
         <p className="eyebrow">Warning</p>
         <h2>低库存预警</h2>
+        <FeedbackMessage message={message} />
+        {loading ? <p>加载中...</p> : null}
         <div className="table-list">
           {lowStockData.records.map((item) => (
             <article className="list-card" key={item.drugId}>
