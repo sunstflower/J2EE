@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import Pagination from "../components/Pagination";
+import useApiAction from "../hooks/useApiAction";
+import usePagedResource from "../hooks/usePagedResource";
 import { createDrug, deleteDrug, queryDrugs } from "../api/drugs";
 
 const initialForm = {
@@ -18,29 +21,19 @@ function DrugPage() {
     pageSize: 10,
     keyword: "",
   });
-  const [result, setResult] = useState({
-    records: [],
-    total: 0,
-    pageNum: 1,
-    pageSize: 10,
-  });
+  const { data: result, loadResource: loadDrugResource, loading } = usePagedResource();
   const [form, setForm] = useState(initialForm);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const { errorMessage, message, resetFeedback, runAction, submitting } = useApiAction();
 
-  async function loadDrugs(nextQuery = query) {
-    setLoading(true);
-    setErrorMessage("");
+  async function loadDrugs(nextQuery = query, options = {}) {
+    if (options.resetFeedback) {
+      resetFeedback();
+    }
 
     try {
-      const data = await queryDrugs(nextQuery);
-      setResult(data);
+      await loadDrugResource(() => queryDrugs(nextQuery));
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setLoading(false);
+      return null;
     }
   }
 
@@ -51,38 +44,39 @@ function DrugPage() {
 
   async function handleCreate(event) {
     event.preventDefault();
-    setSubmitting(true);
-    setMessage("");
-    setErrorMessage("");
 
     try {
-      await createDrug({
-        ...form,
-        purchasePrice: Number(form.purchasePrice),
-        salePrice: Number(form.salePrice),
-        lowStockThreshold: Number(form.lowStockThreshold),
-        enabled: Number(form.enabled),
-      });
-      setMessage("药品新增成功，列表已刷新。");
+      await runAction(
+        "create",
+        () =>
+          createDrug({
+            ...form,
+            purchasePrice: Number(form.purchasePrice),
+            salePrice: Number(form.salePrice),
+            lowStockThreshold: Number(form.lowStockThreshold),
+            enabled: Number(form.enabled),
+          }),
+        "药品新增成功，列表已刷新。"
+      );
       setForm(initialForm);
       await loadDrugs(query);
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setSubmitting(false);
+      return null;
     }
   }
 
   async function handleDelete(id) {
-    setMessage("");
-    setErrorMessage("");
+    if (!window.confirm("确认删除该药品吗？")) {
+      return;
+    }
+
+    resetFeedback();
 
     try {
-      await deleteDrug(id);
-      setMessage("药品已删除。");
+      await runAction("delete", () => deleteDrug(id), "药品已删除。");
       await loadDrugs(query);
     } catch (error) {
-      setErrorMessage(error.message);
+      return null;
     }
   }
 
@@ -96,6 +90,15 @@ function DrugPage() {
     await loadDrugs(nextQuery);
   }
 
+  async function handlePageChange(nextPageNum) {
+    const nextQuery = {
+      ...query,
+      pageNum: nextPageNum,
+    };
+    setQuery(nextQuery);
+    await loadDrugs(nextQuery);
+  }
+
   return (
     <section className="module-panel">
       <div className="section-heading">
@@ -103,7 +106,11 @@ function DrugPage() {
           <p className="section-kicker">Drug Module</p>
           <h2>药品页面联调</h2>
         </div>
-        <button className="secondary-action" onClick={() => loadDrugs(query)} type="button">
+        <button
+          className="secondary-action"
+          onClick={() => loadDrugs(query, { resetFeedback: true })}
+          type="button"
+        >
           刷新列表
         </button>
       </div>
@@ -229,8 +236,8 @@ function DrugPage() {
               </select>
             </label>
           </div>
-          <button className="primary-action" disabled={submitting} type="submit">
-            {submitting ? "提交中..." : "新增药品"}
+          <button className="primary-action" disabled={submitting === "create"} type="submit">
+            {submitting === "create" ? "提交中..." : "新增药品"}
           </button>
         </form>
       </div>
@@ -275,6 +282,12 @@ function DrugPage() {
             </article>
           ))}
         </div>
+        <Pagination
+          onPageChange={handlePageChange}
+          pageNum={result.pageNum}
+          pageSize={result.pageSize}
+          total={result.total}
+        />
       </section>
     </section>
   );

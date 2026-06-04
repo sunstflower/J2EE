@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import Pagination from "../components/Pagination";
+import usePagedResource from "../hooks/usePagedResource";
 import { queryExpiryWarnings, queryLowStockWarnings } from "../api/warnings";
 
 function WarningPage() {
@@ -11,47 +13,35 @@ function WarningPage() {
     pageSize: 10,
     expiryDays: 30,
   });
-  const [lowStockResult, setLowStockResult] = useState({
-    records: [],
-    total: 0,
-    pageNum: 1,
-    pageSize: 10,
-  });
-  const [expiryResult, setExpiryResult] = useState({
-    records: [],
-    total: 0,
-    pageNum: 1,
-    pageSize: 10,
-  });
-  const [loadingLowStock, setLoadingLowStock] = useState(false);
-  const [loadingExpiry, setLoadingExpiry] = useState(false);
+  const {
+    data: lowStockResult,
+    loadResource: loadLowStockResource,
+    loading: loadingLowStock,
+  } = usePagedResource();
+  const {
+    data: expiryResult,
+    loadResource: loadExpiryResource,
+    loading: loadingExpiry,
+  } = usePagedResource();
   const [errorMessage, setErrorMessage] = useState("");
 
   async function loadLowStockWarnings(nextQuery = lowStockQuery) {
-    setLoadingLowStock(true);
     setErrorMessage("");
 
     try {
-      const data = await queryLowStockWarnings(nextQuery);
-      setLowStockResult(data);
+      await loadLowStockResource(() => queryLowStockWarnings(nextQuery));
     } catch (error) {
       setErrorMessage(error.message);
-    } finally {
-      setLoadingLowStock(false);
     }
   }
 
   async function loadExpiryWarnings(nextQuery = expiryQuery) {
-    setLoadingExpiry(true);
     setErrorMessage("");
 
     try {
-      const data = await queryExpiryWarnings(nextQuery);
-      setExpiryResult(data);
+      await loadExpiryResource(() => queryExpiryWarnings(nextQuery));
     } catch (error) {
       setErrorMessage(error.message);
-    } finally {
-      setLoadingExpiry(false);
     }
   }
 
@@ -67,6 +57,24 @@ function WarningPage() {
       ...expiryQuery,
       pageNum: 1,
       expiryDays: Number(expiryQuery.expiryDays),
+    };
+    setExpiryQuery(nextQuery);
+    await loadExpiryWarnings(nextQuery);
+  }
+
+  async function handleLowStockPageChange(nextPageNum) {
+    const nextQuery = {
+      ...lowStockQuery,
+      pageNum: nextPageNum,
+    };
+    setLowStockQuery(nextQuery);
+    await loadLowStockWarnings(nextQuery);
+  }
+
+  async function handleExpiryPageChange(nextPageNum) {
+    const nextQuery = {
+      ...expiryQuery,
+      pageNum: nextPageNum,
     };
     setExpiryQuery(nextQuery);
     await loadExpiryWarnings(nextQuery);
@@ -117,6 +125,12 @@ function WarningPage() {
               </article>
             ))}
           </div>
+          <Pagination
+            onPageChange={handleLowStockPageChange}
+            pageNum={lowStockResult.pageNum}
+            pageSize={lowStockResult.pageSize}
+            total={lowStockResult.total}
+          />
         </section>
 
         <section className="module-card">
@@ -174,6 +188,12 @@ function WarningPage() {
               </article>
             ))}
           </div>
+          <Pagination
+            onPageChange={handleExpiryPageChange}
+            pageNum={expiryResult.pageNum}
+            pageSize={expiryResult.pageSize}
+            total={expiryResult.total}
+          />
         </section>
       </div>
     </section>

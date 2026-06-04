@@ -40,6 +40,90 @@
 
 ## 4. 变更记录
 
+### 2026-06-04 09:08（前端结构整改收口）
+- 会话目标：继续完成剩余前端整改，补齐细分路由承载与导航层角色差异
+- 修改文件：
+  - `AGENTS.md`
+  - `docs/execution-checklist.md`
+  - `docs/frontend-integration.md`
+  - `frontend/src/App.jsx`
+  - `frontend/src/pages/HomePage.jsx`
+  - `frontend/src/pages/InventoryRecordsPage.jsx`
+  - `frontend/src/pages/PrescriptionCreatePage.jsx`
+  - `frontend/src/pages/PrescriptionDetailPage.jsx`
+  - `frontend/src/pages/__tests__/App.test.jsx`
+  - `frontend/src/styles.css`
+- 主要变更：
+  - 为库存流水、处方新建、处方详情补充独立路由承载页，避免继续使用纯重定向占位
+  - 在导航层新增更明确的角色能力标识，进一步前移医生/药师入口差异
+  - 调整首页测试并执行 `frontend npm test`，验证前端 5 个测试文件、11 个用例全部通过
+  - 同步联调文档与执行清单，将前端结构整改状态进一步收口
+- 备注：
+  - 当前细分路由页内部仍复用现有主工作台组件，后续如有必要可继续向真正独立页面拆分
+
+### 2026-06-04 09:05（前端交互整改第二批）
+- 会话目标：进行第三批前端整改，优先收口页面重复的请求状态管理
+- 修改文件：
+  - `AGENTS.md`
+  - `docs/execution-checklist.md`
+  - `docs/frontend-integration.md`
+  - `frontend/src/hooks/useApiAction.js`
+  - `frontend/src/hooks/usePagedResource.js`
+  - `frontend/src/pages/DrugPage.jsx`
+  - `frontend/src/pages/InventoryPage.jsx`
+  - `frontend/src/pages/PrescriptionPage.jsx`
+  - `frontend/src/pages/WarningPage.jsx`
+- 主要变更：
+  - 新增 `useApiAction` 与 `usePagedResource` 两个轻量 Hook，用于统一提交态、提示信息、异常处理和分页资源加载
+  - 将药品、库存、预警、处方四个模块逐步切换到统一 Hook，减少重复的 `loading / message / errorMessage / submitting` 状态代码
+  - 执行 `frontend npm test`，验证前端 5 个测试文件、11 个用例全部通过
+  - 同步联调文档与执行清单，将统一状态管理从“待做”更新为“已完成第一版落地”
+- 备注：
+  - 当前仍属于轻量状态层，不等同于引入完整数据层；后续如有需要，可在此基础上再升级到更强的查询缓存方案
+
+### 2026-06-04 09:00（前端交互整改第一批）
+- 会话目标：进行第二批前端整改，优先完成删除确认与分页控件
+- 修改文件：
+  - `AGENTS.md`
+  - `docs/execution-checklist.md`
+  - `docs/frontend-integration.md`
+  - `frontend/src/components/Pagination.jsx`
+  - `frontend/src/pages/DrugPage.jsx`
+  - `frontend/src/pages/InventoryPage.jsx`
+  - `frontend/src/pages/PrescriptionPage.jsx`
+  - `frontend/src/pages/WarningPage.jsx`
+  - `frontend/src/pages/__tests__/DrugPage.test.jsx`
+  - `frontend/src/styles.css`
+- 主要变更：
+  - 新增通用分页组件，并接入药品、库存、预警、处方四个模块的分页查询结果
+  - 为药品删除操作增加二次确认，降低演示误触风险
+  - 扩展药品页面测试，并执行 `frontend npm test`，验证前端 5 个测试文件、11 个用例全部通过
+  - 同步联调文档和执行清单，将前端交互整改状态更新为“进行中”
+- 备注：
+  - 当前确认逻辑先采用轻量 `window.confirm`，后续如引入统一组件体系可再替换为自定义对话框
+
+### 2026-06-04 08:57（前端路由化整改）
+- 会话目标：开始前端整改，优先完成路由化壳层和导航拆分
+- 修改文件：
+  - `AGENTS.md`
+  - `docs/execution-checklist.md`
+  - `docs/frontend-integration.md`
+  - `frontend/package-lock.json`
+  - `frontend/package.json`
+  - `frontend/src/App.jsx`
+  - `frontend/src/pages/DashboardPage.jsx`
+  - `frontend/src/pages/HomePage.jsx`
+  - `frontend/src/pages/NotFoundPage.jsx`
+  - `frontend/src/pages/__tests__/App.test.jsx`
+  - `frontend/src/styles.css`
+- 主要变更：
+  - 引入 `react-router-dom`，将前端从单页长工作台切换为“壳层布局 + 导航 + 独立模块路由”
+  - 新增首页总览页与未找到页面，保留药品、库存、预警、处方四个模块的独立访问入口
+  - 在导航层初步体现医生/药师入口差异，并保留处方新建、详情、库存流水等细分路由的后续拆分空间
+  - 更新首页测试并执行 `frontend npm test`，验证前端 5 个测试文件、10 个用例全部通过
+- 备注：
+  - 本轮优先完成前端结构整改第一步，尚未进入分页控件、删除确认和统一状态管理 Hook 的实现
+
 ### 2026-06-04 00:18（药品种子数据扩充）
 - 会话目标：补充 SQL 初始化数据，模拟更完整的药品主数据表
 - 修改文件：

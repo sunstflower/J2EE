@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import Pagination from "../components/Pagination";
+import useApiAction from "../hooks/useApiAction";
+import usePagedResource from "../hooks/usePagedResource";
 import { loadCurrentUser } from "../auth";
 import { queryDrugs } from "../api/drugs";
 import {
@@ -37,37 +40,28 @@ function PrescriptionPage() {
     status: "",
     patientName: "",
   });
-  const [prescriptions, setPrescriptions] = useState({
-    records: [],
-    total: 0,
-    pageNum: 1,
-    pageSize: 10,
-  });
+  const {
+    data: prescriptions,
+    loadResource: loadPrescriptionResource,
+    loading: loadingList,
+  } = usePagedResource();
   const [selectedPrescriptionId, setSelectedPrescriptionId] = useState(null);
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const [availableDrugs, setAvailableDrugs] = useState([]);
   const [createForm, setCreateForm] = useState(() => buildCreateForm(currentUser));
   const [rejectReason, setRejectReason] = useState("");
-  const [loadingList, setLoadingList] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [submitting, setSubmitting] = useState("");
-  const [message, setMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const { errorMessage, message, runAction: executeAction, setErrorMessage, submitting } =
+    useApiAction();
 
   async function loadPrescriptions(nextQuery = query) {
-    setLoadingList(true);
-    setErrorMessage("");
-
     try {
-      const data = await queryPrescriptions(nextQuery);
-      setPrescriptions(data);
+      const data = await loadPrescriptionResource(() => queryPrescriptions(nextQuery));
       if (!selectedPrescriptionId && data.records.length > 0) {
         setSelectedPrescriptionId(data.records[0].id);
       }
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setLoadingList(false);
+      return null;
     }
   }
 
@@ -141,9 +135,6 @@ function PrescriptionPage() {
 
   async function handleCreate(event) {
     event.preventDefault();
-    setSubmitting("create");
-    setMessage("");
-    setErrorMessage("");
 
     try {
       const payload = {
@@ -161,15 +152,16 @@ function PrescriptionPage() {
           quantity: Number(item.quantity),
         })),
       };
-      const id = await createPrescription(payload);
-      setMessage("处方创建成功，列表和详情已刷新。");
+      const id = await executeAction(
+        "create",
+        () => createPrescription(payload),
+        "处方创建成功，列表和详情已刷新。"
+      );
       setCreateForm(buildCreateForm(currentUser));
       await loadPrescriptions(query);
       setSelectedPrescriptionId(id);
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setSubmitting("");
+      return null;
     }
   }
 
@@ -183,25 +175,27 @@ function PrescriptionPage() {
     await loadPrescriptions(nextQuery);
   }
 
-  async function runAction(type, executor) {
+  async function handlePrescriptionPageChange(nextPageNum) {
+    const nextQuery = {
+      ...query,
+      pageNum: nextPageNum,
+    };
+    setQuery(nextQuery);
+    await loadPrescriptions(nextQuery);
+  }
+
+  async function handleWorkflowAction(type, executor) {
     if (!selectedPrescription) {
       return;
     }
 
-    setSubmitting(type);
-    setMessage("");
-    setErrorMessage("");
-
     try {
-      await executor();
-      setMessage("处方状态已更新，详情已刷新。");
+      await executeAction(type, executor, "处方状态已更新，详情已刷新。");
       await loadPrescriptions(query);
       await loadPrescriptionDetail(selectedPrescription.id);
       setRejectReason("");
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setSubmitting("");
+      return null;
     }
   }
 
@@ -305,6 +299,12 @@ function PrescriptionPage() {
                 </button>
               ))}
             </div>
+            <Pagination
+              onPageChange={handlePrescriptionPageChange}
+              pageNum={prescriptions.pageNum}
+              pageSize={prescriptions.pageSize}
+              total={prescriptions.total}
+            />
           </section>
         </section>
 
@@ -509,7 +509,7 @@ function PrescriptionPage() {
                       className="primary-action"
                       disabled={submitting === "doctor-approve"}
                       onClick={() =>
-                        runAction("doctor-approve", () =>
+                        handleWorkflowAction("doctor-approve", () =>
                           approvePrescriptionByDoctor(selectedPrescription.id, {
                             action: "APPROVE",
                             doctorId: currentUser.userId,
@@ -525,7 +525,7 @@ function PrescriptionPage() {
                       className="danger-action"
                       disabled={submitting === "doctor-reject"}
                       onClick={() =>
-                        runAction("doctor-reject", () =>
+                        handleWorkflowAction("doctor-reject", () =>
                           approvePrescriptionByDoctor(selectedPrescription.id, {
                             action: "REJECT",
                             doctorId: currentUser.userId,
@@ -544,7 +544,9 @@ function PrescriptionPage() {
                   <button
                     className="primary-action"
                     disabled={submitting === "submit"}
-                    onClick={() => runAction("submit", () => submitPrescription(selectedPrescription.id))}
+                    onClick={() =>
+                      handleWorkflowAction("submit", () => submitPrescription(selectedPrescription.id))
+                    }
                     type="button"
                   >
                     提交处方审核
@@ -557,7 +559,7 @@ function PrescriptionPage() {
                       className="primary-action"
                       disabled={submitting === "audit-approve"}
                       onClick={() =>
-                        runAction("audit-approve", () =>
+                        handleWorkflowAction("audit-approve", () =>
                           auditPrescription(selectedPrescription.id, {
                             action: "APPROVE",
                             operatorId: currentUser.userId,
@@ -573,7 +575,7 @@ function PrescriptionPage() {
                       className="danger-action"
                       disabled={submitting === "audit-reject"}
                       onClick={() =>
-                        runAction("audit-reject", () =>
+                        handleWorkflowAction("audit-reject", () =>
                           auditPrescription(selectedPrescription.id, {
                             action: "REJECT",
                             operatorId: currentUser.userId,
@@ -594,7 +596,7 @@ function PrescriptionPage() {
                     className="primary-action"
                     disabled={submitting === "dispense"}
                     onClick={() =>
-                      runAction("dispense", () =>
+                      handleWorkflowAction("dispense", () =>
                         dispensePrescription(selectedPrescription.id, {
                           operatorId: currentUser.userId,
                           operatorName: currentUser.userName,
@@ -611,7 +613,9 @@ function PrescriptionPage() {
                   <button
                     className="danger-action"
                     disabled={submitting === "cancel"}
-                    onClick={() => runAction("cancel", () => cancelPrescription(selectedPrescription.id))}
+                    onClick={() =>
+                      handleWorkflowAction("cancel", () => cancelPrescription(selectedPrescription.id))
+                    }
                     type="button"
                   >
                     取消处方

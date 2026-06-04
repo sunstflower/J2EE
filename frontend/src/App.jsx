@@ -1,6 +1,16 @@
 import { useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { clearCurrentUser, DEMO_USERS, loadCurrentUser, saveCurrentUser } from "./auth";
+import DashboardPage from "./pages/DashboardPage";
+import DrugPage from "./pages/DrugPage";
 import HomePage from "./pages/HomePage";
+import InventoryPage from "./pages/InventoryPage";
+import InventoryRecordsPage from "./pages/InventoryRecordsPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import PrescriptionCreatePage from "./pages/PrescriptionCreatePage";
+import PrescriptionDetailPage from "./pages/PrescriptionDetailPage";
+import PrescriptionPage from "./pages/PrescriptionPage";
+import WarningPage from "./pages/WarningPage";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => loadCurrentUser());
@@ -36,13 +46,32 @@ function App() {
   }
 
   return (
-    <HomePage
-      currentUser={currentUser}
-      onLogout={() => {
-        clearCurrentUser();
-        setCurrentUser(null);
-      }}
-    />
+    <BrowserRouter>
+      <Routes>
+        <Route
+          element={
+            <HomePage
+              currentUser={currentUser}
+              onLogout={() => {
+                clearCurrentUser();
+                setCurrentUser(null);
+              }}
+            />
+          }
+          path="/"
+        >
+          <Route element={<DashboardPage currentUser={currentUser} />} index />
+          <Route element={<DrugPage />} path="drugs" />
+          <Route element={<InventoryPage />} path="inventories" />
+          <Route element={<InventoryRecordsPage />} path="inventories/records" />
+          <Route element={<WarningPage />} path="warnings" />
+          <Route element={<PrescriptionPage />} path="prescriptions" />
+          <Route element={<PrescriptionCreatePage />} path="prescriptions/new" />
+          <Route element={<PrescriptionDetailPage />} path="prescriptions/:id" />
+          <Route element={<NotFoundPage />} path="*" />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 

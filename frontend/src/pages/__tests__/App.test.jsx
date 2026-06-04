@@ -39,10 +39,12 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: /王医生/ }));
 
     expect(screen.getByRole("heading", { name: "药物管理系统主功能联调准备已就绪" })).toBeInTheDocument();
-    expect(screen.getByText("当前身份：王医生（DOCTOR）")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "药品页面联调" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "库存模块联调" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "预警模块联调" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "处方模块联调" })).toBeInTheDocument();
+    expect(screen.getByText("王医生 / DOCTOR")).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "主导航" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /药品管理/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /库存管理/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /预警查询/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /处方工作台/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /新建处方/ })).toBeInTheDocument();
   });
 });

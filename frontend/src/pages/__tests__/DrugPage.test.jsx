@@ -137,4 +137,17 @@ describe("DrugPage", () => {
     expect(global.fetch.mock.calls[1][1].body).toContain("\"drugCode\":\"DRUG-NEW\"");
     expect(await screen.findByText("布洛芬缓释胶囊")).toBeInTheDocument();
   });
+
+  it("confirms before deleting a drug", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<DrugPage />);
+
+    await user.click(await screen.findByRole("button", { name: "删除" }));
+
+    await waitFor(() => {
+      expect(confirmSpy).toHaveBeenCalledWith("确认删除该药品吗？");
+    });
+  });
 });

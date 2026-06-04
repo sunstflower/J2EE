@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import Pagination from "../components/Pagination";
+import useApiAction from "../hooks/useApiAction";
+import usePagedResource from "../hooks/usePagedResource";
 import { loadCurrentUser } from "../auth";
 import {
   checkInventory,
@@ -46,52 +49,34 @@ function InventoryPage() {
     recordType: "",
     bizNo: "",
   });
-  const [inventories, setInventories] = useState({
-    records: [],
-    total: 0,
-    pageNum: 1,
-    pageSize: 10,
-  });
-  const [records, setRecords] = useState({
-    records: [],
-    total: 0,
-    pageNum: 1,
-    pageSize: 10,
-  });
+  const {
+    data: inventories,
+    loadResource: loadInventoryResource,
+    loading: loadingInventories,
+  } = usePagedResource();
+  const {
+    data: records,
+    loadResource: loadRecordResource,
+    loading: loadingRecords,
+  } = usePagedResource();
   const [inboundForm, setInboundForm] = useState(initialInboundForm);
   const [outboundForm, setOutboundForm] = useState(initialOutboundForm);
   const [checkForm, setCheckForm] = useState(initialCheckForm);
-  const [loadingInventories, setLoadingInventories] = useState(false);
-  const [loadingRecords, setLoadingRecords] = useState(false);
-  const [submittingAction, setSubmittingAction] = useState("");
-  const [message, setMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const { errorMessage, message, runAction, submitting } = useApiAction();
 
   async function loadInventories(nextQuery = inventoryQuery) {
-    setLoadingInventories(true);
-    setErrorMessage("");
-
     try {
-      const data = await queryInventories(nextQuery);
-      setInventories(data);
+      await loadInventoryResource(() => queryInventories(nextQuery));
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setLoadingInventories(false);
+      return null;
     }
   }
 
   async function loadRecords(nextQuery = recordQuery) {
-    setLoadingRecords(true);
-    setErrorMessage("");
-
     try {
-      const data = await queryInventoryRecords(nextQuery);
-      setRecords(data);
+      await loadRecordResource(() => queryInventoryRecords(nextQuery));
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setLoadingRecords(false);
+      return null;
     }
   }
 
@@ -108,70 +93,67 @@ function InventoryPage() {
 
   async function handleInbound(event) {
     event.preventDefault();
-    setSubmittingAction("inbound");
-    setMessage("");
-    setErrorMessage("");
 
     try {
-      await inboundInventory({
-        ...inboundForm,
-        drugId: Number(inboundForm.drugId),
-        quantity: Number(inboundForm.quantity),
-        operatorName: getOperatorName(),
-      });
-      setMessage("入库成功，库存和流水已刷新。");
+      await runAction(
+        "inbound",
+        () =>
+          inboundInventory({
+            ...inboundForm,
+            drugId: Number(inboundForm.drugId),
+            quantity: Number(inboundForm.quantity),
+            operatorName: getOperatorName(),
+          }),
+        "入库成功，库存和流水已刷新。"
+      );
       setInboundForm(initialInboundForm);
       await Promise.all([loadInventories(inventoryQuery), loadRecords(recordQuery)]);
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setSubmittingAction("");
+      return null;
     }
   }
 
   async function handleOutbound(event) {
     event.preventDefault();
-    setSubmittingAction("outbound");
-    setMessage("");
-    setErrorMessage("");
 
     try {
-      await outboundInventory({
-        ...outboundForm,
-        drugId: Number(outboundForm.drugId),
-        quantity: Number(outboundForm.quantity),
-        operatorName: getOperatorName(),
-      });
-      setMessage("出库成功，库存和流水已刷新。");
+      await runAction(
+        "outbound",
+        () =>
+          outboundInventory({
+            ...outboundForm,
+            drugId: Number(outboundForm.drugId),
+            quantity: Number(outboundForm.quantity),
+            operatorName: getOperatorName(),
+          }),
+        "出库成功，库存和流水已刷新。"
+      );
       setOutboundForm(initialOutboundForm);
       await Promise.all([loadInventories(inventoryQuery), loadRecords(recordQuery)]);
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setSubmittingAction("");
+      return null;
     }
   }
 
   async function handleCheck(event) {
     event.preventDefault();
-    setSubmittingAction("check");
-    setMessage("");
-    setErrorMessage("");
 
     try {
-      await checkInventory({
-        ...checkForm,
-        inventoryId: Number(checkForm.inventoryId),
-        actualQuantity: Number(checkForm.actualQuantity),
-        operatorName: getOperatorName(),
-      });
-      setMessage("盘点成功，库存和流水已刷新。");
+      await runAction(
+        "check",
+        () =>
+          checkInventory({
+            ...checkForm,
+            inventoryId: Number(checkForm.inventoryId),
+            actualQuantity: Number(checkForm.actualQuantity),
+            operatorName: getOperatorName(),
+          }),
+        "盘点成功，库存和流水已刷新。"
+      );
       setCheckForm(initialCheckForm);
       await Promise.all([loadInventories(inventoryQuery), loadRecords(recordQuery)]);
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setSubmittingAction("");
+      return null;
     }
   }
 
@@ -190,6 +172,24 @@ function InventoryPage() {
     const nextQuery = {
       ...recordQuery,
       pageNum: 1,
+    };
+    setRecordQuery(nextQuery);
+    await loadRecords(nextQuery);
+  }
+
+  async function handleInventoryPageChange(nextPageNum) {
+    const nextQuery = {
+      ...inventoryQuery,
+      pageNum: nextPageNum,
+    };
+    setInventoryQuery(nextQuery);
+    await loadInventories(nextQuery);
+  }
+
+  async function handleRecordPageChange(nextPageNum) {
+    const nextQuery = {
+      ...recordQuery,
+      pageNum: nextPageNum,
     };
     setRecordQuery(nextQuery);
     await loadRecords(nextQuery);
@@ -273,6 +273,12 @@ function InventoryPage() {
                 </article>
               ))}
             </div>
+            <Pagination
+              onPageChange={handleInventoryPageChange}
+              pageNum={inventories.pageNum}
+              pageSize={inventories.pageSize}
+              total={inventories.total}
+            />
           </section>
         </section>
 
@@ -359,8 +365,8 @@ function InventoryPage() {
                 value={inboundForm.remark}
               />
             </label>
-            <button className="primary-action" disabled={submittingAction === "inbound"} type="submit">
-              {submittingAction === "inbound" ? "提交中..." : "提交入库"}
+            <button className="primary-action" disabled={submitting === "inbound"} type="submit">
+              {submitting === "inbound" ? "提交中..." : "提交入库"}
             </button>
           </form>
 
@@ -412,8 +418,8 @@ function InventoryPage() {
                   value={outboundForm.remark}
                 />
               </label>
-              <button className="primary-action" disabled={submittingAction === "outbound"} type="submit">
-                {submittingAction === "outbound" ? "提交中..." : "提交出库"}
+              <button className="primary-action" disabled={submitting === "outbound"} type="submit">
+                {submitting === "outbound" ? "提交中..." : "提交出库"}
               </button>
             </form>
 
@@ -464,8 +470,8 @@ function InventoryPage() {
                   value={checkForm.remark}
                 />
               </label>
-              <button className="primary-action" disabled={submittingAction === "check"} type="submit">
-                {submittingAction === "check" ? "提交中..." : "提交盘点"}
+              <button className="primary-action" disabled={submitting === "check"} type="submit">
+                {submitting === "check" ? "提交中..." : "提交盘点"}
               </button>
             </form>
           </div>
@@ -541,6 +547,12 @@ function InventoryPage() {
             </article>
           ))}
         </div>
+        <Pagination
+          onPageChange={handleRecordPageChange}
+          pageNum={records.pageNum}
+          pageSize={records.pageSize}
+          total={records.total}
+        />
       </section>
     </section>
   );
