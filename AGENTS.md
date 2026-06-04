@@ -40,6 +40,23 @@
 
 ## 4. 变更记录
 
+### 2026-06-04 00:10（整改设计文档）
+- 会话目标：优先设计项目整改文档，收口前端结构偏差、认证收口与部署回归目标
+- 修改文件：
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/architecture.md`
+  - `docs/execution-checklist.md`
+  - `docs/frontend-integration.md`
+  - `docs/rectification-plan.md`
+- 主要变更：
+  - 新增整改设计文档，系统整理前端无路由、技术栈描述不一致、删除无确认、分页缺失、状态管理重复、角色导航缺失、后端操作者字段未完全收口等问题
+  - 调整执行清单，将后续重点改为“前端结构整改 -> 前端交互整改 -> Docker 业务验收 -> 部署回归”
+  - 修正 README 与架构文档中的前端技术栈表述，将 `shadcn/ui` 改回当前真实实现的“原生 CSS”
+  - 同步前端联调文档，明确当前单页工作台仅是过渡实现，后续必须路由化整改
+- 备注：
+  - 本次仅补文档设计，不修改业务代码；后续编码应以 `docs/rectification-plan.md` 为准
+
 ### 2026-06-03 20:30（容器化交付收口）
 - 会话目标：以容器化演示为目标继续推进，收口前端镜像和 Docker 文档
 - 修改文件：
@@ -63,6 +80,7 @@
 - 修改文件：
   - `README.md`
   - `AGENTS.md`
+  - `docker-compose.yml`
   - `docker/nginx/default.conf`
   - `docs/deployment.md`
   - `docs/docker.md`
@@ -71,6 +89,7 @@
   - 补充非 Docker-socket 验证结果：前端生产构建通过、后端打包通过、Compose 结构校验通过、Nginx 配置语法校验通过
   - 在 Docker 和部署文档中明确记录当前阻塞原因、已完成校验项和后续实跑要求
   - 在实际容器验证中修复外层 Nginx 仍指向 `frontend:5173` 的问题，改为代理前端静态容器的 `80` 端口
+  - 将宿主机对外前端入口从 `localhost:80` 调整为 `localhost:3000`，避免本机端口冲突并统一审查入口
 - 备注：
   - 当前已在具备 Docker 的环境中完成首次容器启动；后续可继续补充更细的演示脚本级验证
 

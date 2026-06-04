@@ -86,9 +86,9 @@ docker compose logs -f nginx
 
 推荐验证地址：
 
-- Nginx 统一入口：`http://localhost`
-- 后端健康检查：`http://localhost/api/health`
-- 药品接口：`http://localhost/api/drugs`
+- Nginx 统一入口：`http://localhost:3000`
+- 后端健康检查：`http://localhost:3000/api/health`
+- 药品接口：`http://localhost:3000/api/drugs`
 
 当前容器职责已收口为：
 
@@ -154,7 +154,8 @@ docker compose up -d backend
 ## 10. 常见排查
 
 - `80` 端口冲突：
-  - 修改 `docker-compose.yml` 中 `nginx` 的宿主机端口映射
+  - 当前已默认改为宿主机 `3000` 端口
+  - 如仍冲突，再修改 `docker-compose.yml` 中 `nginx` 的宿主机端口映射
 - 本机提示 `docker: command not found`：
   - 说明当前机器未安装 Docker Desktop 或 Docker Engine
   - 需要先安装 Docker，并确认 `docker compose version` 可执行
@@ -162,7 +163,7 @@ docker compose up -d backend
   - 先看 `docker compose logs backend`
   - 再确认 `mysql` 健康检查是否已通过
 - 页面打开但接口报错：
-  - 先访问 `http://localhost/api/health`
+  - 先访问 `http://localhost:3000/api/health`
   - 再确认浏览器请求是否命中 `/api`
 - 数据异常需要重置：
   - 执行 `docker compose down -v`

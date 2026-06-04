@@ -56,7 +56,7 @@
 
 ```bash
 docker compose ps
-curl http://localhost/api/health
+curl http://localhost:3000/api/health
 ```
 
 ## 6. 主功能验收
