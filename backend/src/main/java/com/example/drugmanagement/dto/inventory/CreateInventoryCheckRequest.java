@@ -16,7 +16,6 @@ public class CreateInventoryCheckRequest {
     @NotBlank(message = "must not be blank")
     private String bizNo;
 
-    @NotBlank(message = "must not be blank")
     private String operatorName;
 
     private String remark;

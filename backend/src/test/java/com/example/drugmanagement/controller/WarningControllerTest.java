@@ -1,11 +1,13 @@
 package com.example.drugmanagement.controller;
 
+import com.example.drugmanagement.common.auth.AuthSessionService;
 import com.example.drugmanagement.common.response.PageResponse;
 import com.example.drugmanagement.mapper.DrugMapper;
 import com.example.drugmanagement.mapper.InventoryMapper;
 import com.example.drugmanagement.mapper.InventoryRecordMapper;
 import com.example.drugmanagement.mapper.PrescriptionItemMapper;
 import com.example.drugmanagement.mapper.PrescriptionMapper;
+import com.example.drugmanagement.mapper.UserAccountMapper;
 import com.example.drugmanagement.mapper.WarningMapper;
 import com.example.drugmanagement.service.WarningService;
 import com.example.drugmanagement.vo.warning.ExpiryWarningVO;
@@ -50,6 +52,12 @@ class WarningControllerTest {
 
     @MockBean
     private PrescriptionItemMapper prescriptionItemMapper;
+
+    @MockBean
+    private UserAccountMapper userAccountMapper;
+
+    @MockBean
+    private AuthSessionService authSessionService;
 
     @Test
     void shouldReturnLowStockWarnings() throws Exception {

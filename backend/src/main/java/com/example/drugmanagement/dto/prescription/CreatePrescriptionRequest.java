@@ -12,13 +12,10 @@ public class CreatePrescriptionRequest {
     @NotBlank(message = "must not be blank")
     private String patientName;
 
-    @NotBlank(message = "must not be blank")
     private String createdByRole;
 
-    @NotNull(message = "must not be null")
     private Long createdByUserId;
 
-    @NotBlank(message = "must not be blank")
     private String createdByName;
 
     @NotNull(message = "must not be null")

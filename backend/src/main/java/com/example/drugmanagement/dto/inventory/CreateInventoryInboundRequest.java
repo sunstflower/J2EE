@@ -26,7 +26,6 @@ public class CreateInventoryInboundRequest {
     @NotBlank(message = "must not be blank")
     private String bizNo;
 
-    @NotBlank(message = "must not be blank")
     private String operatorName;
 
     private String remark;

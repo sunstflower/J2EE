@@ -1,5 +1,20 @@
 USE drug_management;
 
+CREATE TABLE IF NOT EXISTS user_account (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    user_name VARCHAR(64) NOT NULL,
+    role VARCHAR(32) NOT NULL,
+    password VARCHAR(128) NOT NULL,
+    enabled TINYINT NOT NULL DEFAULT 1,
+    created_by VARCHAR(64) NOT NULL DEFAULT 'system',
+    updated_by VARCHAR(64) NOT NULL DEFAULT 'system',
+    deleted TINYINT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uk_user_account_user_id UNIQUE (user_id)
+);
+
 CREATE TABLE IF NOT EXISTS drug (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     drug_code VARCHAR(64) NOT NULL,
@@ -132,9 +147,30 @@ CREATE INDEX idx_inventory_drug_id ON inventory(drug_id);
 CREATE INDEX idx_inventory_expiry_date ON inventory(expiry_date);
 CREATE INDEX idx_inventory_record_drug_id ON inventory_record(drug_id);
 CREATE INDEX idx_inventory_record_biz_no ON inventory_record(biz_no);
+CREATE INDEX idx_user_account_role ON user_account(role);
 CREATE INDEX idx_prescription_status ON prescription(status);
 CREATE INDEX idx_prescription_doctor_id ON prescription(doctor_id);
 CREATE INDEX idx_prescription_created_by_user_id ON prescription(created_by_user_id);
 CREATE INDEX idx_prescription_item_prescription_id ON prescription_item(prescription_id);
 CREATE INDEX idx_warning_record_status ON warning_record(status);
 CREATE INDEX idx_warning_record_warning_type ON warning_record(warning_type);
+
+INSERT INTO user_account (
+    user_id,
+    user_name,
+    role,
+    password,
+    enabled,
+    created_by,
+    updated_by,
+    deleted
+) VALUES
+    (1001, '张药师', 'PHARMACIST', 'pharm123', 1, 'system', 'system', 0),
+    (2001, '王医生', 'DOCTOR', 'doctor123', 1, 'system', 'system', 0)
+ON DUPLICATE KEY UPDATE
+    user_name = VALUES(user_name),
+    role = VALUES(role),
+    password = VALUES(password),
+    enabled = VALUES(enabled),
+    updated_by = VALUES(updated_by),
+    deleted = VALUES(deleted);

@@ -1,5 +1,8 @@
 package com.example.drugmanagement.service;
 
+import com.example.drugmanagement.common.auth.CurrentUser;
+import com.example.drugmanagement.common.auth.CurrentUserHolder;
+import com.example.drugmanagement.common.enums.RoleType;
 import com.example.drugmanagement.common.enums.InventoryRecordType;
 import com.example.drugmanagement.common.enums.PrescriptionStatus;
 import com.example.drugmanagement.dto.prescription.CreatePrescriptionRequest;
@@ -23,6 +26,7 @@ import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -46,8 +50,14 @@ class PrescriptionFlowIntegrationTest {
     @Autowired
     private InventoryMapper inventoryMapper;
 
+    @AfterEach
+    void clearCurrentUser() {
+        CurrentUserHolder.clear();
+    }
+
     @Test
     void shouldCompleteProxyPrescriptionFlowAndWriteDispenseRecord() {
+        CurrentUserHolder.set(new CurrentUser(200L, "药师张", RoleType.PHARMACIST));
         CreatePrescriptionRequest createRequest = new CreatePrescriptionRequest();
         createRequest.setPatientName("集成患者");
         createRequest.setCreatedByRole("PHARMACIST");
@@ -63,6 +73,7 @@ class PrescriptionFlowIntegrationTest {
         assertEquals(PrescriptionStatus.PENDING_DOCTOR_APPROVAL.name(), created.getStatus());
         assertEquals(200L, created.getPharmacistOperatorId());
 
+        CurrentUserHolder.set(new CurrentUser(100L, "王医生", RoleType.DOCTOR));
         PrescriptionDoctorApprovalRequest doctorApprovalRequest = new PrescriptionDoctorApprovalRequest();
         doctorApprovalRequest.setAction("APPROVE");
         doctorApprovalRequest.setDoctorId(100L);
@@ -73,6 +84,7 @@ class PrescriptionFlowIntegrationTest {
         assertEquals(PrescriptionStatus.SUBMITTED.name(), approvedByDoctor.getStatus());
         assertNotNull(approvedByDoctor.getDoctorApprovedAt());
 
+        CurrentUserHolder.set(new CurrentUser(201L, "审核药师李", RoleType.PHARMACIST));
         PrescriptionAuditRequest auditRequest = new PrescriptionAuditRequest();
         auditRequest.setAction("APPROVE");
         auditRequest.setOperatorId(201L);
@@ -83,6 +95,7 @@ class PrescriptionFlowIntegrationTest {
         assertEquals(PrescriptionStatus.APPROVED.name(), audited.getStatus());
         assertEquals("审核药师李", audited.getAuditBy());
 
+        CurrentUserHolder.set(new CurrentUser(202L, "发药药师赵", RoleType.PHARMACIST));
         PrescriptionDispenseRequest dispenseRequest = new PrescriptionDispenseRequest();
         dispenseRequest.setOperatorId(202L);
         dispenseRequest.setOperatorName("发药药师赵");

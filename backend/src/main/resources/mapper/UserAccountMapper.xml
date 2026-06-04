@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.drugmanagement.mapper.UserAccountMapper">
+
+    <sql id="BaseUserAccountColumns">
+        id,
+        user_id,
+        user_name,
+        role,
+        password,
+        enabled,
+        created_by,
+        updated_by,
+        deleted,
+        created_at,
+        updated_at
+    </sql>
+
+    <select id="findByUserId" resultType="com.example.drugmanagement.entity.UserAccount">
+        SELECT <include refid="BaseUserAccountColumns"/>
+        FROM user_account
+        WHERE user_id = #{userId}
+          AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="com.example.drugmanagement.entity.UserAccount" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_account (
+            user_id,
+            user_name,
+            role,
+            password,
+            enabled,
+            created_by,
+            updated_by,
+            deleted
+        ) VALUES (
+            #{userId},
+            #{userName},
+            #{role},
+            #{password},
+            #{enabled},
+            #{createdBy},
+            #{updatedBy},
+            #{deleted}
+        )
+    </insert>
+</mapper>

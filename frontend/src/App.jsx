@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { login } from "./api/auth";
+import { login, register } from "./api/auth";
 import RequireRole from "./components/RequireRole";
 import {
   clearCurrentUser,
@@ -20,8 +20,10 @@ import PrescriptionPage from "./pages/PrescriptionPage";
 import WarningPage from "./pages/WarningPage";
 
 function LoginPage({ onLogin }) {
+  const [mode, setMode] = useState("login");
   const [form, setForm] = useState({
     userId: "",
+    userName: "",
     password: "",
   });
   const [message, setMessage] = useState(null);
@@ -40,6 +42,25 @@ function LoginPage({ onLogin }) {
     setMessage(null);
 
     try {
+      if (mode === "register") {
+        const registeredUser = await register({
+          userId: Number(form.userId),
+          userName: form.userName.trim(),
+          password: form.password,
+        });
+        setMessage({
+          type: "success",
+          text: `注册成功，账号角色为${registeredUser.role === "DOCTOR" ? "医生" : "药师"}，请登录。`,
+        });
+        setMode("login");
+        setForm({
+          userId: String(registeredUser.userId),
+          userName: "",
+          password: "",
+        });
+        return;
+      }
+
       const data = await login({
         userId: Number(form.userId),
         password: form.password,
@@ -71,6 +92,22 @@ function LoginPage({ onLogin }) {
         <p className="hero-copy">
           当前演示环境通过后端登录接口签发会话。用户号以 1 开头为药师，以 2 开头为医生。
         </p>
+        <div className="auth-switch">
+          <button
+            className={mode === "login" ? "auth-tab active-tab" : "auth-tab"}
+            onClick={() => setMode("login")}
+            type="button"
+          >
+            登录
+          </button>
+          <button
+            className={mode === "register" ? "auth-tab active-tab" : "auth-tab"}
+            onClick={() => setMode("register")}
+            type="button"
+          >
+            注册
+          </button>
+        </div>
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
             用户号
@@ -80,19 +117,29 @@ function LoginPage({ onLogin }) {
               value={form.userId}
             />
           </label>
+          {mode === "register" ? (
+            <label>
+              用户名
+              <input
+                onChange={(event) => updateField("userName", event.target.value)}
+                placeholder="请输入姓名"
+                value={form.userName}
+              />
+            </label>
+          ) : null}
           <label>
             密码
             <input
               onChange={(event) => updateField("password", event.target.value)}
               placeholder="请输入密码"
-              type="password"
+              type={mode === "register" ? "text" : "password"}
               value={form.password}
             />
           </label>
           <p className="role-hint">{roleHint}</p>
           {message ? <p className={`message ${message.type}`}>{message.text}</p> : null}
           <button className="primary-action" disabled={loading} type="submit">
-            {loading ? "登录中..." : "登录"}
+            {loading ? (mode === "login" ? "登录中..." : "注册中...") : mode === "login" ? "登录" : "注册"}
           </button>
         </form>
         <div className="demo-hint">

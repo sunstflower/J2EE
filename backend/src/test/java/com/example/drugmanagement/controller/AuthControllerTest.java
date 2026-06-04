@@ -8,6 +8,7 @@ import com.example.drugmanagement.mapper.InventoryMapper;
 import com.example.drugmanagement.mapper.InventoryRecordMapper;
 import com.example.drugmanagement.mapper.PrescriptionItemMapper;
 import com.example.drugmanagement.mapper.PrescriptionMapper;
+import com.example.drugmanagement.mapper.UserAccountMapper;
 import com.example.drugmanagement.mapper.WarningMapper;
 import org.springframework.http.MediaType;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,9 @@ class AuthControllerTest {
     private PrescriptionItemMapper prescriptionItemMapper;
 
     @MockBean
+    private UserAccountMapper userAccountMapper;
+
+    @MockBean
     private AuthSessionService authSessionService;
 
     @Test
@@ -67,6 +71,25 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.data.token").isNotEmpty())
                 .andExpect(jsonPath("$.data.user.userId").value(1001))
                 .andExpect(jsonPath("$.data.user.role").value("PHARMACIST"));
+    }
+
+    @Test
+    void shouldRegisterUser() throws Exception {
+        given(authSessionService.register(1008L, "李药师", "abc123"))
+                .willReturn(new CurrentUser(1008L, "李药师", RoleType.PHARMACIST));
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "userId": 1008,
+                                  "userName": "李药师",
+                                  "password": "abc123"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.userId").value(1008))
+                .andExpect(jsonPath("$.data.role").value("PHARMACIST"));
     }
 
     @Test

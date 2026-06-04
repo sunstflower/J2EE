@@ -1,7 +1,10 @@
 package com.example.drugmanagement.service;
 
+import com.example.drugmanagement.common.auth.CurrentUser;
+import com.example.drugmanagement.common.auth.CurrentUserHolder;
 import com.example.drugmanagement.common.enums.DoctorApprovalStatus;
 import com.example.drugmanagement.common.enums.PrescriptionStatus;
+import com.example.drugmanagement.common.enums.RoleType;
 import com.example.drugmanagement.common.exception.BusinessException;
 import com.example.drugmanagement.common.response.PageResponse;
 import com.example.drugmanagement.dto.prescription.CreatePrescriptionRequest;
@@ -32,6 +35,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.AfterEach;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -42,6 +46,11 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PrescriptionServiceTest {
+
+    @AfterEach
+    void clearCurrentUser() {
+        CurrentUserHolder.clear();
+    }
 
     @Mock
     private PrescriptionMapper prescriptionMapper;
@@ -63,6 +72,7 @@ class PrescriptionServiceTest {
 
     @Test
     void shouldCreateDoctorPrescriptionAsDraft() {
+        CurrentUserHolder.set(new CurrentUser(100L, "医生王", RoleType.DOCTOR));
         CreatePrescriptionRequest request = buildDoctorCreateRequest();
         Drug drug = enabledDrug(1L);
         when(drugMapper.findEntityById(1L)).thenReturn(drug);
@@ -83,6 +93,7 @@ class PrescriptionServiceTest {
 
     @Test
     void shouldCreatePharmacistPrescriptionAsPendingDoctorApproval() {
+        CurrentUserHolder.set(new CurrentUser(200L, "药师张", RoleType.PHARMACIST));
         CreatePrescriptionRequest request = buildPharmacistCreateRequest();
         when(drugMapper.findEntityById(1L)).thenReturn(enabledDrug(1L));
         doAnswer(invocation -> {
@@ -102,6 +113,7 @@ class PrescriptionServiceTest {
 
     @Test
     void shouldRejectPharmacistDirectPrescriptionWithoutDoctorBindingRule() {
+        CurrentUserHolder.set(new CurrentUser(200L, "药师张", RoleType.PHARMACIST));
         CreatePrescriptionRequest request = buildPharmacistCreateRequest();
         request.setDoctorId(200L);
         request.setCreatedByUserId(200L);
@@ -111,6 +123,7 @@ class PrescriptionServiceTest {
 
     @Test
     void shouldApproveProxyPrescriptionByDoctor() {
+        CurrentUserHolder.set(new CurrentUser(100L, "医生王", RoleType.DOCTOR));
         Prescription prescription = new Prescription();
         prescription.setId(1L);
         prescription.setStatus(PrescriptionStatus.PENDING_DOCTOR_APPROVAL.name());
@@ -119,8 +132,8 @@ class PrescriptionServiceTest {
 
         PrescriptionDoctorApprovalRequest request = new PrescriptionDoctorApprovalRequest();
         request.setAction("APPROVE");
-        request.setDoctorId(100L);
-        request.setDoctorName("医生王");
+        request.setDoctorId(999L);
+        request.setDoctorName("不会被使用");
 
         prescriptionService.doctorApprove(1L, request);
 
@@ -130,6 +143,7 @@ class PrescriptionServiceTest {
 
     @Test
     void shouldAuditPrescriptionToApproved() {
+        CurrentUserHolder.set(new CurrentUser(300L, "药师李", RoleType.PHARMACIST));
         Prescription prescription = new Prescription();
         prescription.setId(1L);
         prescription.setStatus(PrescriptionStatus.SUBMITTED.name());
@@ -137,8 +151,8 @@ class PrescriptionServiceTest {
 
         PrescriptionAuditRequest request = new PrescriptionAuditRequest();
         request.setAction("APPROVE");
-        request.setOperatorId(300L);
-        request.setOperatorName("药师李");
+        request.setOperatorId(999L);
+        request.setOperatorName("不会被使用");
 
         prescriptionService.audit(1L, request);
 
@@ -148,6 +162,7 @@ class PrescriptionServiceTest {
 
     @Test
     void shouldDispenseApprovedPrescription() {
+        CurrentUserHolder.set(new CurrentUser(300L, "药师李", RoleType.PHARMACIST));
         Prescription prescription = new Prescription();
         prescription.setId(1L);
         prescription.setPrescriptionNo("RX-1");
@@ -167,8 +182,8 @@ class PrescriptionServiceTest {
         when(inventoryMapper.findAvailableByDrugIdOrderByExpiry(1L)).thenReturn(List.of(inventory));
 
         PrescriptionDispenseRequest request = new PrescriptionDispenseRequest();
-        request.setOperatorId(300L);
-        request.setOperatorName("药师李");
+        request.setOperatorId(999L);
+        request.setOperatorName("不会被使用");
 
         when(prescriptionMapper.updateStatusByCurrentStatus(eq(1L), eq(PrescriptionStatus.APPROVED.name()),
                 eq(PrescriptionStatus.DISPENSED.name()), any(), any(), any(), any(), eq("药师李"), any(), eq(null), eq("药师李")))
@@ -183,6 +198,7 @@ class PrescriptionServiceTest {
 
     @Test
     void shouldRejectDispenseWhenAllInventoryExpired() {
+        CurrentUserHolder.set(new CurrentUser(300L, "药师李", RoleType.PHARMACIST));
         Prescription prescription = new Prescription();
         prescription.setId(1L);
         prescription.setPrescriptionNo("RX-1");
@@ -204,8 +220,8 @@ class PrescriptionServiceTest {
         when(inventoryMapper.findAvailableByDrugIdOrderByExpiry(1L)).thenReturn(List.of(expiredInventory));
 
         PrescriptionDispenseRequest request = new PrescriptionDispenseRequest();
-        request.setOperatorId(300L);
-        request.setOperatorName("药师李");
+        request.setOperatorId(999L);
+        request.setOperatorName("不会被使用");
 
         assertThrows(BusinessException.class, () -> prescriptionService.dispense(1L, request));
         verify(inventoryMapper, never()).decreaseQuantity(anyLong(), any(), any());
@@ -213,6 +229,7 @@ class PrescriptionServiceTest {
 
     @Test
     void shouldRejectDispenseWhenStatusTransitionFails() {
+        CurrentUserHolder.set(new CurrentUser(300L, "药师李", RoleType.PHARMACIST));
         Prescription prescription = new Prescription();
         prescription.setId(1L);
         prescription.setPrescriptionNo("RX-1");
@@ -237,8 +254,8 @@ class PrescriptionServiceTest {
                 .thenReturn(0);
 
         PrescriptionDispenseRequest request = new PrescriptionDispenseRequest();
-        request.setOperatorId(300L);
-        request.setOperatorName("药师李");
+        request.setOperatorId(999L);
+        request.setOperatorName("不会被使用");
 
         assertThrows(BusinessException.class, () -> prescriptionService.dispense(1L, request));
     }

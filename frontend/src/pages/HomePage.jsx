@@ -28,15 +28,15 @@ function HomePage({ currentUser, onLogout }) {
 
   return (
     <main className="app-shell">
-      <aside className="sidebar">
-        <div>
+      <header className="app-header">
+        <div className="header-brand">
           <p className="eyebrow">Workspace</p>
           <h1>药物管理系统</h1>
-          <p className="sidebar-user">
+          <p className="header-user">
             {currentUser.userName} / {currentUser.role} / 用户号 {currentUser.userId}
           </p>
         </div>
-        <nav className="sidebar-nav">
+        <nav className="header-nav">
           {items.map((item) => (
             <NavLink
               className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
@@ -48,22 +48,22 @@ function HomePage({ currentUser, onLogout }) {
             </NavLink>
           ))}
         </nav>
-        <div className="sidebar-shortcuts">
-          <button className="secondary-action" onClick={() => navigate("/drugs")} type="button">
+        <div className="header-actions">
+          <button className="secondary-action compact-action" onClick={() => navigate("/drugs")} type="button">
             药物管理
           </button>
           <button
-            className="secondary-action"
+            className="secondary-action compact-action"
             onClick={() => navigate("/inventories")}
             type="button"
           >
             库存管理
           </button>
+          <button className="secondary-action compact-action" onClick={onLogout} type="button">
+            退出登录
+          </button>
         </div>
-        <button className="secondary-action" onClick={onLogout} type="button">
-          退出登录
-        </button>
-      </aside>
+      </header>
       <section className="content-shell">
         <Outlet />
       </section>

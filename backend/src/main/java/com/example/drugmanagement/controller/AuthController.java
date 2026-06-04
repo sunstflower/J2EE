@@ -5,6 +5,7 @@ import com.example.drugmanagement.common.auth.CurrentUserHolder;
 import com.example.drugmanagement.common.auth.AuthSessionService;
 import com.example.drugmanagement.common.response.ApiResponse;
 import com.example.drugmanagement.dto.auth.LoginRequest;
+import com.example.drugmanagement.dto.auth.RegisterRequest;
 import com.example.drugmanagement.vo.auth.LoginVO;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,6 +28,13 @@ public class AuthController {
         String token = authSessionService.login(request.getUserId(), request.getPassword());
         CurrentUser currentUser = authSessionService.getCurrentUser(token);
         return ApiResponse.success(new LoginVO(token, currentUser));
+    }
+
+    @PostMapping("/register")
+    public ApiResponse<CurrentUser> register(@RequestBody RegisterRequest request) {
+        return ApiResponse.success(
+                authSessionService.register(request.getUserId(), request.getUserName(), request.getPassword())
+        );
     }
 
     @GetMapping("/me")

@@ -101,6 +101,7 @@ strong {
 
 .hero-copy,
 .sidebar-user,
+.header-user,
 .message,
 .list-card p,
 .detail-card p,
@@ -161,36 +162,39 @@ strong {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-rows: auto 1fr;
 }
 
-.sidebar {
+.app-header {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: space-between;
-  padding: 28px 20px;
-  background: linear-gradient(180deg, #133b2d, #205942);
+  gap: 20px;
+  padding: 18px 24px;
+  background: linear-gradient(90deg, #133b2d, #205942);
   color: #f7fbf8;
 }
 
-.sidebar h1 {
+.header-brand h1 {
   margin: 0 0 8px;
 }
 
-.sidebar-nav {
-  display: grid;
+.header-nav {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  margin: 24px 0;
+  justify-content: center;
 }
 
-.sidebar-shortcuts {
-  display: grid;
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 12px;
+  justify-content: flex-end;
 }
 
 .nav-link {
-  padding: 14px 16px;
+  padding: 10px 14px;
   color: #e7f4ea;
   text-decoration: none;
   background: rgba(255, 255, 255, 0.06);
@@ -203,6 +207,10 @@ strong {
 
 .secondary-action {
   width: 100%;
+}
+
+.compact-action {
+  width: auto;
 }
 
 .content-shell {
@@ -347,7 +355,13 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .sidebar {
-    gap: 20px;
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-nav,
+  .header-actions {
+    justify-content: flex-start;
   }
 }

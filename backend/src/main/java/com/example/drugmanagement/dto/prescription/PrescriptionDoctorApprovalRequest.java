@@ -8,10 +8,8 @@ public class PrescriptionDoctorApprovalRequest {
     @NotBlank(message = "must not be blank")
     private String action;
 
-    @NotBlank(message = "must not be blank")
     private String doctorName;
 
-    @NotNull(message = "must not be null")
     private Long doctorId;
 
     public String getAction() {

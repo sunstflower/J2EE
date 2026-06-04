@@ -1,5 +1,7 @@
 package com.example.drugmanagement.service.impl;
 
+import com.example.drugmanagement.common.auth.CurrentUser;
+import com.example.drugmanagement.common.auth.CurrentUserHolder;
 import com.example.drugmanagement.common.enums.InventoryRecordType;
 import com.example.drugmanagement.common.exception.BusinessException;
 import com.example.drugmanagement.common.response.PageResponse;
@@ -43,6 +45,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional
     public Long inbound(CreateInventoryInboundRequest request) {
+        String operatorName = resolveOperatorName(request.getOperatorName());
         Drug drug = drugMapper.findEntityById(request.getDrugId());
         if (drug == null) {
             throw BusinessException.of(ResponseCode.RESOURCE_NOT_FOUND);
@@ -66,8 +69,8 @@ public class InventoryServiceImpl implements InventoryService {
             inventory.setQuantity(request.getQuantity());
             inventory.setLockedQuantity(0);
             inventory.setLocationCode(request.getLocationCode());
-            inventory.setCreatedBy(request.getOperatorName());
-            inventory.setUpdatedBy(request.getOperatorName());
+            inventory.setCreatedBy(operatorName);
+            inventory.setUpdatedBy(operatorName);
             inventory.setDeleted(0);
             inventoryMapper.insert(inventory);
 
@@ -81,7 +84,7 @@ public class InventoryServiceImpl implements InventoryService {
                     existing.getId(),
                     request.getQuantity(),
                     request.getLocationCode(),
-                    request.getOperatorName()
+                    operatorName
             );
             inventoryId = existing.getId();
         }
@@ -94,11 +97,11 @@ public class InventoryServiceImpl implements InventoryService {
         inventoryRecord.setBeforeQuantity(beforeQuantity);
         inventoryRecord.setAfterQuantity(afterQuantity);
         inventoryRecord.setBizNo(request.getBizNo());
-        inventoryRecord.setOperatorName(request.getOperatorName());
+        inventoryRecord.setOperatorName(operatorName);
         inventoryRecord.setOperatedAt(LocalDateTime.now());
         inventoryRecord.setRemark(request.getRemark());
-        inventoryRecord.setCreatedBy(request.getOperatorName());
-        inventoryRecord.setUpdatedBy(request.getOperatorName());
+        inventoryRecord.setCreatedBy(operatorName);
+        inventoryRecord.setUpdatedBy(operatorName);
         inventoryRecord.setDeleted(0);
         inventoryRecordMapper.insert(inventoryRecord);
 
@@ -108,6 +111,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional
     public void outbound(CreateInventoryOutboundRequest request) {
+        String operatorName = resolveOperatorName(request.getOperatorName());
         Drug drug = drugMapper.findEntityById(request.getDrugId());
         if (drug == null) {
             throw BusinessException.of(ResponseCode.RESOURCE_NOT_FOUND);
@@ -131,7 +135,7 @@ public class InventoryServiceImpl implements InventoryService {
             int beforeQuantity = inventory.getQuantity();
             int afterQuantity = beforeQuantity - deduction;
 
-            inventoryMapper.decreaseQuantity(inventory.getId(), deduction, request.getOperatorName());
+            inventoryMapper.decreaseQuantity(inventory.getId(), deduction, operatorName);
 
             InventoryRecord record = new InventoryRecord();
             record.setDrugId(request.getDrugId());
@@ -141,11 +145,11 @@ public class InventoryServiceImpl implements InventoryService {
             record.setBeforeQuantity(beforeQuantity);
             record.setAfterQuantity(afterQuantity);
             record.setBizNo(request.getBizNo());
-            record.setOperatorName(request.getOperatorName());
+            record.setOperatorName(operatorName);
             record.setOperatedAt(LocalDateTime.now());
             record.setRemark(request.getRemark());
-            record.setCreatedBy(request.getOperatorName());
-            record.setUpdatedBy(request.getOperatorName());
+            record.setCreatedBy(operatorName);
+            record.setUpdatedBy(operatorName);
             record.setDeleted(0);
             records.add(record);
 
@@ -164,6 +168,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional
     public void check(CreateInventoryCheckRequest request) {
+        String operatorName = resolveOperatorName(request.getOperatorName());
         Inventory inventory = inventoryMapper.findById(request.getInventoryId());
         if (inventory == null) {
             throw BusinessException.of(ResponseCode.RESOURCE_NOT_FOUND);
@@ -176,7 +181,7 @@ public class InventoryServiceImpl implements InventoryService {
         inventoryMapper.updateQuantityByCheck(
                 request.getInventoryId(),
                 request.getActualQuantity(),
-                request.getOperatorName()
+                operatorName
         );
 
         InventoryRecord inventoryRecord = new InventoryRecord();
@@ -187,11 +192,11 @@ public class InventoryServiceImpl implements InventoryService {
         inventoryRecord.setBeforeQuantity(beforeQuantity);
         inventoryRecord.setAfterQuantity(afterQuantity);
         inventoryRecord.setBizNo(request.getBizNo());
-        inventoryRecord.setOperatorName(request.getOperatorName());
+        inventoryRecord.setOperatorName(operatorName);
         inventoryRecord.setOperatedAt(LocalDateTime.now());
         inventoryRecord.setRemark(request.getRemark());
-        inventoryRecord.setCreatedBy(request.getOperatorName());
-        inventoryRecord.setUpdatedBy(request.getOperatorName());
+        inventoryRecord.setCreatedBy(operatorName);
+        inventoryRecord.setUpdatedBy(operatorName);
         inventoryRecord.setDeleted(0);
         inventoryRecordMapper.insert(inventoryRecord);
     }
@@ -217,5 +222,16 @@ public class InventoryServiceImpl implements InventoryService {
         List<InventoryRecordVO> records = inventoryRecordMapper.findPage(request);
         long total = inventoryRecordMapper.count(request);
         return PageResponse.of(records, total, request.getPageNum(), request.getPageSize());
+    }
+
+    private String resolveOperatorName(String fallbackOperatorName) {
+        CurrentUser currentUser = CurrentUserHolder.get();
+        if (currentUser != null) {
+            return currentUser.userName();
+        }
+        if (fallbackOperatorName == null || fallbackOperatorName.isBlank()) {
+            throw new BusinessException(ResponseCode.VALIDATION_ERROR.getCode(), "operatorName不能为空");
+        }
+        return fallbackOperatorName;
     }
 }

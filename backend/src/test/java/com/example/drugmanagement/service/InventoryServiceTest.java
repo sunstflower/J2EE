@@ -1,6 +1,9 @@
 package com.example.drugmanagement.service;
 
+import com.example.drugmanagement.common.auth.CurrentUser;
+import com.example.drugmanagement.common.auth.CurrentUserHolder;
 import com.example.drugmanagement.common.enums.InventoryRecordType;
+import com.example.drugmanagement.common.enums.RoleType;
 import com.example.drugmanagement.common.exception.BusinessException;
 import com.example.drugmanagement.common.response.PageResponse;
 import com.example.drugmanagement.dto.inventory.CreateInventoryCheckRequest;
@@ -29,6 +32,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.AfterEach;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
@@ -37,6 +41,11 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceTest {
+
+    @AfterEach
+    void clearCurrentUser() {
+        CurrentUserHolder.clear();
+    }
 
     @Mock
     private DrugMapper drugMapper;
@@ -52,6 +61,7 @@ class InventoryServiceTest {
 
     @Test
     void shouldCreateInventoryWhenBatchDoesNotExist() {
+        CurrentUserHolder.set(new CurrentUser(1001L, "张药师", RoleType.PHARMACIST));
         CreateInventoryInboundRequest request = buildInboundRequest();
         Drug drug = new Drug();
         drug.setId(1L);
@@ -75,6 +85,7 @@ class InventoryServiceTest {
 
     @Test
     void shouldIncreaseInventoryWhenBatchAlreadyExists() {
+        CurrentUserHolder.set(new CurrentUser(1001L, "张药师", RoleType.PHARMACIST));
         CreateInventoryInboundRequest request = buildInboundRequest();
         Drug drug = new Drug();
         drug.setId(1L);
@@ -87,7 +98,7 @@ class InventoryServiceTest {
         Long inventoryId = inventoryService.inbound(request);
 
         assertEquals(11L, inventoryId);
-        verify(inventoryMapper).increaseQuantity(11L, 50, "A-01", "药师张三");
+        verify(inventoryMapper).increaseQuantity(11L, 50, "A-01", "张药师");
         ArgumentCaptor<InventoryRecord> recordCaptor = ArgumentCaptor.forClass(InventoryRecord.class);
         verify(inventoryRecordMapper).insert(recordCaptor.capture());
         assertEquals(30, recordCaptor.getValue().getBeforeQuantity());
@@ -96,6 +107,7 @@ class InventoryServiceTest {
 
     @Test
     void shouldRejectInboundWhenDrugDoesNotExist() {
+        CurrentUserHolder.set(new CurrentUser(1001L, "张药师", RoleType.PHARMACIST));
         CreateInventoryInboundRequest request = buildInboundRequest();
         when(drugMapper.findEntityById(1L)).thenReturn(null);
 
@@ -131,6 +143,7 @@ class InventoryServiceTest {
 
     @Test
     void shouldOutboundByEarliestExpiryFirst() {
+        CurrentUserHolder.set(new CurrentUser(1002L, "药师李四", RoleType.PHARMACIST));
         CreateInventoryOutboundRequest request = new CreateInventoryOutboundRequest();
         request.setDrugId(1L);
         request.setQuantity(60);
@@ -162,6 +175,7 @@ class InventoryServiceTest {
 
     @Test
     void shouldRejectOutboundWhenInventoryInsufficient() {
+        CurrentUserHolder.set(new CurrentUser(1002L, "药师李四", RoleType.PHARMACIST));
         CreateInventoryOutboundRequest request = new CreateInventoryOutboundRequest();
         request.setDrugId(1L);
         request.setQuantity(100);
@@ -184,6 +198,7 @@ class InventoryServiceTest {
 
     @Test
     void shouldCheckInventoryAndWriteRecord() {
+        CurrentUserHolder.set(new CurrentUser(1002L, "药师李四", RoleType.PHARMACIST));
         CreateInventoryCheckRequest request = new CreateInventoryCheckRequest();
         request.setInventoryId(10L);
         request.setActualQuantity(18);

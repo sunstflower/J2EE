@@ -1,5 +1,7 @@
 package com.example.drugmanagement.service.impl;
 
+import com.example.drugmanagement.common.auth.CurrentUser;
+import com.example.drugmanagement.common.auth.CurrentUserHolder;
 import com.example.drugmanagement.common.enums.DoctorApprovalStatus;
 import com.example.drugmanagement.common.enums.InventoryRecordType;
 import com.example.drugmanagement.common.enums.PrescriptionStatus;
@@ -57,19 +59,20 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     @Override
     @Transactional
     public Long createPrescription(CreatePrescriptionRequest request) {
-        RoleType roleType = RoleType.valueOf(request.getCreatedByRole());
+        CurrentUser actor = requireCurrentUser();
+        RoleType roleType = actor.role();
         validateCreateRoleRules(request, roleType);
         validatePrescriptionItems(request.getItems());
 
         Prescription prescription = new Prescription();
         prescription.setPrescriptionNo(generatePrescriptionNo());
         prescription.setPatientName(request.getPatientName());
-        prescription.setCreatedByUserId(request.getCreatedByUserId());
-        prescription.setCreatedByRole(request.getCreatedByRole());
+        prescription.setCreatedByUserId(actor.userId());
+        prescription.setCreatedByRole(roleType.name());
         prescription.setDoctorId(request.getDoctorId());
         prescription.setDoctorName(request.getDoctorName());
-        prescription.setCreatedBy(request.getCreatedByName());
-        prescription.setUpdatedBy(request.getCreatedByName());
+        prescription.setCreatedBy(actor.userName());
+        prescription.setUpdatedBy(actor.userName());
         prescription.setDeleted(0);
 
         if (roleType == RoleType.DOCTOR) {
@@ -78,7 +81,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         } else {
             prescription.setStatus(PrescriptionStatus.PENDING_DOCTOR_APPROVAL.name());
             prescription.setDoctorApprovalStatus(DoctorApprovalStatus.PENDING.name());
-            prescription.setPharmacistOperatorId(request.getCreatedByUserId());
+            prescription.setPharmacistOperatorId(actor.userId());
         }
 
         prescriptionMapper.insert(prescription);
@@ -92,8 +95,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             item.setFrequency(itemRequest.getFrequency());
             item.setDays(itemRequest.getDays());
             item.setQuantity(itemRequest.getQuantity());
-            item.setCreatedBy(request.getCreatedByName());
-            item.setUpdatedBy(request.getCreatedByName());
+            item.setCreatedBy(actor.userName());
+            item.setUpdatedBy(actor.userName());
             item.setDeleted(0);
             items.add(item);
         }
@@ -121,11 +124,13 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     @Override
     @Transactional
     public void doctorApprove(Long id, PrescriptionDoctorApprovalRequest request) {
+        CurrentUser actor = requireCurrentUser();
+        ensureRole(actor, RoleType.DOCTOR);
         Prescription prescription = getExistingPrescription(id);
         if (!PrescriptionStatus.PENDING_DOCTOR_APPROVAL.name().equals(prescription.getStatus())) {
             throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
         }
-        if (!prescription.getDoctorId().equals(request.getDoctorId())) {
+        if (!prescription.getDoctorId().equals(actor.userId())) {
             throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
         }
 
@@ -140,7 +145,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                     null,
                     null,
                     null,
-                    request.getDoctorName()
+                    actor.userName()
             );
         } else if ("REJECT".equals(request.getAction())) {
             prescriptionMapper.updateStatus(
@@ -153,7 +158,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                     null,
                     null,
                     "doctor rejected proxy prescription",
-                    request.getDoctorName()
+                    actor.userName()
             );
         } else {
             throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
@@ -192,6 +197,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     @Override
     @Transactional
     public void audit(Long id, PrescriptionAuditRequest request) {
+        CurrentUser actor = requireCurrentUser();
+        ensureRole(actor, RoleType.PHARMACIST);
         Prescription prescription = getExistingPrescription(id);
         if (!PrescriptionStatus.SUBMITTED.name().equals(prescription.getStatus())) {
             throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
@@ -203,12 +210,12 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                     PrescriptionStatus.APPROVED.name(),
                     prescription.getDoctorApprovalStatus(),
                     prescription.getDoctorApprovedAt(),
-                    request.getOperatorName(),
+                    actor.userName(),
                     LocalDateTime.now(),
                     null,
                     null,
                     null,
-                    request.getOperatorName()
+                    actor.userName()
             );
         } else if ("REJECT".equals(request.getAction())) {
             prescriptionMapper.updateStatus(
@@ -216,12 +223,12 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                     PrescriptionStatus.REJECTED.name(),
                     prescription.getDoctorApprovalStatus(),
                     prescription.getDoctorApprovedAt(),
-                    request.getOperatorName(),
+                    actor.userName(),
                     LocalDateTime.now(),
                     null,
                     null,
                     request.getRejectReason(),
-                    request.getOperatorName()
+                    actor.userName()
             );
         } else {
             throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
@@ -231,6 +238,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     @Override
     @Transactional
     public void dispense(Long id, PrescriptionDispenseRequest request) {
+        CurrentUser actor = requireCurrentUser();
+        ensureRole(actor, RoleType.PHARMACIST);
         Prescription prescription = getExistingPrescription(id);
         if (!PrescriptionStatus.APPROVED.name().equals(prescription.getStatus())) {
             throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
@@ -261,7 +270,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 int deduction = Math.min(available, remaining);
                 int beforeQuantity = inventory.getQuantity();
                 int afterQuantity = beforeQuantity - deduction;
-                inventoryMapper.decreaseQuantity(inventory.getId(), deduction, request.getOperatorName());
+                inventoryMapper.decreaseQuantity(inventory.getId(), deduction, actor.userName());
 
                 InventoryRecord record = new InventoryRecord();
                 record.setDrugId(item.getDrugId());
@@ -271,11 +280,11 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 record.setBeforeQuantity(beforeQuantity);
                 record.setAfterQuantity(afterQuantity);
                 record.setBizNo(prescription.getPrescriptionNo());
-                record.setOperatorName(request.getOperatorName());
+                record.setOperatorName(actor.userName());
                 record.setOperatedAt(LocalDateTime.now());
                 record.setRemark("prescription dispense");
-                record.setCreatedBy(request.getOperatorName());
-                record.setUpdatedBy(request.getOperatorName());
+                record.setCreatedBy(actor.userName());
+                record.setUpdatedBy(actor.userName());
                 record.setDeleted(0);
                 inventoryRecordMapper.insert(record);
 
@@ -295,10 +304,10 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 prescription.getDoctorApprovedAt(),
                 prescription.getAuditBy(),
                 prescription.getAuditTime(),
-                request.getOperatorName(),
+                actor.userName(),
                 LocalDateTime.now(),
                 null,
-                request.getOperatorName()
+                actor.userName()
         );
 
         if (updatedRows != 1) {
@@ -338,11 +347,13 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
     private void validateCreateRoleRules(CreatePrescriptionRequest request, RoleType roleType) {
         if (roleType == RoleType.DOCTOR) {
-            if (!request.getCreatedByUserId().equals(request.getDoctorId())) {
+            CurrentUser actor = requireCurrentUser();
+            if (!actor.userId().equals(request.getDoctorId())) {
                 throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
             }
         } else if (roleType == RoleType.PHARMACIST) {
-            if (request.getCreatedByUserId().equals(request.getDoctorId())) {
+            CurrentUser actor = requireCurrentUser();
+            if (actor.userId().equals(request.getDoctorId())) {
                 throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
             }
         } else {
@@ -356,6 +367,20 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             if (drug == null || drug.getEnabled() == null || drug.getEnabled() != 1) {
                 throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
             }
+        }
+    }
+
+    private CurrentUser requireCurrentUser() {
+        CurrentUser currentUser = CurrentUserHolder.get();
+        if (currentUser == null) {
+            throw BusinessException.of(ResponseCode.UNAUTHORIZED);
+        }
+        return currentUser;
+    }
+
+    private void ensureRole(CurrentUser actor, RoleType expectedRole) {
+        if (actor.role() != expectedRole) {
+            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
         }
     }
 

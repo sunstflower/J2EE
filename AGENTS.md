@@ -40,6 +40,88 @@
 
 ## 4. 变更记录
 
+### 2026-06-04 15:04
+- 会话目标：完成注册用户落库、用户表初始化，并继续将业务操作者字段向认证上下文内收
+- 修改文件：
+  - `backend/src/main/java/com/example/drugmanagement/common/auth/AuthSessionService.java`
+  - `backend/src/main/java/com/example/drugmanagement/entity/UserAccount.java`
+  - `backend/src/main/java/com/example/drugmanagement/mapper/UserAccountMapper.java`
+  - `backend/src/main/resources/mapper/UserAccountMapper.xml`
+  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryInboundRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryOutboundRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryCheckRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/CreatePrescriptionRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionAuditRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionDispenseRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionDoctorApprovalRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/impl/InventoryServiceImpl.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/impl/PrescriptionServiceImpl.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/AuthControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/DrugControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/HealthControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerAdditionalTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/PrescriptionControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/controller/WarningControllerTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/service/InventoryServiceTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/service/PrescriptionFlowIntegrationTest.java`
+  - `backend/src/test/java/com/example/drugmanagement/service/PrescriptionServiceTest.java`
+  - `docker/mysql/init/002_schema.sql`
+  - `README.md`
+  - `docs/authentication.md`
+  - `docs/architecture.md`
+  - `AGENTS.md`
+- 主要变更：
+  - 新增 `user_account` 表、默认演示账号种子数据和用户 Mapper，将注册与登录切换到数据库存储
+  - 库存服务改为优先从认证上下文解析 `operatorName`，旧请求字段只保留兼容回退
+  - 处方创建、医生授权、审核、发药改为优先使用认证上下文中的当前用户身份
+  - 调整 DTO 校验与服务测试，补齐当前用户上下文测试前置，更新项目文档到最新实现状态
+- 备注：
+  - 本次后端测试结果：`mvn -q test` 全量通过
+
+### 2026-06-04 14:55
+- 会话目标：维护项目文档并收口认证链路遗留项，修复前端认证测试回归
+- 修改文件：
+  - `frontend/src/pages/__tests__/App.test.jsx`
+  - `backend/src/main/java/com/example/drugmanagement/common/auth/AuthSessionService.java`
+  - `README.md`
+  - `docs/authentication.md`
+  - `docs/architecture.md`
+  - `AGENTS.md`
+- 主要变更：
+  - 修复登录 / 注册页测试中因同名按钮导致的选择器歧义，恢复前端测试可回归状态
+  - 同步认证文档到当前真实实现：后端登录、后端注册、Bearer Token、旧请求头兼容
+  - 修正 README 中前端技术栈与认证现状描述，补充当前仍未完成的落地项
+  - 清理认证服务中的重复导入，保持后端代码整洁
+- 备注：
+  - 本次需继续执行前端与后端测试，确认文档同步后的实现未回归
+
+### 2026-06-04 14:47
+- 会话目标：将左侧导航栏改为顶部 header，并把退出登录移到右上角
+- 修改文件：
+  - `frontend/src/pages/HomePage.jsx`
+  - `frontend/src/styles.css`
+  - `AGENTS.md`
+- 主要变更：
+  - 去掉左侧整栏式“药物管理系统”导航
+  - 改为顶部 header 横向导航与快捷入口
+  - 将“退出登录”移动到 header 右上角
+- 备注：
+  - 本次前端测试结果：`4` 个测试文件，`7` 个测试全部通过
+
+### 2026-06-04 14:42
+- 会话目标：修复前端登录请求被后端 CORS 拦截的问题
+- 修改文件：
+  - `backend/src/main/java/com/example/drugmanagement/common/config/WebMvcConfig.java`
+  - `backend/Dockerfile`
+  - `AGENTS.md`
+- 主要变更：
+  - 为 `/api/**` 增加 CORS 配置，放行 `http://localhost:3000`
+  - 将后端镜像构建切换为直接复制本地已打包 jar，绕开容器内 Maven 依赖下载超时
+  - 重建后端与网关容器，并验证 `OPTIONS /api/auth/login` 已返回跨域允许头
+- 备注：
+  - 验证结果包含 `Access-Control-Allow-Origin: http://localhost:3000`
+
 ### 2026-06-04 14:34
 - 会话目标：按优先级修复前端假路由、前端本地认证、错误处理与消息提示问题
 - 修改文件：
