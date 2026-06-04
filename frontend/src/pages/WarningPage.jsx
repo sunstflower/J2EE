@@ -1,201 +1,97 @@
 import { useEffect, useState } from "react";
 import Pagination from "../components/Pagination";
-import usePagedResource from "../hooks/usePagedResource";
 import { queryExpiryWarnings, queryLowStockWarnings } from "../api/warnings";
 
 function WarningPage() {
-  const [lowStockQuery, setLowStockQuery] = useState({
-    pageNum: 1,
-    pageSize: 10,
-  });
-  const [expiryQuery, setExpiryQuery] = useState({
-    pageNum: 1,
-    pageSize: 10,
-    expiryDays: 30,
-  });
-  const {
-    data: lowStockResult,
-    loadResource: loadLowStockResource,
-    loading: loadingLowStock,
-  } = usePagedResource();
-  const {
-    data: expiryResult,
-    loadResource: loadExpiryResource,
-    loading: loadingExpiry,
-  } = usePagedResource();
-  const [errorMessage, setErrorMessage] = useState("");
+  const [lowStockData, setLowStockData] = useState({ records: [], total: 0, pageSize: 10 });
+  const [expiryData, setExpiryData] = useState({ records: [], total: 0, pageSize: 10 });
+  const [lowStockPageNum, setLowStockPageNum] = useState(1);
+  const [expiryPageNum, setExpiryPageNum] = useState(1);
+  const [expiryDays, setExpiryDays] = useState("30");
 
-  async function loadLowStockWarnings(nextQuery = lowStockQuery) {
-    setErrorMessage("");
-
-    try {
-      await loadLowStockResource(() => queryLowStockWarnings(nextQuery));
-    } catch (error) {
-      setErrorMessage(error.message);
-    }
+  async function loadLowStock(targetPage = lowStockPageNum) {
+    const data = await queryLowStockWarnings({ pageNum: targetPage, pageSize: 10 });
+    setLowStockPageNum(data.pageNum);
+    setLowStockData(data);
   }
 
-  async function loadExpiryWarnings(nextQuery = expiryQuery) {
-    setErrorMessage("");
-
-    try {
-      await loadExpiryResource(() => queryExpiryWarnings(nextQuery));
-    } catch (error) {
-      setErrorMessage(error.message);
-    }
+  async function loadExpiry(targetPage = expiryPageNum, targetDays = expiryDays) {
+    const data = await queryExpiryWarnings({
+      pageNum: targetPage,
+      pageSize: 10,
+      expiryDays: targetDays,
+    });
+    setExpiryPageNum(data.pageNum);
+    setExpiryData(data);
   }
 
   useEffect(() => {
-    loadLowStockWarnings(lowStockQuery);
-    loadExpiryWarnings(expiryQuery);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadLowStock(1);
+    loadExpiry(1, "30");
   }, []);
 
-  async function handleExpirySearch(event) {
-    event.preventDefault();
-    const nextQuery = {
-      ...expiryQuery,
-      pageNum: 1,
-      expiryDays: Number(expiryQuery.expiryDays),
-    };
-    setExpiryQuery(nextQuery);
-    await loadExpiryWarnings(nextQuery);
-  }
-
-  async function handleLowStockPageChange(nextPageNum) {
-    const nextQuery = {
-      ...lowStockQuery,
-      pageNum: nextPageNum,
-    };
-    setLowStockQuery(nextQuery);
-    await loadLowStockWarnings(nextQuery);
-  }
-
-  async function handleExpiryPageChange(nextPageNum) {
-    const nextQuery = {
-      ...expiryQuery,
-      pageNum: nextPageNum,
-    };
-    setExpiryQuery(nextQuery);
-    await loadExpiryWarnings(nextQuery);
-  }
-
   return (
-    <section className="module-panel">
-      <div className="section-heading">
-        <div>
-          <p className="section-kicker">Warning Module</p>
-          <h2>预警模块联调</h2>
+    <section className="page-grid">
+      <article className="panel">
+        <p className="eyebrow">Warning</p>
+        <h2>低库存预警</h2>
+        <div className="table-list">
+          {lowStockData.records.map((item) => (
+            <article className="list-card" key={item.drugId}>
+              <div>
+                <strong>{item.drugName}</strong>
+                <p>
+                  {item.drugCode} / 可用库存 {item.availableQuantity} / 阈值 {item.lowStockThreshold}
+                </p>
+              </div>
+            </article>
+          ))}
         </div>
-        <div className="button-row">
-          <button className="secondary-action" onClick={() => loadLowStockWarnings(lowStockQuery)} type="button">
-            刷新低库存
-          </button>
-          <button className="secondary-action" onClick={() => loadExpiryWarnings(expiryQuery)} type="button">
-            刷新效期预警
-          </button>
+        <Pagination
+          onChange={(nextPage) => loadLowStock(nextPage)}
+          pageNum={lowStockPageNum}
+          pageSize={lowStockData.pageSize || 10}
+          total={lowStockData.total}
+        />
+      </article>
+
+      <article className="panel">
+        <p className="eyebrow">Expiry</p>
+        <h2>效期预警</h2>
+        <form
+          className="inline-form"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            await loadExpiry(1, expiryDays);
+          }}
+        >
+          <label>
+            临期天数
+            <input
+              onChange={(event) => setExpiryDays(event.target.value)}
+              type="number"
+              value={expiryDays}
+            />
+          </label>
+          <button type="submit">查询效期预警</button>
+        </form>
+        <div className="table-list">
+          {expiryData.records.map((item) => (
+            <article className="list-card" key={item.inventoryId}>
+              <h3>{item.drugName}</h3>
+              <p>
+                {item.batchNo} / {item.warningType} / {item.expiryDate} / 剩余 {item.daysToExpiry} 天
+              </p>
+            </article>
+          ))}
         </div>
-      </div>
-
-      {errorMessage ? <p className="feedback error-text">{errorMessage}</p> : null}
-
-      <div className="warning-layout">
-        <section className="module-card">
-          <div className="list-header">
-            <h3>低库存预警</h3>
-            <span>共 {lowStockResult.total} 条</span>
-          </div>
-          {loadingLowStock ? <p className="empty-state">正在加载低库存预警...</p> : null}
-          {!loadingLowStock && lowStockResult.records.length === 0 ? (
-            <p className="empty-state">当前没有低库存预警数据。</p>
-          ) : null}
-          <div className="warning-list">
-            {lowStockResult.records.map((warning) => (
-              <article className="warning-card low-stock-card" key={warning.drugId}>
-                <div className="drug-card-main">
-                  <p className="drug-code">{warning.drugCode}</p>
-                  <h4>{warning.drugName}</h4>
-                  <p className="drug-meta">
-                    当前可用库存 {warning.availableQuantity} / 阈值 {warning.lowStockThreshold}
-                  </p>
-                </div>
-                <div className="drug-card-actions">
-                  <span className="status-pill warning-pill">低库存</span>
-                </div>
-              </article>
-            ))}
-          </div>
-          <Pagination
-            onPageChange={handleLowStockPageChange}
-            pageNum={lowStockResult.pageNum}
-            pageSize={lowStockResult.pageSize}
-            total={lowStockResult.total}
-          />
-        </section>
-
-        <section className="module-card">
-          <div className="list-header">
-            <h3>临期 / 过期预警</h3>
-            <span>共 {expiryResult.total} 条</span>
-          </div>
-          <form className="inline-filter warning-filter" onSubmit={handleExpirySearch}>
-            <label className="field inline-field">
-              <span>临期天数</span>
-              <input
-                min="0"
-                name="expiryDays"
-                onChange={(event) =>
-                  setExpiryQuery((current) => ({ ...current, expiryDays: event.target.value }))
-                }
-                type="number"
-                value={expiryQuery.expiryDays}
-              />
-            </label>
-            <button className="primary-action" type="submit">
-              查询效期预警
-            </button>
-          </form>
-          {loadingExpiry ? <p className="empty-state">正在加载效期预警...</p> : null}
-          {!loadingExpiry && expiryResult.records.length === 0 ? (
-            <p className="empty-state">当前没有临期或过期预警数据。</p>
-          ) : null}
-          <div className="warning-list">
-            {expiryResult.records.map((warning) => (
-              <article className="warning-card expiry-card" key={warning.inventoryId}>
-                <div className="drug-card-main">
-                  <p className="drug-code">{warning.drugCode}</p>
-                  <h4>
-                    {warning.drugName} / 批次 {warning.batchNo}
-                  </h4>
-                  <p className="drug-meta">
-                    到期日 {warning.expiryDate} / 数量 {warning.quantity}
-                  </p>
-                  <p className="drug-meta">
-                    剩余天数 {warning.daysToExpiry} / 库存ID {warning.inventoryId}
-                  </p>
-                </div>
-                <div className="drug-card-actions">
-                  <span
-                    className={
-                      warning.warningType === "EXPIRED"
-                        ? "status-pill danger-pill"
-                        : "status-pill expiry-pill"
-                    }
-                  >
-                    {warning.warningType === "EXPIRED" ? "已过期" : "临期"}
-                  </span>
-                </div>
-              </article>
-            ))}
-          </div>
-          <Pagination
-            onPageChange={handleExpiryPageChange}
-            pageNum={expiryResult.pageNum}
-            pageSize={expiryResult.pageSize}
-            total={expiryResult.total}
-          />
-        </section>
-      </div>
+        <Pagination
+          onChange={(nextPage) => loadExpiry(nextPage, expiryDays)}
+          pageNum={expiryPageNum}
+          pageSize={expiryData.pageSize || 10}
+          total={expiryData.total}
+        />
+      </article>
     </section>
   );
 }

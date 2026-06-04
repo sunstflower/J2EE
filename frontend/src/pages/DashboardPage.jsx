@@ -1,23 +1,25 @@
 function DashboardPage({ currentUser }) {
   return (
-    <section className="hero dashboard-hero">
-      <p className="eyebrow">Drug Management System</p>
-      <h1>药物管理系统主功能联调准备已就绪</h1>
-      <p className="lead">
-        当前身份：{currentUser.userName}（{currentUser.role}）
-      </p>
-      <div className="status-grid">
-        <article className="status-card">
-          <h2>认证接入</h2>
-          <p>当前用户身份已建立，请求头会通过统一请求层自动注入。</p>
+    <section className="panel">
+      <p className="eyebrow">Dashboard</p>
+      <h2>首页总览</h2>
+      <p>当前登录身份：{currentUser.userName}</p>
+      <div className="stat-grid">
+        <article className="stat-card">
+          <h3>药品管理</h3>
+          <p>维护药品主数据，支撑库存与处方链路。</p>
         </article>
-        <article className="status-card">
-          <h2>结构整改</h2>
-          <p>当前已切换为独立模块路由，后续继续补齐分页、确认弹窗和统一状态管理。</p>
+        <article className="stat-card">
+          <h3>库存管理</h3>
+          <p>执行入库、出库、盘点，并查看库存流水。</p>
         </article>
-        <article className="status-card">
-          <h2>演示目标</h2>
-          <p>最终目标是打通建档、入库、预警、处方、发药完整链路，并让医生与药师入口分层可见。</p>
+        <article className="stat-card">
+          <h3>预警查询</h3>
+          <p>跟踪低库存、临期和过期药品。</p>
+        </article>
+        <article className="stat-card">
+          <h3>处方工作台</h3>
+          <p>完成建方、授权、审核和发药。</p>
         </article>
       </div>
     </section>

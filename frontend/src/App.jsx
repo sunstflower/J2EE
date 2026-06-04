@@ -12,36 +12,42 @@ import PrescriptionDetailPage from "./pages/PrescriptionDetailPage";
 import PrescriptionPage from "./pages/PrescriptionPage";
 import WarningPage from "./pages/WarningPage";
 
+function LoginPage({ onSelectUser }) {
+  return (
+    <main className="login-shell">
+      <section className="hero-card">
+        <p className="eyebrow">Drug Management System</p>
+        <h1>药物管理系统联调入口</h1>
+        <p className="hero-copy">当前阶段使用最小登录态切换医生与药师身份，便于前后端联调与容器演示。</p>
+        <div className="login-grid">
+          {DEMO_USERS.map((user) => (
+            <button
+              className="login-card"
+              key={user.userId}
+              onClick={() => onSelectUser(user)}
+              type="button"
+            >
+              <strong>{user.userName}</strong>
+              <span>{user.role === "DOCTOR" ? "医生身份" : "药师身份"}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function App() {
   const [currentUser, setCurrentUser] = useState(() => loadCurrentUser());
 
   if (!currentUser) {
     return (
-      <main className="app-shell">
-        <section className="hero">
-          <p className="eyebrow">Drug Management System</p>
-          <h1>药物管理系统联调入口</h1>
-          <p className="lead">
-            当前阶段先接入最小登录态，为医生与药师角色联调提供统一入口。
-          </p>
-          <div className="login-grid">
-            {DEMO_USERS.map((user) => (
-              <button
-                key={user.userId}
-                className="login-card"
-                onClick={() => {
-                  saveCurrentUser(user);
-                  setCurrentUser(user);
-                }}
-                type="button"
-              >
-                <strong>{user.userName}</strong>
-                <span>{user.role === "DOCTOR" ? "医生身份" : "药师身份"}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      </main>
+      <LoginPage
+        onSelectUser={(user) => {
+          saveCurrentUser(user);
+          setCurrentUser(user);
+        }}
+      />
     );
   }
 
@@ -68,6 +74,7 @@ function App() {
           <Route element={<PrescriptionPage />} path="prescriptions" />
           <Route element={<PrescriptionCreatePage />} path="prescriptions/new" />
           <Route element={<PrescriptionDetailPage />} path="prescriptions/:id" />
+          <Route element={<Navigate replace to="/" />} path="dashboard" />
           <Route element={<NotFoundPage />} path="*" />
         </Route>
       </Routes>
