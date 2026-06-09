@@ -15,7 +15,6 @@ import com.example.drugmanagement.dto.prescription.PrescriptionDispenseRequest;
 import com.example.drugmanagement.dto.prescription.PrescriptionDoctorApprovalRequest;
 import com.example.drugmanagement.dto.prescription.PrescriptionItemRequest;
 import com.example.drugmanagement.dto.prescription.PrescriptionQueryRequest;
-import com.example.drugmanagement.entity.Drug;
 import com.example.drugmanagement.entity.Inventory;
 import com.example.drugmanagement.entity.InventoryRecord;
 import com.example.drugmanagement.entity.Prescription;
@@ -26,81 +25,80 @@ import com.example.drugmanagement.mapper.InventoryRecordMapper;
 import com.example.drugmanagement.mapper.PrescriptionItemMapper;
 import com.example.drugmanagement.mapper.PrescriptionMapper;
 import com.example.drugmanagement.service.PrescriptionService;
-import com.example.drugmanagement.vo.prescription.PrescriptionItemVO;
 import com.example.drugmanagement.vo.prescription.PrescriptionVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class PrescriptionServiceImpl implements PrescriptionService {
 
+    private static final DateTimeFormatter PRESCRIPTION_NO_FORMAT =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
     private final PrescriptionMapper prescriptionMapper;
     private final PrescriptionItemMapper prescriptionItemMapper;
-    private final DrugMapper drugMapper;
     private final InventoryMapper inventoryMapper;
     private final InventoryRecordMapper inventoryRecordMapper;
+    private final DrugMapper drugMapper;
 
     public PrescriptionServiceImpl(PrescriptionMapper prescriptionMapper,
                                    PrescriptionItemMapper prescriptionItemMapper,
-                                   DrugMapper drugMapper,
                                    InventoryMapper inventoryMapper,
-                                   InventoryRecordMapper inventoryRecordMapper) {
+                                   InventoryRecordMapper inventoryRecordMapper,
+                                   DrugMapper drugMapper) {
         this.prescriptionMapper = prescriptionMapper;
         this.prescriptionItemMapper = prescriptionItemMapper;
-        this.drugMapper = drugMapper;
         this.inventoryMapper = inventoryMapper;
         this.inventoryRecordMapper = inventoryRecordMapper;
+        this.drugMapper = drugMapper;
     }
 
     @Override
     @Transactional
     public Long createPrescription(CreatePrescriptionRequest request) {
-        CurrentUser actor = requireCurrentUser();
-        RoleType roleType = actor.role();
-        validateCreateRoleRules(request, roleType);
-        validatePrescriptionItems(request.getItems());
-
-        Prescription prescription = new Prescription();
-        prescription.setPrescriptionNo(generatePrescriptionNo());
-        prescription.setPatientName(request.getPatientName());
-        prescription.setCreatedByUserId(actor.userId());
-        prescription.setCreatedByRole(roleType.name());
-        prescription.setDoctorId(request.getDoctorId());
-        prescription.setDoctorName(request.getDoctorName());
-        prescription.setCreatedBy(actor.userName());
-        prescription.setUpdatedBy(actor.userName());
-        prescription.setDeleted(0);
-
-        if (roleType == RoleType.DOCTOR) {
-            prescription.setStatus(PrescriptionStatus.DRAFT.name());
-            prescription.setDoctorApprovalStatus(DoctorApprovalStatus.NONE.name());
-        } else {
-            prescription.setStatus(PrescriptionStatus.PENDING_DOCTOR_APPROVAL.name());
-            prescription.setDoctorApprovalStatus(DoctorApprovalStatus.PENDING.name());
-            prescription.setPharmacistOperatorId(actor.userId());
+        CurrentUser currentUser = requireCurrentUser();
+        if (currentUser.role() != RoleType.DOCTOR) {
+            throw BusinessException.of(ResponseCode.UNAUTHORIZED);
         }
 
+        Prescription prescription = new Prescription();
+        prescription.setPrescriptionNo("RX-" + LocalDateTime.now().format(PRESCRIPTION_NO_FORMAT));
+        prescription.setPatientName(request.getPatientName());
+        prescription.setCreatedByUserId(currentUser.userId());
+        prescription.setCreatedByRole(currentUser.role().name());
+        prescription.setDoctorId(currentUser.userId());
+        prescription.setDoctorName(currentUser.userName());
+        prescription.setStatus(PrescriptionStatus.APPROVED.name());
+        prescription.setDoctorApprovalStatus(DoctorApprovalStatus.APPROVED.name());
+        prescription.setDoctorApprovedAt(LocalDateTime.now());
+        prescription.setRemark(request.getRemark());
+        prescription.setCreatedBy(currentUser.userName());
+        prescription.setUpdatedBy(currentUser.userName());
+        prescription.setDeleted(0);
         prescriptionMapper.insert(prescription);
 
         List<PrescriptionItem> items = new ArrayList<>();
-        for (PrescriptionItemRequest itemRequest : request.getItems()) {
+        for (PrescriptionItemRequest requestItem : request.getItems()) {
+            ensureDrugExists(requestItem.getDrugId());
             PrescriptionItem item = new PrescriptionItem();
             item.setPrescriptionId(prescription.getId());
-            item.setDrugId(itemRequest.getDrugId());
-            item.setDosage(itemRequest.getDosage());
-            item.setFrequency(itemRequest.getFrequency());
-            item.setDays(itemRequest.getDays());
-            item.setQuantity(itemRequest.getQuantity());
-            item.setCreatedBy(actor.userName());
-            item.setUpdatedBy(actor.userName());
+            item.setDrugId(requestItem.getDrugId());
+            item.setDosage(requestItem.getDosage());
+            item.setFrequency(requestItem.getFrequency());
+            item.setDays(requestItem.getDays());
+            item.setQuantity(requestItem.getQuantity());
+            item.setCreatedBy(currentUser.userName());
+            item.setUpdatedBy(currentUser.userName());
             item.setDeleted(0);
             items.add(item);
         }
         prescriptionItemMapper.insertBatch(items);
+        dispensePrescriptionItems(prescription, items, currentUser.userName());
         return prescription.getId();
     }
 
@@ -117,6 +115,9 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     @Override
     public PageResponse<PrescriptionVO> queryPrescriptions(PrescriptionQueryRequest request) {
         List<PrescriptionVO> records = prescriptionMapper.findPage(request);
+        for (PrescriptionVO record : records) {
+            record.setItems(prescriptionItemMapper.findByPrescriptionId(record.getId()));
+        }
         long total = prescriptionMapper.count(request);
         return PageResponse.of(records, total, request.getPageNum(), request.getPageSize());
     }
@@ -124,207 +125,84 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     @Override
     @Transactional
     public void doctorApprove(Long id, PrescriptionDoctorApprovalRequest request) {
-        CurrentUser actor = requireCurrentUser();
-        ensureRole(actor, RoleType.DOCTOR);
         Prescription prescription = getExistingPrescription(id);
-        if (!PrescriptionStatus.PENDING_DOCTOR_APPROVAL.name().equals(prescription.getStatus())) {
-            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-        }
-        if (!prescription.getDoctorId().equals(actor.userId())) {
-            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-        }
-
-        if ("APPROVE".equals(request.getAction())) {
-            prescriptionMapper.updateStatus(
-                    id,
-                    PrescriptionStatus.SUBMITTED.name(),
-                    DoctorApprovalStatus.APPROVED.name(),
-                    LocalDateTime.now(),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    actor.userName()
-            );
-        } else if ("REJECT".equals(request.getAction())) {
-            prescriptionMapper.updateStatus(
-                    id,
-                    PrescriptionStatus.CANCELLED.name(),
-                    DoctorApprovalStatus.REJECTED.name(),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    "doctor rejected proxy prescription",
-                    actor.userName()
-            );
-        } else {
-            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-        }
+        String status = request.getApproved() ? PrescriptionStatus.APPROVED.name() : PrescriptionStatus.REJECTED.name();
+        String approvalStatus = request.getApproved() ? DoctorApprovalStatus.APPROVED.name() : DoctorApprovalStatus.REJECTED.name();
+        prescriptionMapper.updateStatus(
+                prescription.getId(),
+                status,
+                approvalStatus,
+                LocalDateTime.now(),
+                prescription.getAuditBy(),
+                prescription.getAuditTime(),
+                prescription.getDispenseBy(),
+                prescription.getDispenseTime(),
+                request.getRejectReason(),
+                currentUserName()
+        );
     }
 
     @Override
     @Transactional
     public void submit(Long id) {
         Prescription prescription = getExistingPrescription(id);
-        if (RoleType.DOCTOR.name().equals(prescription.getCreatedByRole())) {
-            if (!PrescriptionStatus.DRAFT.name().equals(prescription.getStatus())) {
-                throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-            }
-        } else {
-            if (!PrescriptionStatus.SUBMITTED.name().equals(prescription.getStatus())) {
-                throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-            }
-            return;
-        }
-
         prescriptionMapper.updateStatus(
-                id,
+                prescription.getId(),
                 PrescriptionStatus.SUBMITTED.name(),
                 prescription.getDoctorApprovalStatus(),
                 prescription.getDoctorApprovedAt(),
-                null,
-                null,
-                null,
-                null,
-                null,
-                prescription.getUpdatedBy()
+                prescription.getAuditBy(),
+                prescription.getAuditTime(),
+                prescription.getDispenseBy(),
+                prescription.getDispenseTime(),
+                prescription.getRejectReason(),
+                currentUserName()
         );
     }
 
     @Override
     @Transactional
     public void audit(Long id, PrescriptionAuditRequest request) {
-        CurrentUser actor = requireCurrentUser();
-        ensureRole(actor, RoleType.PHARMACIST);
         Prescription prescription = getExistingPrescription(id);
-        if (!PrescriptionStatus.SUBMITTED.name().equals(prescription.getStatus())) {
-            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-        }
-
-        if ("APPROVE".equals(request.getAction())) {
-            prescriptionMapper.updateStatus(
-                    id,
-                    PrescriptionStatus.APPROVED.name(),
-                    prescription.getDoctorApprovalStatus(),
-                    prescription.getDoctorApprovedAt(),
-                    actor.userName(),
-                    LocalDateTime.now(),
-                    null,
-                    null,
-                    null,
-                    actor.userName()
-            );
-        } else if ("REJECT".equals(request.getAction())) {
-            prescriptionMapper.updateStatus(
-                    id,
-                    PrescriptionStatus.REJECTED.name(),
-                    prescription.getDoctorApprovalStatus(),
-                    prescription.getDoctorApprovedAt(),
-                    actor.userName(),
-                    LocalDateTime.now(),
-                    null,
-                    null,
-                    request.getRejectReason(),
-                    actor.userName()
-            );
-        } else {
-            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-        }
+        String status = request.getApproved() ? PrescriptionStatus.APPROVED.name() : PrescriptionStatus.REJECTED.name();
+        prescriptionMapper.updateStatus(
+                prescription.getId(),
+                status,
+                prescription.getDoctorApprovalStatus(),
+                prescription.getDoctorApprovedAt(),
+                currentUserName(),
+                LocalDateTime.now(),
+                prescription.getDispenseBy(),
+                prescription.getDispenseTime(),
+                request.getRejectReason(),
+                currentUserName()
+        );
     }
 
     @Override
     @Transactional
     public void dispense(Long id, PrescriptionDispenseRequest request) {
-        CurrentUser actor = requireCurrentUser();
-        ensureRole(actor, RoleType.PHARMACIST);
         Prescription prescription = getExistingPrescription(id);
-        if (!PrescriptionStatus.APPROVED.name().equals(prescription.getStatus())) {
-            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-        }
-
-        List<PrescriptionItemVO> items = prescriptionItemMapper.findByPrescriptionId(id);
-        for (PrescriptionItemVO item : items) {
-            Drug drug = drugMapper.findEntityById(item.getDrugId());
-            if (drug == null || drug.getEnabled() == null || drug.getEnabled() != 1) {
-                throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-            }
-
-            List<Inventory> inventories = inventoryMapper.findAvailableByDrugIdOrderByExpiry(item.getDrugId());
-            int remaining = item.getQuantity();
-
-            for (Inventory inventory : inventories) {
-                if (remaining <= 0) {
-                    break;
-                }
-                if (inventory.getExpiryDate() != null && inventory.getExpiryDate().isBefore(java.time.LocalDate.now())) {
-                    continue;
-                }
-                int available = inventory.getQuantity() - inventory.getLockedQuantity();
-                if (available <= 0) {
-                    continue;
-                }
-
-                int deduction = Math.min(available, remaining);
-                int beforeQuantity = inventory.getQuantity();
-                int afterQuantity = beforeQuantity - deduction;
-                inventoryMapper.decreaseQuantity(inventory.getId(), deduction, actor.userName());
-
-                InventoryRecord record = new InventoryRecord();
-                record.setDrugId(item.getDrugId());
-                record.setInventoryId(inventory.getId());
-                record.setRecordType(InventoryRecordType.DISPENSE.name());
-                record.setQuantityChange(-deduction);
-                record.setBeforeQuantity(beforeQuantity);
-                record.setAfterQuantity(afterQuantity);
-                record.setBizNo(prescription.getPrescriptionNo());
-                record.setOperatorName(actor.userName());
-                record.setOperatedAt(LocalDateTime.now());
-                record.setRemark("prescription dispense");
-                record.setCreatedBy(actor.userName());
-                record.setUpdatedBy(actor.userName());
-                record.setDeleted(0);
-                inventoryRecordMapper.insert(record);
-
-                remaining -= deduction;
-            }
-
-            if (remaining > 0) {
-                throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-            }
-        }
-
-        int updatedRows = prescriptionMapper.updateStatusByCurrentStatus(
-                id,
-                PrescriptionStatus.APPROVED.name(),
+        prescriptionMapper.updateStatus(
+                prescription.getId(),
                 PrescriptionStatus.DISPENSED.name(),
                 prescription.getDoctorApprovalStatus(),
                 prescription.getDoctorApprovedAt(),
                 prescription.getAuditBy(),
                 prescription.getAuditTime(),
-                actor.userName(),
+                currentUserName(),
                 LocalDateTime.now(),
-                null,
-                actor.userName()
+                request.getRemark(),
+                currentUserName()
         );
-
-        if (updatedRows != 1) {
-            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-        }
     }
 
     @Override
     @Transactional
     public void cancel(Long id) {
         Prescription prescription = getExistingPrescription(id);
-        if (PrescriptionStatus.DISPENSED.name().equals(prescription.getStatus())) {
-            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-        }
-
         prescriptionMapper.updateStatus(
-                id,
+                prescription.getId(),
                 PrescriptionStatus.CANCELLED.name(),
                 prescription.getDoctorApprovalStatus(),
                 prescription.getDoctorApprovedAt(),
@@ -333,8 +211,73 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 prescription.getDispenseBy(),
                 prescription.getDispenseTime(),
                 prescription.getRejectReason(),
-                prescription.getUpdatedBy()
+                currentUserName()
         );
+    }
+
+    private void dispensePrescriptionItems(Prescription prescription,
+                                           List<PrescriptionItem> items,
+                                           String operatorName) {
+        for (PrescriptionItem item : items) {
+            int remainingQuantity = item.getQuantity();
+            List<Inventory> inventories = inventoryMapper.findAvailableByDrugIdOrderByExpiry(item.getDrugId());
+            for (Inventory inventory : inventories) {
+                if (remainingQuantity <= 0) {
+                    break;
+                }
+                int consumeQuantity = Math.min(remainingQuantity, inventory.getQuantity());
+                int affectedRows = inventoryMapper.decreaseQuantity(inventory.getId(), consumeQuantity, operatorName);
+                if (affectedRows == 0) {
+                    continue;
+                }
+                writeDispenseRecord(prescription, item, inventory, consumeQuantity, operatorName);
+                remainingQuantity -= consumeQuantity;
+            }
+            if (remainingQuantity > 0) {
+                throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
+            }
+        }
+
+        prescriptionMapper.updateStatus(
+                prescription.getId(),
+                PrescriptionStatus.DISPENSED.name(),
+                prescription.getDoctorApprovalStatus(),
+                prescription.getDoctorApprovedAt(),
+                prescription.getAuditBy(),
+                prescription.getAuditTime(),
+                operatorName,
+                LocalDateTime.now(),
+                prescription.getRejectReason(),
+                operatorName
+        );
+    }
+
+    private void writeDispenseRecord(Prescription prescription,
+                                     PrescriptionItem item,
+                                     Inventory inventory,
+                                     int consumeQuantity,
+                                     String operatorName) {
+        InventoryRecord inventoryRecord = new InventoryRecord();
+        inventoryRecord.setDrugId(item.getDrugId());
+        inventoryRecord.setInventoryId(inventory.getId());
+        inventoryRecord.setRecordType(InventoryRecordType.DISPENSE.name());
+        inventoryRecord.setQuantityChange(-consumeQuantity);
+        inventoryRecord.setBeforeQuantity(inventory.getQuantity());
+        inventoryRecord.setAfterQuantity(inventory.getQuantity() - consumeQuantity);
+        inventoryRecord.setBizNo(prescription.getPrescriptionNo());
+        inventoryRecord.setOperatorName(operatorName);
+        inventoryRecord.setOperatedAt(LocalDateTime.now());
+        inventoryRecord.setRemark("处方发药");
+        inventoryRecord.setCreatedBy(operatorName);
+        inventoryRecord.setUpdatedBy(operatorName);
+        inventoryRecord.setDeleted(0);
+        inventoryRecordMapper.insert(inventoryRecord);
+    }
+
+    private void ensureDrugExists(Long drugId) {
+        if (drugMapper.findEntityById(drugId) == null) {
+            throw BusinessException.of(ResponseCode.RESOURCE_NOT_FOUND);
+        }
     }
 
     private Prescription getExistingPrescription(Long id) {
@@ -345,31 +288,6 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         return prescription;
     }
 
-    private void validateCreateRoleRules(CreatePrescriptionRequest request, RoleType roleType) {
-        if (roleType == RoleType.DOCTOR) {
-            CurrentUser actor = requireCurrentUser();
-            if (!actor.userId().equals(request.getDoctorId())) {
-                throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-            }
-        } else if (roleType == RoleType.PHARMACIST) {
-            CurrentUser actor = requireCurrentUser();
-            if (actor.userId().equals(request.getDoctorId())) {
-                throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-            }
-        } else {
-            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-        }
-    }
-
-    private void validatePrescriptionItems(List<PrescriptionItemRequest> items) {
-        for (PrescriptionItemRequest item : items) {
-            Drug drug = drugMapper.findEntityById(item.getDrugId());
-            if (drug == null || drug.getEnabled() == null || drug.getEnabled() != 1) {
-                throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-            }
-        }
-    }
-
     private CurrentUser requireCurrentUser() {
         CurrentUser currentUser = CurrentUserHolder.get();
         if (currentUser == null) {
@@ -378,13 +296,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         return currentUser;
     }
 
-    private void ensureRole(CurrentUser actor, RoleType expectedRole) {
-        if (actor.role() != expectedRole) {
-            throw BusinessException.of(ResponseCode.BUSINESS_RULE_VIOLATION);
-        }
-    }
-
-    private String generatePrescriptionNo() {
-        return "RX-" + System.currentTimeMillis();
+    private String currentUserName() {
+        CurrentUser currentUser = CurrentUserHolder.get();
+        return currentUser == null ? "system" : currentUser.userName();
     }
 }

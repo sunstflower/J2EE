@@ -1,38 +1,27 @@
 package com.example.drugmanagement.dto.prescription;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public class PrescriptionDoctorApprovalRequest {
 
-    @NotBlank(message = "must not be blank")
-    private String action;
+    @NotNull(message = "must not be null")
+    private Boolean approved;
 
-    private String doctorName;
+    private String rejectReason;
 
-    private Long doctorId;
-
-    public String getAction() {
-        return action;
+    public Boolean getApproved() {
+        return approved;
     }
 
-    public void setAction(String action) {
-        this.action = action;
+    public void setApproved(Boolean approved) {
+        this.approved = approved;
     }
 
-    public String getDoctorName() {
-        return doctorName;
+    public String getRejectReason() {
+        return rejectReason;
     }
 
-    public void setDoctorName(String doctorName) {
-        this.doctorName = doctorName;
-    }
-
-    public Long getDoctorId() {
-        return doctorId;
-    }
-
-    public void setDoctorId(Long doctorId) {
-        this.doctorId = doctorId;
+    public void setRejectReason(String rejectReason) {
+        this.rejectReason = rejectReason;
     }
 }

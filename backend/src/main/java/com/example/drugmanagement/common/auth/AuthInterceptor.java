@@ -28,6 +28,10 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
         String authorization = request.getHeader(HEADER_AUTHORIZATION);
         if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {
             CurrentUserHolder.set(authSessionService.getCurrentUser(authorization.substring(BEARER_PREFIX.length())));

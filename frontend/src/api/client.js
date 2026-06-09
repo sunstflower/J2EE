@@ -1,9 +1,12 @@
-import { loadAccessToken, loadCurrentUser } from "../auth";
+import { clearCurrentUser, loadAccessToken, loadCurrentUser } from "../auth";
 
 const DEFAULT_API_BASE_URL = "http://localhost:8080";
 
 function getApiBaseUrl() {
-  return import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL;
+  if (Object.prototype.hasOwnProperty.call(import.meta.env, "VITE_API_BASE_URL")) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  return DEFAULT_API_BASE_URL;
 }
 
 function buildHeaders(body, headers = {}) {
@@ -30,6 +33,11 @@ function buildHeaders(body, headers = {}) {
 
 async function parseResponse(response) {
   const payload = await response.json().catch(() => null);
+
+  if (payload?.code === 4010) {
+    clearCurrentUser();
+    throw new Error("登录状态已失效，请重新登录");
+  }
 
   if (!response.ok) {
     throw new Error(payload?.message || "请求失败");

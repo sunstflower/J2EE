@@ -1,5 +1,6 @@
 package com.example.drugmanagement.dto.inventory;
 
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,6 +16,7 @@ public class CreateInventoryInboundRequest {
     private String batchNo;
 
     @NotNull(message = "must not be null")
+    @Future(message = "must be a future date")
     private LocalDate expiryDate;
 
     @NotNull(message = "must not be null")
@@ -22,12 +24,7 @@ public class CreateInventoryInboundRequest {
     private Integer quantity;
 
     private String locationCode;
-
-    @NotBlank(message = "must not be blank")
     private String bizNo;
-
-    private String operatorName;
-
     private String remark;
 
     public Long getDrugId() {
@@ -76,14 +73,6 @@ public class CreateInventoryInboundRequest {
 
     public void setBizNo(String bizNo) {
         this.bizNo = bizNo;
-    }
-
-    public String getOperatorName() {
-        return operatorName;
-    }
-
-    public void setOperatorName(String operatorName) {
-        this.operatorName = operatorName;
     }
 
     public String getRemark() {

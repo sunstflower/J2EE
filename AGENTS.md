@@ -14,17 +14,9 @@
 
 后续会话至少检查并按需更新以下文档：
 
-- `README.md`
 - `AGENTS.md`
 - `docs/architecture.md`
-
-如果项目进入开发阶段，再按需扩展：
-
-- Docker 使用说明
-- 数据库初始化说明
-- API 文档
-- 测试说明
-- 部署说明
+- `docs/frontend-scope.md`
 
 ## 3. 变更记录格式
 
@@ -40,661 +32,111 @@
 
 ## 4. 变更记录
 
-### 2026-06-04 15:04
-- 会话目标：完成注册用户落库、用户表初始化，并继续将业务操作者字段向认证上下文内收
+### 2026-06-08 15:45
+- 会话目标：按演示目标收缩前端功能范围，形成新的页面与交互设计文档
 - 修改文件：
-  - `backend/src/main/java/com/example/drugmanagement/common/auth/AuthSessionService.java`
-  - `backend/src/main/java/com/example/drugmanagement/entity/UserAccount.java`
-  - `backend/src/main/java/com/example/drugmanagement/mapper/UserAccountMapper.java`
-  - `backend/src/main/resources/mapper/UserAccountMapper.xml`
-  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryInboundRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryOutboundRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryCheckRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/CreatePrescriptionRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionAuditRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionDispenseRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionDoctorApprovalRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/impl/InventoryServiceImpl.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/impl/PrescriptionServiceImpl.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/AuthControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/DrugControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/HealthControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerAdditionalTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/PrescriptionControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/WarningControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/service/InventoryServiceTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/service/PrescriptionFlowIntegrationTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/service/PrescriptionServiceTest.java`
-  - `docker/mysql/init/002_schema.sql`
-  - `README.md`
-  - `docs/authentication.md`
-  - `docs/architecture.md`
   - `AGENTS.md`
-- 主要变更：
-  - 新增 `user_account` 表、默认演示账号种子数据和用户 Mapper，将注册与登录切换到数据库存储
-  - 库存服务改为优先从认证上下文解析 `operatorName`，旧请求字段只保留兼容回退
-  - 处方创建、医生授权、审核、发药改为优先使用认证上下文中的当前用户身份
-  - 调整 DTO 校验与服务测试，补齐当前用户上下文测试前置，更新项目文档到最新实现状态
-- 备注：
-  - 本次后端测试结果：`mvn -q test` 全量通过
-
-### 2026-06-04 14:55
-- 会话目标：维护项目文档并收口认证链路遗留项，修复前端认证测试回归
-- 修改文件：
-  - `frontend/src/pages/__tests__/App.test.jsx`
-  - `backend/src/main/java/com/example/drugmanagement/common/auth/AuthSessionService.java`
-  - `README.md`
-  - `docs/authentication.md`
   - `docs/architecture.md`
-  - `AGENTS.md`
+  - `docs/frontend-scope.md`
 - 主要变更：
-  - 修复登录 / 注册页测试中因同名按钮导致的选择器歧义，恢复前端测试可回归状态
-  - 同步认证文档到当前真实实现：后端登录、后端注册、Bearer Token、旧请求头兼容
-  - 修正 README 中前端技术栈与认证现状描述，补充当前仍未完成的落地项
-  - 清理认证服务中的重复导入，保持后端代码整洁
+  - 将前端展示范围收敛为“库存预览、开药、药物入库”三项核心功能
+  - 明确库存预览页需要同时展示库存列表和低库存预警
+  - 明确开药页中处方药只能由医生账号开出，药师账号不展示该能力
+  - 补充新的前端页面结构、角色边界和演示落地原则
 - 备注：
-  - 本次需继续执行前端与后端测试，确认文档同步后的实现未回归
+  - 本次仅修改文档，不修改业务代码
 
-### 2026-06-04 14:47
-- 会话目标：将左侧导航栏改为顶部 header，并把退出登录移到右上角
+### 2026-06-08 16:00
+- 会话目标：进行基础修改，并将 `frontend-scope.md` 中的收口要求落实到前端入口和 AGENTS 文档
 - 修改文件：
-  - `frontend/src/pages/HomePage.jsx`
+  - `frontend/src/App.jsx`
   - `frontend/src/styles.css`
+  - `frontend/src/pages/DashboardPage.jsx`
   - `AGENTS.md`
 - 主要变更：
-  - 去掉左侧整栏式“药物管理系统”导航
-  - 改为顶部 header 横向导航与快捷入口
-  - 将“退出登录”移动到 header 右上角
+  - 补回前端缺失的 `App.jsx` 和 `styles.css`，恢复最小可运行入口
+  - 将主页入口收敛为 `库存预览`、`开药`、`药物入库` 三项
+  - 按 `frontend-scope.md` 约束，药师账号不再显示“开药”入口
+  - 将本次基于 `frontend-scope.md` 的基础落地动作同步记录到 AGENTS 文档
 - 备注：
-  - 本次前端测试结果：`4` 个测试文件，`7` 个测试全部通过
+  - 当前仅完成入口层和页面骨架收口，具体页面内容仍需继续按收口设计替换现有旧模块实现
 
-### 2026-06-04 14:42
-- 会话目标：修复前端登录请求被后端 CORS 拦截的问题
+### 2026-06-08 16:07
+- 会话目标：修复当前不可运行状态，恢复最小可演示闭环的前后端、数据库初始化和测试验证
 - 修改文件：
-  - `backend/src/main/java/com/example/drugmanagement/common/config/WebMvcConfig.java`
-  - `backend/Dockerfile`
-  - `AGENTS.md`
-- 主要变更：
-  - 为 `/api/**` 增加 CORS 配置，放行 `http://localhost:3000`
-  - 将后端镜像构建切换为直接复制本地已打包 jar，绕开容器内 Maven 依赖下载超时
-  - 重建后端与网关容器，并验证 `OPTIONS /api/auth/login` 已返回跨域允许头
-- 备注：
-  - 验证结果包含 `Access-Control-Allow-Origin: http://localhost:3000`
-
-### 2026-06-04 14:34
-- 会话目标：按优先级修复前端假路由、前端本地认证、错误处理与消息提示问题
-- 修改文件：
-  - `backend/src/main/java/com/example/drugmanagement/common/auth/AuthInterceptor.java`
   - `backend/src/main/java/com/example/drugmanagement/common/auth/AuthSessionService.java`
   - `backend/src/main/java/com/example/drugmanagement/common/config/WebMvcConfig.java`
   - `backend/src/main/java/com/example/drugmanagement/controller/AuthController.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/auth/LoginRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/vo/auth/LoginVO.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/AuthControllerTest.java`
-  - `frontend/src/App.jsx`
-  - `frontend/src/auth.js`
-  - `frontend/src/api/auth.js`
-  - `frontend/src/api/client.js`
-  - `frontend/src/components/FeedbackMessage.jsx`
-  - `frontend/src/components/RequireRole.jsx`
-  - `frontend/src/hooks/useFlashMessage.js`
-  - `frontend/src/pages/DrugPage.jsx`
-  - `frontend/src/pages/InventoryPage.jsx`
-  - `frontend/src/pages/InventoryRecordsPage.jsx`
-  - `frontend/src/pages/PrescriptionCreatePage.jsx`
-  - `frontend/src/pages/PrescriptionDetailPage.jsx`
-  - `frontend/src/pages/PrescriptionPage.jsx`
-  - `frontend/src/pages/WarningPage.jsx`
-  - `frontend/src/pages/__tests__/App.test.jsx`
-  - `frontend/src/pages/__tests__/InventoryPage.test.jsx`
-  - `frontend/src/pages/__tests__/PrescriptionPage.test.jsx`
-  - `frontend/src/pages/__tests__/WarningPage.test.jsx`
-  - `frontend/src/styles.css`
-  - `README.md`
-  - `docs/architecture.md`
-  - `AGENTS.md`
-- 主要变更：
-  - 新增后端 `POST /api/auth/login` 演示登录接口与基于 token 的会话解析
-  - 前端改为通过后端登录接口获取 token，不再在浏览器端保存明文密码
-  - 将 `/inventories/records`、`/prescriptions/new`、`/prescriptions/:id` 改为真实职责页
-  - 为药品、库存、预警、处方页面补充 loading / error / success 提示
-  - 修复库存出库、盘点仍显示“入库成功”的错误文案
-- 备注：
-  - 本次前端测试结果：`4` 个测试文件，`7` 个测试全部通过
-  - 本次后端测试结果：`AuthControllerTest` 通过
-
-### 2026-06-04 14:10
-- 会话目标：调整注册页密码输入显示方式
-- 修改文件：
-  - `frontend/src/App.jsx`
-  - `AGENTS.md`
-- 主要变更：
-  - 将注册态密码输入从隐藏改为明文显示
-  - 保持登录态密码输入仍为隐藏模式
-  - 执行前端测试回归并确认通过
-- 备注：
-  - 本次前端测试结果：`4` 个测试文件，`7` 个测试全部通过
-
-### 2026-06-04 14:00
-- 会话目标：调整前端登录入口与主路由结构，补足登录/注册和模块入口设计
-- 修改文件：
-  - `frontend/src/auth.js`
-  - `frontend/src/App.jsx`
-  - `frontend/src/pages/HomePage.jsx`
-  - `frontend/src/pages/DashboardPage.jsx`
-  - `frontend/src/pages/__tests__/App.test.jsx`
-  - `frontend/src/styles.css`
-  - `README.md`
-  - `docs/architecture.md`
-  - `AGENTS.md`
-- 主要变更：
-  - 将前端入口从“演示身份切换”改为“登录 / 注册”页
-  - 增加用户号首位判定规则：`1` 开头为药师，`2` 开头为医生
-  - 将首页总览收敛为主路由入口页，提供模块按钮跳转到各业务分路由
-  - 补充认证入口与主路由前端测试，并验证前端测试通过
-- 备注：
-  - 本次前端测试结果：`4` 个测试文件，`7` 个测试全部通过
-
-### 2026-06-03 20:30（容器化交付收口）
-- 会话目标：以容器化演示为目标继续推进，收口前端镜像和 Docker 文档
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docker-compose.yml`
-  - `docs/deployment.md`
-  - `docs/docker.md`
-  - `frontend/Dockerfile`
-  - `frontend/src/api/client.js`
-- 主要变更：
-  - 将前端镜像改为多阶段构建并输出静态页面，避免容器演示依赖 `vite dev server`
-  - 将前端默认 API 基地址调整为 `/api`，配合 Nginx 统一入口适配容器环境
-  - 调整 Compose 中前端服务暴露方式，明确由 Nginx 作为对外统一入口
-  - 补充 Docker 与部署文档中的启动、停止、重置、验证和排障命令
-- 备注：
-  - 本轮优先完成“容器化交付收口”，并修正前端 API 基地址与现有 `/api/**` 路径重复拼接的问题；尚未在当前会话中实际执行 `docker compose up` 验证容器运行结果
-
-### 2026-06-03 20:33（容器化验证）
-- 会话目标：进行容器化验证，继续完成 Docker 演示落地
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docker-compose.yml`
-  - `docker/nginx/default.conf`
-  - `docs/deployment.md`
-  - `docs/docker.md`
-- 主要变更：
-  - 尝试执行 `docker compose up --build -d`，确认当前环境缺少 `docker` 命令，阻塞实际容器启动验证
-  - 补充非 Docker-socket 验证结果：前端生产构建通过、后端打包通过、Compose 结构校验通过、Nginx 配置语法校验通过
-  - 在 Docker 和部署文档中明确记录当前阻塞原因、已完成校验项和后续实跑要求
-  - 在实际容器验证中修复外层 Nginx 仍指向 `frontend:5173` 的问题，改为代理前端静态容器的 `80` 端口
-  - 将宿主机对外前端入口从 `localhost:80` 调整为 `localhost:3000`，避免本机端口冲突并统一审查入口
-- 备注：
-  - 当前已在具备 Docker 的环境中完成首次容器启动；后续可继续补充更细的演示脚本级验证
-
-### 2026-06-03 20:00（处方链路联调收口）
-- 会话目标：按文档要求完成处方前端主链路联调，并同步收口项目状态文档
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/frontend-integration.md`
-  - `docs/execution-checklist.md`
-  - `frontend/src/api/prescriptions.js`
-  - `frontend/src/pages/HomePage.jsx`
-  - `frontend/src/pages/PrescriptionPage.jsx`
-  - `frontend/src/pages/__tests__/App.test.jsx`
-  - `frontend/src/pages/__tests__/PrescriptionPage.test.jsx`
-  - `frontend/src/styles.css`
-- 主要变更：
-  - 新增处方模块 API 封装与处方联调工作台，打通查询、详情、建方、授权、提交、审核、发药、取消全链路
-  - 将处方模块接入首页联调工作台，并按医生/药师角色动态控制可操作按钮
-  - 补充处方页面测试并重新执行前端测试，验证 5 个测试文件、10 个用例全部通过
-  - 同步 README、前端联调文档和执行清单，将项目状态收口为“主链路已完成，下一步转入 Docker 与部署验证”
-- 备注：
-  - 当前处方相关请求体中的部分 `createdBy*`、`operator*` 字段仍由前端按现有接口契约传递，后续可继续按认证方案向后端上下文收口
-
-### 2026-06-03 19:32（预警模块联调）
-- 会话目标：优先进行预警前端页并接上真实查询
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/frontend-integration.md`
-  - `docs/execution-checklist.md`
-  - `frontend/src/api/warnings.js`
-  - `frontend/src/pages/HomePage.jsx`
-  - `frontend/src/pages/WarningPage.jsx`
-  - `frontend/src/pages/__tests__/App.test.jsx`
-  - `frontend/src/pages/__tests__/WarningPage.test.jsx`
-  - `frontend/src/styles.css`
-- 主要变更：
-  - 新增预警模块 API 封装，接入低库存预警与临期/过期预警真实查询
-  - 新增预警联调页面，完成低库存展示、效期预警展示与自定义临期天数筛选
-  - 将预警页面接入首页联调工作台，并同步更新联调与执行清单文档状态
-  - 执行 `frontend npm test`，验证前端 8 个测试全部通过
-- 备注：
-  - 当前预警模块为查询型页面，下一步应直接进入处方模块前端联调
-
-### 2026-06-03 19:27（库存模块联调）
-- 会话目标：按文档要求完成库存模块的前端联调和实现
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/api.md`
-  - `docs/frontend-integration.md`
-  - `frontend/src/api/inventories.js`
-  - `frontend/src/pages/HomePage.jsx`
-  - `frontend/src/pages/InventoryPage.jsx`
-  - `frontend/src/pages/__tests__/App.test.jsx`
-  - `frontend/src/pages/__tests__/InventoryPage.test.jsx`
-  - `frontend/src/styles.css`
-- 主要变更：
-  - 新增库存模块 API 封装，接入库存查询、库存流水查询、入库、出库、盘点接口
-  - 新增库存联调页面，完成库存列表、流水列表及三类库存操作的最小前端闭环
-  - 在库存请求中自动使用当前登录用户填充 `operatorName`，保持与现有后端接口契约一致
-  - 同步 README、前端联调文档与 API 文档，记录库存联调现状及后续字段收口约束
-  - 执行 `frontend npm test`，验证前端 6 个测试全部通过
-- 备注：
-  - 当前未改动后端库存业务代码；`operatorName` 仍是现有后端请求体字段，后续可再按认证文档继续收口
-
-### 2026-06-03 19:20（药品页面联调）
-- 会话目标：进入前端统一请求头注入与药品页面联调
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/api.md`
-  - `docs/frontend-integration.md`
-  - `backend/src/main/java/com/example/drugmanagement/common/auth/AuthInterceptor.java`
-  - `frontend/src/api/client.js`
-  - `frontend/src/api/drugs.js`
-  - `frontend/src/pages/DrugPage.jsx`
-  - `frontend/src/pages/HomePage.jsx`
-  - `frontend/src/pages/__tests__/App.test.jsx`
-  - `frontend/src/pages/__tests__/DrugPage.test.jsx`
-  - `frontend/src/styles.css`
-- 主要变更：
-  - 新增前端统一 `api client` 与药品模块 API 封装，自动注入当前用户请求头
-  - 新增药品联调页面，完成药品列表查询、新增药品、删除药品的最小前端闭环
-  - 修复浏览器中文请求头限制问题，前端对 `X-User-Name` 进行 URL 编码，后端拦截器统一解码
-  - 同步 README、前端联调文档与 API 文档，明确当前联调基线和请求头约定
-  - 执行 `frontend npm test` 与 `backend mvn test`，验证前端 4 个测试和后端 56 个测试全部通过
-- 备注：
-  - 当前尚未引入路由与更多页面，后续建议沿用同一请求层继续进入库存模块联调
-
-### 2026-06-03 11:47（认证基线恢复编码）
-- 会话目标：恢复编码，收口最小认证基线并修复前端测试
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/authentication.md`
-  - `docs/execution-checklist.md`
-  - `frontend/src/auth.js`
-  - `frontend/src/pages/__tests__/App.test.jsx`
-- 主要变更：
-  - 为前端补充最小认证状态存储兜底，在测试环境中使用内存存储替代不完整的 `localStorage`
-  - 修复前端登录页测试，补充 Vitest 显式导入、测试前状态清理与用例间 DOM 清理
-  - 同步 README、认证文档与执行清单，将认证阶段更新为“已完成基线、待继续联调收口”的状态
-  - 执行 `frontend npm test`，验证前端 2 个测试全部通过
-- 备注：
-  - 后端认证拦截器与 `/api/auth/me` 已在本轮恢复编码前完成，本次主要完成前端测试收口与文档状态同步
-
-### 2026-06-03 11:01（执行清单收敛）
-- 会话目标：将现有设计文档收敛成项目落地执行清单
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/execution-checklist.md`
-- 主要变更：
-  - 新增执行清单文档，统一后续顺序、阶段目标、产出物与验收标准
-  - 将认证接入、前端联调、Docker 演示、部署验证收敛到同一落地路径中
-  - 在 README 中补充执行清单入口，便于后续恢复编码时直接按清单推进
-- 备注：
-  - 本次仅整理执行清单，不修改业务代码
-
-### 2026-06-03 11:01（落地设计文档补全）
-- 会话目标：补全认证方案、前端联调约定、Docker 实操说明、部署说明的设计文档
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/architecture.md`
-  - `docs/authentication.md`
-  - `docs/frontend-integration.md`
-  - `docs/deployment.md`
-- 主要变更：
-  - 新增轻量认证方案说明，明确当前用户请求头、前后端职责和后续升级路径
-  - 新增前端联调约定，明确最小页面清单、路由结构、联调顺序和联动要求
-  - 新增部署说明，明确当前单机容器化交付边界、部署检查项和主功能验收路径
-  - 在 README 和架构文档中补充新文档入口，统一后续实施参考路径
-- 备注：
-  - 本次仅补全文档设计，不修改业务代码
-
-### 2026-06-03 11:01（API 与演示文档补全）
-- 会话目标：继续补全文档，聚焦主功能联调与最终演示准备
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/api.md`
-  - `docs/demo-script.md`
-- 主要变更：
-  - 新增 API 文档，按药品、库存、预警、处方四个主模块整理接口、关键参数与规则
-  - 新增演示脚本，明确主功能演示顺序、演示前准备与核心说明点
-  - 在 README 中补充 API 文档和演示脚本索引，并修正章节编号
-- 备注：
-  - 本次仍只补全文档，不修改业务代码
-
-### 2026-06-03 11:01（落地文档补全）
-- 会话目标：补全文档说明，聚焦主功能落地与后续实施准备
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/docker.md`
-  - `docs/database-init.md`
-  - `docs/testing.md`
-- 主要变更：
-  - 在 README 中补充主功能落地路线和已补齐文档索引
-  - 新增 Docker 使用说明，聚焦主功能演示路径、服务职责与最低验证项
-  - 新增数据库初始化说明，明确初始化脚本顺序、核心表范围与最小补数建议
-  - 新增测试说明，聚焦主功能测试层次、当前覆盖范围与后续补测优先级
-- 备注：
-  - 本次仅补全文档说明，不修改业务代码
-
-### 2026-06-03 11:01（文档优化）
-- 会话目标：暂停业务代码编写，优先优化项目文档并梳理后续实现路线
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/architecture.md`
-- 主要变更：
-  - 明确当前项目阶段定位，区分“后端主链路已完成”与“容器化演示仍待完善”两类状态
-  - 梳理后续实现路线，补充文档优先级、阶段目标与交付顺序
-  - 补充 Docker 与测试策略的边界说明，明确当前 H2 测试与后续 MySQL 容器验证的关系
-  - 修正文档中少量已落后于现状的表述，例如处方代理接口与当前初始化状态描述
-- 备注：
-  - 本次仅优化文档，不新增业务代码与测试代码
-
-### 2026-06-03 11:01
-- 会话目标：对照现有文档要求补全处方链路与测试验证
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/architecture.md`
-  - `backend/pom.xml`
-  - `backend/src/main/java/com/example/drugmanagement/mapper/PrescriptionMapper.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/impl/PrescriptionServiceImpl.java`
-  - `backend/src/main/resources/mapper/PrescriptionMapper.xml`
-  - `backend/src/test/java/com/example/drugmanagement/mapper/PrescriptionMapperTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/service/PrescriptionFlowIntegrationTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/service/PrescriptionServiceTest.java`
-  - `backend/src/test/resources/h2/prescription-flow-init.sql`
-  - `backend/src/test/resources/h2/prescription-mapper-init.sql`
-- 主要变更：
-  - 为处方发药补充基于当前状态的条件更新，增强重复发药场景下的链路保护
-  - 新增处方 Mapper 测试，覆盖分页筛选、详情查询与状态更新 SQL 映射
-  - 新增基于 H2 的处方链路集成测试，覆盖代开授权、审核、发药、库存扣减与 `DISPENSE` 流水写入
-  - 扩展处方服务层测试，补充过期批次不可发药和发药状态迁移失败场景
-  - 执行 `mvn test`，验证后端 54 个测试全部通过
-- 备注：
-  - 当前环境不可用 Docker socket，因此链路测试采用 H2 落地而非 Testcontainers；后续如进入容器化联调阶段，可再补 MySQL 方言级测试
-
-### 2026-06-03 10:42
-- 会话目标：完成处方模块，并在模块完成后执行测试且同步文档设计约束
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/architecture.md`
-  - `backend/src/main/java/com/example/drugmanagement/controller/PrescriptionController.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryCheckRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryInboundRequest.java`
+  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryOutboundRequest.java`
   - `backend/src/main/java/com/example/drugmanagement/dto/prescription/CreatePrescriptionRequest.java`
   - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionAuditRequest.java`
   - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionDispenseRequest.java`
   - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionDoctorApprovalRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionItemRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/prescription/PrescriptionQueryRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/mapper/PrescriptionItemMapper.java`
-  - `backend/src/main/java/com/example/drugmanagement/mapper/PrescriptionMapper.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/PrescriptionService.java`
+  - `backend/src/main/java/com/example/drugmanagement/entity/UserAccount.java`
+  - `backend/src/main/java/com/example/drugmanagement/mapper/UserAccountMapper.java`
+  - `backend/src/main/java/com/example/drugmanagement/service/impl/InventoryServiceImpl.java`
   - `backend/src/main/java/com/example/drugmanagement/service/impl/PrescriptionServiceImpl.java`
-  - `backend/src/main/java/com/example/drugmanagement/vo/prescription/PrescriptionItemVO.java`
-  - `backend/src/main/java/com/example/drugmanagement/vo/prescription/PrescriptionVO.java`
+  - `backend/src/main/resources/application.yml`
   - `backend/src/main/resources/mapper/PrescriptionItemMapper.xml`
   - `backend/src/main/resources/mapper/PrescriptionMapper.xml`
-  - `backend/src/test/java/com/example/drugmanagement/controller/DrugControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/HealthControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerAdditionalTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/PrescriptionControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/WarningControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/service/PrescriptionServiceTest.java`
-- 主要变更：
-  - 实现处方模块创建、详情、分页、医生授权、提交审核、药师审核、发药、取消完整后端流程
-  - 落地医生直接开方与药师代开两条状态流转，并补充库存扣减与 `DISPENSE` 流水联动
-  - 新增处方模块 DTO、VO、Mapper、MyBatis XML、Controller、Service 与单元测试
-  - 为适配新增处方 Mapper，补齐现有 `@WebMvcTest` 控制器测试中的 mapper mock 隔离
-  - 执行 `mvn test`，验证后端 49 个测试全部通过
-- 备注：
-  - 当前处方模块已按文档中的角色与状态机约束完成基础闭环，后续应优先补齐 Mapper 层与集成链路测试
-
-### 2026-06-03 10:30
-- 会话目标：完成预警模块，并在模块完成后执行测试
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/architecture.md`
-  - `backend/src/main/java/com/example/drugmanagement/controller/DrugController.java`
-  - `backend/src/main/java/com/example/drugmanagement/controller/HealthController.java`
-  - `backend/src/main/java/com/example/drugmanagement/controller/InventoryControllerAdditionalTest.java`
-  - `backend/src/main/java/com/example/drugmanagement/controller/InventoryControllerTest.java`
-  - `backend/src/main/java/com/example/drugmanagement/controller/WarningController.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/warning/ExpiryWarningQueryRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/mapper/WarningMapper.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/WarningService.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/impl/WarningServiceImpl.java`
-  - `backend/src/main/java/com/example/drugmanagement/vo/warning/ExpiryWarningVO.java`
-  - `backend/src/main/java/com/example/drugmanagement/vo/warning/LowStockWarningVO.java`
-  - `backend/src/main/resources/mapper/WarningMapper.xml`
-  - `backend/src/test/java/com/example/drugmanagement/controller/DrugControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/HealthControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/WarningControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/service/WarningServiceTest.java`
-- 主要变更：
-  - 实现低库存预警、临期预警和过期预警分页查询
-  - 新增预警模块 DTO、VO、Mapper、Service、Controller 与 MyBatis XML 映射
-  - 修复 `WarningMapper.xml` 中的 XML 转义问题，并补齐控制器测试对 `WarningMapper` 的 mock 隔离
-  - 执行 `mvn test`，验证药品、库存、预警模块测试全部通过
-- 备注：
-  - 当前预警模块已完成，下一步可进入处方模块开发
-
-### 2026-06-03 10:28
-- 会话目标：完成库存模块，并在模块完成后执行测试
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/architecture.md`
-  - `backend/src/main/java/com/example/drugmanagement/controller/InventoryController.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryCheckRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryOutboundRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/InventoryRecordQueryRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/mapper/InventoryMapper.java`
-  - `backend/src/main/java/com/example/drugmanagement/mapper/InventoryRecordMapper.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/InventoryService.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/impl/InventoryServiceImpl.java`
-  - `backend/src/main/java/com/example/drugmanagement/vo/inventory/InventoryRecordVO.java`
-  - `backend/src/main/resources/mapper/InventoryMapper.xml`
-  - `backend/src/main/resources/mapper/InventoryRecordMapper.xml`
-  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerAdditionalTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/service/InventoryServiceTest.java`
-- 主要变更：
-  - 补齐库存出库、库存盘点、库存流水分页查询能力
-  - 实现按最早到期批次优先扣减库存、库存不足拦截和盘点差异流水写入
-  - 扩展库存模块 DTO、VO、Mapper 与 XML 映射
-  - 执行 `mvn test`，验证药品模块与库存模块测试全部通过
-- 备注：
-  - 当前库存模块已形成完整后端闭环，下一步可进入预警模块或处方模块开发
-
-### 2026-06-03 10:20
-- 会话目标：进行库存入库模型的业务代码编写，并在模块完成后执行测试
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/architecture.md`
-  - `backend/src/main/java/com/example/drugmanagement/controller/InventoryController.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/CreateInventoryInboundRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/inventory/InventoryQueryRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/mapper/InventoryMapper.java`
-  - `backend/src/main/java/com/example/drugmanagement/mapper/InventoryRecordMapper.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/InventoryService.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/impl/InventoryServiceImpl.java`
-  - `backend/src/main/java/com/example/drugmanagement/vo/inventory/InventoryVO.java`
-  - `backend/src/main/resources/mapper/InventoryMapper.xml`
-  - `backend/src/main/resources/mapper/InventoryRecordMapper.xml`
-  - `backend/src/test/java/com/example/drugmanagement/controller/DrugControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/HealthControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/InventoryControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/service/InventoryServiceTest.java`
-- 主要变更：
-  - 实现库存入库、库存分页查询、库存详情查询与库存流水写入
-  - 增加入库请求 DTO、库存展示 VO、Inventory/InventoryRecord Mapper 与 XML 映射
-  - 实现同批次同效期库存累加与首次入库建档逻辑
-  - 补充库存模块控制器测试和服务层单元测试，并执行 `mvn test` 验证通过
-- 备注：
-  - 当前已完成库存入库能力，库存出库、盘点和预警模块仍待继续开发
-
-### 2026-06-03 10:17
-- 会话目标：继续实现药品模块 CRUD，并补充对应测试
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/architecture.md`
-  - `backend/src/main/java/com/example/drugmanagement/common/dto/PageQuery.java`
-  - `backend/src/main/java/com/example/drugmanagement/controller/DrugController.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/drug/CreateDrugRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/drug/DrugQueryRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/dto/drug/UpdateDrugRequest.java`
-  - `backend/src/main/java/com/example/drugmanagement/mapper/DrugMapper.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/DrugService.java`
-  - `backend/src/main/java/com/example/drugmanagement/service/impl/DrugServiceImpl.java`
-  - `backend/src/main/java/com/example/drugmanagement/vo/drug/DrugVO.java`
-  - `backend/src/main/resources/mapper/DrugMapper.xml`
-  - `backend/src/test/java/com/example/drugmanagement/controller/DrugControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/HealthControllerTest.java`
-  - `backend/src/test/java/com/example/drugmanagement/service/DrugServiceTest.java`
-- 主要变更：
-  - 实现药品模块新增、分页查询、详情查询、更新、逻辑删除接口
-  - 增加药品模块 DTO、VO、MyBatis Mapper 与 XML 映射
-  - 实现药品编码唯一性校验、逻辑删除与分页偏移计算
-  - 补充药品模块控制器测试和服务层单元测试，并验证 `mvn test` 通过
-- 备注：
-  - 当前药品模块已具备基础 CRUD 能力，库存与处方模块尚未开始实现
-
-### 2026-06-02 10:10
-- 会话目标：初始化后端公共基础与数据库业务表，为后续模块开发做准备
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/architecture.md`
-  - `backend/src/main/java/com/example/drugmanagement/common/config/MybatisConfig.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/dto/PageQuery.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/entity/BaseEntity.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/entity/AuditEntity.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/enums/DoctorApprovalStatus.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/enums/InventoryRecordType.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/enums/PrescriptionStatus.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/enums/RoleType.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/enums/WarningStatus.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/enums/WarningType.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/exception/BusinessException.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/exception/GlobalExceptionHandler.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/response/ApiResponse.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/response/PageResponse.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/response/ResponseCode.java`
-  - `backend/src/main/java/com/example/drugmanagement/entity/Drug.java`
-  - `backend/src/main/java/com/example/drugmanagement/entity/Inventory.java`
-  - `backend/src/main/java/com/example/drugmanagement/entity/InventoryRecord.java`
-  - `backend/src/main/java/com/example/drugmanagement/entity/Prescription.java`
-  - `backend/src/main/java/com/example/drugmanagement/entity/PrescriptionItem.java`
-  - `backend/src/main/java/com/example/drugmanagement/entity/WarningRecord.java`
-  - `backend/src/main/resources/application.yml`
-  - `backend/src/test/java/com/example/drugmanagement/common/ApiResponseTest.java`
+  - `backend/src/main/resources/mapper/UserAccountMapper.xml`
+  - `backend/src/test/resources/application.yml`
   - `docker/mysql/init/002_schema.sql`
   - `docker/mysql/init/003_seed.sql`
-- 主要变更：
-  - 初始化后端统一错误码、分页对象、基础实体、业务枚举与 MyBatis 基础配置
-  - 补充药品、库存、库存流水、处方、处方明细、预警记录等实体类骨架
-  - 创建数据库业务表、索引、约束及示例种子数据脚本
-  - 补充基础响应测试并验证后端测试通过
-- 备注：
-  - 当前已完成公共基础与表结构初始化，尚未实现具体业务 Mapper/Service/Controller
-
-### 2026-06-02 09:31
-- 会话目标：初始化项目工程骨架，为后续业务开发与测试落地做准备
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-  - `docs/architecture.md`
-  - `.gitignore`
-  - `docker-compose.yml`
-  - `backend/pom.xml`
-  - `backend/Dockerfile`
-  - `backend/src/main/java/com/example/drugmanagement/DrugManagementApplication.java`
-  - `backend/src/main/java/com/example/drugmanagement/controller/HealthController.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/response/ApiResponse.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/exception/BusinessException.java`
-  - `backend/src/main/java/com/example/drugmanagement/common/exception/GlobalExceptionHandler.java`
-  - `backend/src/main/resources/application.yml`
-  - `backend/src/test/java/com/example/drugmanagement/DrugManagementApplicationTests.java`
-  - `backend/src/test/java/com/example/drugmanagement/controller/HealthControllerTest.java`
-  - `frontend/package.json`
-  - `frontend/vite.config.js`
-  - `frontend/index.html`
-  - `frontend/Dockerfile`
-  - `frontend/src/main.jsx`
   - `frontend/src/App.jsx`
   - `frontend/src/styles.css`
-  - `frontend/src/pages/HomePage.jsx`
-  - `frontend/src/pages/__tests__/App.test.jsx`
-  - `frontend/src/test/setup/setupTests.js`
-  - `docker/mysql/init/001_init.sql`
-  - `docker/nginx/default.conf`
+  - `frontend/src/pages/InboundPage.jsx`
+  - `frontend/src/pages/InventoryOverviewPage.jsx`
+  - `frontend/src/pages/PrescribePage.jsx`
+  - `docs/testing.md`
+  - `docs/deployment.md`
+  - `AGENTS.md`
 - 主要变更：
-  - 初始化 Spring Boot + MyBatis 后端骨架、统一响应、异常处理与健康检查接口
-  - 初始化 React + Vite 前端骨架、Vitest 测试配置与占位首页
-  - 创建 Docker Compose、MySQL 初始化目录、Nginx 代理配置与前后端 Dockerfile
-  - 同步更新项目文档，标记当前初始化状态与后续开发落点
+  - 恢复后端认证会话、CORS 配置、库存与处方缺失 DTO、库存服务与处方服务实现
+  - 恢复 `user_account` 最小数据模型与 Mapper，避免 MyBatis 启动残缺
+  - 补齐 MySQL 业务表初始化脚本和 12 条药品与库存演示数据
+  - 将前端真实落地为 `库存预览`、`药物入库`、`开药` 三个页面，并加入医生角色路由限制
+  - 修正测试与部署文档，使其与当前最小演示闭环一致
+  - 完成 `backend:mvn clean test`、`frontend:npm run build`、`frontend:npm test` 验证
 - 备注：
-  - 当前仅完成工程与测试骨架，尚未实现正式业务模块
+  - 当前项目已恢复到可构建、可测试、可继续联调的最小演示状态
 
-### 2026-06-02 09:20
-- 会话目标：细化项目文档，并补充后续单元测试与测试分层规划
+### 2026-06-08 16:08
+- 会话目标：补齐 Docker Compose 实跑所需配置，准备容器化验收
 - 修改文件：
-  - `README.md`
+  - `backend/Dockerfile`
+  - `docker-compose.yml`
   - `AGENTS.md`
-  - `docs/architecture.md`
 - 主要变更：
-  - 细化开发阶段实施顺序，增加后端基础结构、建表脚本与前端落地顺序建议
-  - 扩展后端与前端测试分层、命名规范、优先级与测试数据准备策略
-  - 为库存、处方、审计链路补充更明确的业务校验与事务一致性要求
+  - 将后端镜像改为多阶段构建，容器内直接完成 Maven 打包
+  - 新增根目录 `docker-compose.yml`，编排 MySQL、backend、frontend、nginx 四个服务
+  - 将演示入口端口统一暴露为 `localhost:3000`
 - 备注：
-  - 当前仍为文档设计阶段，未编写业务代码
+  - 下一步将直接执行 `docker compose up --build` 做实跑验收
 
-### 2026-06-02 09:11
-- 会话目标：根据新的处方开具与授权规则更新项目文档
+### 2026-06-08 16:36
+- 会话目标：修复 Docker 实跑中的登录失败问题并继续验收
 - 修改文件：
-  - `README.md`
+  - `docker/mysql/init/002_schema.sql`
+  - `docker/mysql/init/003_seed.sql`
   - `AGENTS.md`
-  - `docs/architecture.md`
 - 主要变更：
-  - 增加医生与药师两类角色说明及处方权限边界
-  - 补充药师输入医生 ID 发起代开、医生登录确认授权的业务流程
-  - 更新处方状态、接口草案、数据字段建议与测试场景
+  - 修正 `user_account` 表结构，补齐 `enabled`、审计字段和 `deleted`
+  - 修正演示账号种子数据，使其与后端 `UserAccountMapper` 查询字段一致
 - 备注：
-  - 当前仍为文档设计阶段，未编写业务代码
-### 2026-06-02 08:43
-- 会话目标：初始化“药物管理系统”项目文档，不编写业务代码
+  - 该修复需要重新初始化 MySQL 数据卷后再复验登录接口
+
+### 2026-06-08 16:41
+- 会话目标：修复容器化环境下库存页 `Failed to fetch` 问题，检查真实数据库连接
 - 修改文件：
-  - `README.md`
+  - `frontend/src/api/client.js`
+  - `backend/src/main/java/com/example/drugmanagement/common/auth/AuthInterceptor.java`
   - `AGENTS.md`
-  - `docs/architecture.md`
 - 主要变更：
-  - 编写项目概述、技术栈、功能范围与分层架构要求
-  - 定义 RESTful API 草案、核心数据表建议、测试范围与 Docker 规划
-  - 建立 AGENTS 协作规则，并约定后续每次会话后追加修改记录
+  - 修正前端 API 基地址逻辑，使 `VITE_API_BASE_URL` 为空字符串时走同源 `/api`
+  - 放行后端 `OPTIONS` 预检请求，避免带鉴权头的跨域预检被误判为未授权
+  - 复核容器内 MySQL 数据，确认 `drug` 与 `inventory` 均已有 12 条初始化数据
 - 备注：
-  - 当前仓库未初始化前后端工程，仅完成文档层设计
+  - 本次问题根因不是数据库无数据，而是容器联调请求链路配置错误

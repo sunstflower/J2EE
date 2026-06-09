@@ -1,20 +1,12 @@
 spring:
-  application:
-    name: drug-management-backend
   datasource:
-    url: jdbc:mysql://localhost:3306/drug_management?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: drug_user
-    password: drug_pass
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/drug_management?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:drug_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:drug_pass}
     driver-class-name: com.mysql.cj.jdbc.Driver
-  jackson:
-    time-zone: Asia/Shanghai
-    date-format: yyyy-MM-dd HH:mm:ss
 
 mybatis:
-  mapper-locations: classpath*:mapper/**/*.xml
-  type-aliases-package: com.example.drugmanagement.entity
-  configuration:
-    map-underscore-to-camel-case: true
+  mapper-locations: classpath:mapper/*.xml
 
 server:
   port: 8080

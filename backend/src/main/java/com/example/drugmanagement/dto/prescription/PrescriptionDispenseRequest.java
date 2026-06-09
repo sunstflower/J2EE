@@ -2,23 +2,13 @@ package com.example.drugmanagement.dto.prescription;
 
 public class PrescriptionDispenseRequest {
 
-    private String operatorName;
+    private String remark;
 
-    private Long operatorId;
-
-    public String getOperatorName() {
-        return operatorName;
+    public String getRemark() {
+        return remark;
     }
 
-    public void setOperatorName(String operatorName) {
-        this.operatorName = operatorName;
-    }
-
-    public Long getOperatorId() {
-        return operatorId;
-    }
-
-    public void setOperatorId(Long operatorId) {
-        this.operatorId = operatorId;
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 }

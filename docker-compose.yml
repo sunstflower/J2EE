@@ -4,33 +4,30 @@ services:
     container_name: drug-management-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: drug_management
-      MYSQL_USER: drug_user
-      MYSQL_PASSWORD: drug_pass
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   backend:
     build:
       context: ./backend
     container_name: drug-management-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/drug_management?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/drug_management?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
       SPRING_DATASOURCE_USERNAME: drug_user
       SPRING_DATASOURCE_PASSWORD: drug_pass
-    ports:
-      - "8080:8080"
     depends_on:
       mysql:
         condition: service_healthy
+    ports:
+      - "8080:8080"
 
   frontend:
     build:
@@ -38,19 +35,19 @@ services:
       args:
         VITE_API_BASE_URL: ""
     container_name: drug-management-frontend
-    expose:
-      - "80"
+    depends_on:
+      - backend
 
   nginx:
     image: nginx:1.27-alpine
     container_name: drug-management-nginx
+    depends_on:
+      - frontend
+      - backend
     ports:
       - "3000:80"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - frontend
-      - backend
 
 volumes:
   mysql_data:

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 public class CreateInventoryOutboundRequest {
 
     @NotNull(message = "must not be null")
-    private Long drugId;
+    private Long inventoryId;
 
     @NotNull(message = "must not be null")
     @Min(value = 1, message = "must be greater than or equal to 1")
@@ -16,16 +16,14 @@ public class CreateInventoryOutboundRequest {
     @NotBlank(message = "must not be blank")
     private String bizNo;
 
-    private String operatorName;
-
     private String remark;
 
-    public Long getDrugId() {
-        return drugId;
+    public Long getInventoryId() {
+        return inventoryId;
     }
 
-    public void setDrugId(Long drugId) {
-        this.drugId = drugId;
+    public void setInventoryId(Long inventoryId) {
+        this.inventoryId = inventoryId;
     }
 
     public Integer getQuantity() {
@@ -42,14 +40,6 @@ public class CreateInventoryOutboundRequest {
 
     public void setBizNo(String bizNo) {
         this.bizNo = bizNo;
-    }
-
-    public String getOperatorName() {
-        return operatorName;
-    }
-
-    public void setOperatorName(String operatorName) {
-        this.operatorName = operatorName;
     }
 
     public String getRemark() {

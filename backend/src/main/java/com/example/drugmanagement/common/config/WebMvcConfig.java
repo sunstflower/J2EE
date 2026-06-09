@@ -19,7 +19,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor)
                 .addPathPatterns("/api/**")
-                .excludePathPatterns("/api/health", "/api/auth/login", "/api/auth/register");
+                .excludePathPatterns("/api/health", "/api/auth/login");
     }
 
     @Override
@@ -28,7 +28,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .allowedOrigins("http://localhost:3000")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(false)
-                .maxAge(3600);
+                .allowCredentials(false);
     }
 }
