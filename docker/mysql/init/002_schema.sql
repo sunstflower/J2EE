@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 USE drug_management;
 
 CREATE TABLE IF NOT EXISTS user_account (

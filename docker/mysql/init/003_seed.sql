@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 USE drug_management;
 
 INSERT INTO user_account (user_id, user_name, role, password, enabled, created_by, updated_by, deleted)

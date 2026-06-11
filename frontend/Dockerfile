@@ -1,7 +1,8 @@
 FROM node:22-alpine AS build
 WORKDIR /app
+ARG NPM_REGISTRY=https://registry.npmmirror.com
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm sh -c 'npm config set registry "'"${NPM_REGISTRY}"'" && npm ci --no-audit --no-fund'
 COPY . .
 ARG VITE_API_BASE_URL=
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
