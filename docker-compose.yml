@@ -20,7 +20,7 @@ services:
       context: ./backend
     container_name: drug-management-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/drug_management?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/drug_management?useUnicode=true&characterEncoding=utf8mb4&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Shanghai
       SPRING_DATASOURCE_USERNAME: drug_user
       SPRING_DATASOURCE_PASSWORD: drug_pass
     depends_on:
