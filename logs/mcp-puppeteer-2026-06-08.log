@@ -1,4 +1,0 @@
-{"arguments":{"debugPort":9222},"level":"debug","message":"Tool call received","service":"mcp-puppeteer","timestamp":"2026-06-08 16:46:20.313","tool":"puppeteer_connect_active_tab"}
-{"arguments":{"url":"http://localhost:3000"},"level":"debug","message":"Tool call received","service":"mcp-puppeteer","timestamp":"2026-06-08 16:46:20.321","tool":"puppeteer_navigate"}
-{"level":"info","message":"Navigating to URL","service":"mcp-puppeteer","timestamp":"2026-06-08 16:46:20.321","url":"http://localhost:3000"}
-{"error":"Attempted to use detached Frame '92A956C4645A2B33B64C09CB358CE3FE'.","level":"error","message":"Navigation failed","service":"mcp-puppeteer","timestamp":"2026-06-08 16:46:20.322","url":"http://localhost:3000"}

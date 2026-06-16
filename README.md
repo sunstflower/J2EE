@@ -49,24 +49,43 @@
 
 ## 4. Docker Compose 使用方法
 
+如果目标是最快完成演示，推荐直接使用 Docker Compose。
+
+### 4.1 启动前检查
+
+在项目根目录执行前，先确认：
+
+- Docker Desktop 已启动，`docker info` 能正常返回 `Server` 信息
+- 本机端口 `3000`、`8080`、`3306` 未被其他程序占用
+- 当前目录为项目根目录，即存在 `docker-compose.yml`
+
+可先执行：
+
+```bash
+docker info
+docker compose config
+```
+
+### 4.2 首次启动
+
 在项目根目录执行：
 
 ```bash
 docker compose up --build -d
 ```
 
-启动完成后访问：
+说明：
 
-- 演示入口：`http://localhost:3000`
-- 后端接口：`http://localhost:8080`
-- MySQL：`localhost:3306`
+- `--build` 会强制按当前代码重新构建前后端镜像
+- `-d` 表示后台启动容器
+- 后端镜像会在容器内执行 `mvn clean package -DskipTests`
+- 前端镜像会在容器内执行 `npm ci` 和 `npm run build`
 
 首次执行说明：
 
-- 后端镜像会在容器内执行 `mvn clean package -DskipTests`
-- 前端镜像会在容器内执行 `npm ci`
-- 第一次构建需要下载 Maven 和 npm 依赖，可能持续数分钟，且中间可能长时间没有新增输出
-- 当前 `docker-compose.yml` 已为镜像构建默认配置 Maven 阿里云镜像和 npm npmmirror 源，以降低首次冷启动耗时
+- 第一次构建需要下载 Maven、npm 依赖和基础镜像，可能持续数分钟
+- 如果输出长时间停在依赖下载步骤，通常不是卡死，而是在拉取依赖
+- 当前 `docker-compose.yml` 已为构建阶段默认配置 Maven 阿里云镜像和 npm `npmmirror` 源，以降低首次冷启动耗时
 
 如果网络环境特殊，需要覆盖默认镜像源，可在执行前临时指定：
 
@@ -76,12 +95,49 @@ NPM_REGISTRY=https://registry.npmjs.org \
 docker compose up --build -d
 ```
 
-推荐验收顺序：
+### 4.3 启动成功后的访问地址
+
+容器启动完成后访问：
+
+- 演示入口：`http://localhost:3000`
+- 后端接口：`http://localhost:8080`
+- MySQL：`localhost:3306`
+
+当前默认演示账号：
+
+- 医生：`2001 / doctor123`
+- 药师：`1001 / pharm123`
+
+### 4.4 启动后验证
+
+建议按以下顺序检查：
 
 ```bash
 docker compose ps
 curl http://localhost:3000/api/health
 ```
+
+若启动成功，`docker compose ps` 应看到 `mysql`、`backend`、`frontend`、`nginx` 四个服务处于 `Up` 状态，其中 `mysql` 应显示 `healthy`。
+
+健康接口正常返回示例：
+
+```json
+{"code":0,"message":"success","data":"ok"}
+```
+
+如果你还想进一步确认页面链路，可直接打开：
+
+- `http://localhost:3000`
+
+然后执行最小演示路径：
+
+1. 使用医生账号登录
+2. 打开“库存预览”确认库存和低库存提醒
+3. 打开“药物入库”完成一次入库
+4. 返回“库存预览”确认库存变化
+5. 打开“开药”完成一次处方提交
+
+### 4.5 常用 Docker 命令
 
 常用命令：
 
@@ -101,6 +157,60 @@ docker compose down -v
 - `docker compose down -v` 会删除 MySQL 数据卷
 - 重新执行 `up --build` 后，会重新加载 `docker/mysql/init` 中的初始化脚本
 - 如果你修改了种子数据或表结构，通常需要先执行一次 `docker compose down -v`
+
+### 4.6 停止、重启与重置
+
+只停止容器但保留数据：
+
+```bash
+docker compose down
+```
+
+停止后重新启动已有容器：
+
+```bash
+docker compose up -d
+```
+
+代码或 Dockerfile 变更后重新构建并启动：
+
+```bash
+docker compose up --build -d
+```
+
+重置数据库并重新初始化演示数据：
+
+```bash
+docker compose down -v
+docker compose up --build -d
+```
+
+### 4.7 常见问题
+
+如果执行 `docker compose up --build -d` 报错无法连接 Docker daemon，通常说明 Docker Desktop 尚未启动。先启动 Docker Desktop，再确认：
+
+```bash
+docker info
+```
+
+只有当 `docker info` 能正常显示 `Server` 段时，再执行 Compose。
+
+如果启动后页面无法访问，可优先检查：
+
+```bash
+docker compose ps
+docker compose logs --tail=200 nginx
+docker compose logs --tail=200 backend
+docker compose logs --tail=200 mysql
+curl -i http://localhost:3000/api/health
+```
+
+如果数据库脚本、种子数据或字符集配置有调整，建议直接重置数据卷再复验：
+
+```bash
+docker compose down -v
+docker compose up --build -d
+```
 
 ## 5. 本地开发使用方法
 
