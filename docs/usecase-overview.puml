@@ -1,0 +1,33 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor "医生" as Doctor
+actor "药师" as Pharmacist
+
+rectangle "药品管理系统\n最小演示版本" {
+  usecase "登录系统" as UC_Login
+  usecase "查看库存预览" as UC_ViewInventory
+  usecase "查看低库存提醒" as UC_LowStock
+  usecase "执行药物入库" as UC_Inbound
+  usecase "开具处方" as UC_Prescribe
+}
+
+Doctor --> UC_Login
+Doctor --> UC_ViewInventory
+Doctor --> UC_Inbound
+Doctor --> UC_Prescribe
+
+Pharmacist --> UC_Login
+Pharmacist --> UC_ViewInventory
+Pharmacist --> UC_Inbound
+
+UC_ViewInventory .> UC_LowStock : <<include>>
+
+note right of UC_Prescribe
+仅医生可执行
+药师不展示该能力
+end note
+
+@enduml

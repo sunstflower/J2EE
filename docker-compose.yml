@@ -18,11 +18,9 @@ services:
   backend:
     build:
       context: ./backend
-      args:
-        MAVEN_REPO_URL: ${MAVEN_REPO_URL:-https://maven.aliyun.com/repository/public}
     container_name: drug-management-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/drug_management?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/drug_management?useUnicode=true&characterEncoding=utf8mb4&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Shanghai
       SPRING_DATASOURCE_USERNAME: drug_user
       SPRING_DATASOURCE_PASSWORD: drug_pass
     depends_on:
@@ -36,7 +34,6 @@ services:
       context: ./frontend
       args:
         VITE_API_BASE_URL: ""
-        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
     container_name: drug-management-frontend
     depends_on:
       - backend

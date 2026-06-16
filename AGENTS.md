@@ -32,137 +32,42 @@
 
 ## 4. 变更记录
 
-### 2026-06-16 08:02
-- 会话目标：使用 Docker 启动项目，并在 README 中补全 Docker 启动方法
+### 2026-06-16 16:56
+- 会话目标：确认当前项目实际使用的数据库类型
 - 修改文件：
-  - `README.md`
   - `AGENTS.md`
 - 主要变更：
-  - 实际启动 Docker Desktop 并执行 `docker compose up --build -d`，成功拉起 `mysql`、`backend`、`frontend`、`nginx` 四个服务
-  - 复验 `docker compose ps` 与 `curl http://localhost:3000/api/health`，确认容器环境可用且健康接口返回 `200`
-  - 在 README 中补充 Docker 启动前检查、首次启动、验证方式、停止/重启/重置数据、常见问题排查等完整操作说明
+  - 核对后端主配置中的 JDBC URL 与驱动，确认运行配置使用 MySQL
+  - 核对 `docker-compose.yml` 与 `docker/mysql/init` 约定，确认容器化部署也使用 MySQL
+  - 复查 `docs/architecture.md` 与 `docs/frontend-scope.md`，当前无需调整
 - 备注：
-  - 已复核 `docs/architecture.md` 与 `docs/frontend-scope.md`，本次仅补充运行与使用文档，无需改动现有设计文档
+  - 测试环境配置仍保留 H2 `MODE=MySQL` 用于单元测试，不影响主项目实际使用 MySQL
 
-### 2026-06-16 00:42
-- 会话目标：按照 docs 中项目报告结构与要求，产出完整项目最终报告
+### 2026-06-16 10:39
+- 会话目标：生成当前最小演示闭环对应的 Mermaid 架构图文件
 - 修改文件：
-  - `docs/最终报告.md`
+  - `docs/architecture-mermaid.md`
+  - `docs/architecture.md`
   - `AGENTS.md`
 - 主要变更：
-  - 依据 `docs/项目报告.md` 中的章节模板与写作要求，补写完整项目报告，覆盖摘要、Abstract、绪论、技术基础、需求分析、系统设计、系统实现与测试、总结展望、致谢和参考文献
-  - 结合现有架构文档、前端收口说明、测试说明、部署说明与仓库实际实现，统一报告中的系统范围、角色边界、部署方式和测试结论
-  - 对需截图处以文字形式给出界面示意说明，满足“如需要截图就在文本中进行文字说明”的要求
+  - 新增一份 Mermaid 架构图文档，明确浏览器、React 前端、Nginx、Spring Boot、认证拦截器、业务服务、MyBatis 与 MySQL 的关系
+  - 在架构说明文档中补充对 Mermaid 架构图文件的引用入口
+  - 将本次文档新增动作记录到 AGENTS 文档
 - 备注：
-  - 已复核 `docs/architecture.md` 与 `docs/frontend-scope.md`，本次围绕最终报告撰写，无需改动现有设计文档
+  - 已检查 `docs/frontend-scope.md`，当前前端收口范围无需调整
 
-### 2026-06-11 15:23
-- 会话目标：在演示药例中加入处方药“非步司他”，并验证医生开药功能
+### 2026-06-16 09:22
+- 会话目标：在 `docs` 中新增基于 shell 脚本的系统功能性测试文档
 - 修改文件：
-  - `docker/mysql/init/003_seed.sql`
+  - `docs/functional-test-shell.md`
+  - `docs/testing.md`
   - `AGENTS.md`
 - 主要变更：
-  - 为演示药品种子数据新增 `DRUG-013`“非步司他片”，分类标记为“处方药”
-  - 为新增药品补充默认库存批次 `BATCH-013`，便于直接进行医生开药演示
+  - 新增一份可直接在终端执行的 shell 功能测试文档，覆盖健康检查、双角色登录、库存查询、低库存查询、药物入库、医生开具处方、药师越权验证等主链路
+  - 在 shell 脚本中使用 `curl + python3` 完成请求与 JSON 断言，降低额外工具依赖
+  - 在 `docs/testing.md` 中补充对 shell 测试文档的引用，明确接口级验收入口与执行顺序
 - 备注：
-  - 已复核 `docs/architecture.md` 与 `docs/frontend-scope.md`，本次仅补充演示数据，无需改动现有设计文档
-
-### 2026-06-11 15:18
-- 会话目标：继续排查库存页异常，并修复药品名称中文乱码
-- 修改文件：
-  - `AGENTS.md`
-- 主要变更：
-  - 确认前端库存页真实依赖接口为 `GET /api/inventories` 与 `GET /api/warnings/low-stock`，不存在 `GET /api/inventory/overview` 路由
-  - 复验库存列表和低库存预警接口，确认接口本身返回 `200`
-  - 定位到库存页中文乱码来自现有 `drug` 表演示数据历史写脏，而非接口路由或前端渲染问题
-  - 在运行中的 MySQL 数据内修正 12 条演示药品的中文名称等关键文本字段，恢复库存页和低库存提醒中的中文显示
-- 备注：
-  - 本次未修改业务代码；库存页相关问题实质为运行态数据修复
-  - 已复核 `docs/architecture.md` 与 `docs/frontend-scope.md`，无需改动现有设计文档
-
-### 2026-06-11 14:53
-- 会话目标：修复容器环境登录接口返回 `500` 的问题
-- 修改文件：
-  - `backend/src/main/resources/application.yml`
-  - `docker-compose.yml`
-  - `AGENTS.md`
-- 主要变更：
-  - 定位到 MySQL JDBC 连接参数 `characterEncoding=utf8mb4` 与 Java 编码名不兼容，导致后端首次获取数据库连接时报 `Unsupported character encoding 'utf8mb4'`
-  - 将后端默认数据源 URL 和 Compose 注入的 `SPRING_DATASOURCE_URL` 统一改为 `characterEncoding=UTF-8`
-- 备注：
-  - 已复核 `docs/architecture.md` 与 `docs/frontend-scope.md`，本次仅涉及运行配置修复，无需改动现有设计文档
-
-### 2026-06-11 15:02
-- 会话目标：修复登录响应中的中文用户名乱码
-- 修改文件：
-  - `docker/mysql/init/002_schema.sql`
-  - `docker/mysql/init/003_seed.sql`
-  - `AGENTS.md`
-- 主要变更：
-  - 确认乱码根因不是前端展示，而是历史错误 JDBC 编码配置曾将演示账号姓名以错误字节写入现有 MySQL 数据卷
-  - 在运行中的 `drug_management.user_account` 表内将 `1001`、`2001` 两条演示账号的 `user_name` 修正回正确 UTF-8 字节
-  - 为 `002_schema.sql` 与 `003_seed.sql` 增加 `SET NAMES utf8mb4;`，降低重新初始化数据卷时再次写脏中文数据的风险
-  - 复验登录接口返回字节与数据库十六进制，确认中文链路恢复正常
-- 备注：
-  - 种子文件 `docker/mysql/init/003_seed.sql` 本身无乱码；若后续重新初始化数据卷，当前种子数据可直接写入正确中文
-  - 已复核 `docs/architecture.md` 与 `docs/frontend-scope.md`，本次仅修复运行态数据，无需改动现有设计文档
-
-### 2026-06-11 14:35
-- 会话目标：降低 `docker compose up --build -d` 首次构建阶段的依赖下载耗时，并补充镜像源覆盖说明
-- 修改文件：
-  - `backend/Dockerfile`
-  - `frontend/Dockerfile`
-  - `docker-compose.yml`
-  - `README.md`
-  - `AGENTS.md`
-- 主要变更：
-  - 为后端 Maven 构建增加可配置的 `MAVEN_REPO_URL`，默认使用阿里云 Maven 镜像
-  - 为前端 npm 构建增加可配置的 `NPM_REGISTRY`，默认使用 npmmirror 源
-  - 在 `docker-compose.yml` 中补充对应构建参数，并保留环境变量覆盖能力
-  - 在 README 中补充首次冷构建耗时原因，以及覆盖 Maven/npm 镜像源的执行示例
-- 备注：
-  - 已复核 `docs/architecture.md` 与 `docs/frontend-scope.md`，本次仅涉及构建链路与使用文档，无需改动现有设计文档
-
-### 2026-06-11 14:32
-- 会话目标：更新 README 文档，使项目使用方法与当前实际启动链路保持一致
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-- 主要变更：
-  - 重写 README 中的快速开始、容器启动、本地开发、测试与排查章节
-  - 补充当前登录方式为 `userId + password`，并明确医生与药师两个演示账号
-  - 补充容器首次构建会在镜像内执行 `mvn clean package` 与 `npm ci`、可能长时间下载依赖的说明
-  - 更新 Docker Compose、本地前后端联调、健康检查与常见故障排查命令
-- 备注：
-  - 已复核 `docs/architecture.md` 与 `docs/frontend-scope.md`，本次仅更新使用文档，无需改动现有设计文档
-### 2026-06-11 14:11
-- 会话目标：修复 `docker compose up --build -d` 后端仍引用旧产物、导致容器环境登录接口异常的问题
-- 修改文件：
-  - `backend/Dockerfile`
-  - `backend/.dockerignore`
-  - `frontend/Dockerfile`
-  - `AGENTS.md`
-- 主要变更：
-  - 将后端镜像改回真正的多阶段构建，改为在容器内执行 `mvn clean package -DskipTests`
-  - 移除对宿主机 `backend/target/*.jar` 的构建依赖，避免 `docker compose up --build` 误打包本地过期产物
-  - 为后端新增 `.dockerignore`，收紧构建上下文，避免将本地 `target` 等无关内容送入镜像构建
-  - 将前端镜像安装步骤改为 `npm ci --no-audit --no-fund`，并为 npm / Maven 启用 BuildKit 缓存挂载，降低首次构建后的重复下载开销
-  - 复核 `docs/architecture.md` 与 `docs/frontend-scope.md`，确认本次问题仅涉及容器构建链路，无需改动现有文档内容
-- 备注：
-  - 首次重建后端镜像会额外下载 Maven 依赖，耗时显著高于前端镜像构建
-  - 首次重建前端镜像同样需要重新下载 npm 依赖，`docker build`/`docker compose up --build` 在依赖安装阶段可能长时间无新增输出
-  - 运行态异常表现为 `POST /api/auth/login` 返回 `500`，当前旧容器仍为 2 天前镜像，需等待新镜像完成替换后继续复验
-### 2026-06-11 13:48
-- 会话目标：将项目启动、测试、构建与容器运行命令集中整理到 README 文档
-- 修改文件：
-  - `README.md`
-  - `AGENTS.md`
-- 主要变更：
-  - 新增根目录 `README.md`，补充项目简介、环境要求与目录说明
-  - 汇总后端 Maven、前端 Vite/Vitest、本地联调、Docker Compose 启动与停止命令
-  - 增加最小演示路径与常见容器日志排查命令，便于直接启动和验收
-- 备注：
-  - 本次仅补充文档，不修改业务代码
+  - 已复核 `docs/architecture.md` 与 `docs/frontend-scope.md`，本次仅补充测试操作文档，无需改动现有设计文档
 
 ### 2026-06-08 15:45
 - 会话目标：按演示目标收缩前端功能范围，形成新的页面与交互设计文档
@@ -287,3 +192,29 @@
   - 将 Docker Compose 中后端数据源连接参数同步为 `utf8mb4`
 - 备注：
   - 本次修改不改变业务功能，仅修复中文展示质量
+
+### 2026-06-16 00:00
+- 会话目标：整理当前最小演示闭环可用的 `curl` 手工测试命令
+- 修改文件：
+  - `AGENTS.md`
+- 主要变更：
+  - 核对登录、库存预览、低库存预警、药物入库、开药相关接口路径与请求体字段
+  - 确认当前代码实际支持 `Authorization: Bearer <token>`，同时兼容旧的请求头方式
+  - 检查 `docs/architecture.md` 与 `docs/frontend-scope.md`，当前无需更新
+- 备注：
+  - 本次仅补充会话记录，无业务代码修改
+
+### 2026-06-16 00:10
+- 会话目标：为当前最小演示范围补充课程设计可用的用例图 `.puml` 文件
+- 修改文件：
+  - `docs/usecase-overview.puml`
+  - `docs/usecase-doctor.puml`
+  - `docs/usecase-pharmacist.puml`
+  - `docs/usecase-diagrams.md`
+  - `AGENTS.md`
+- 主要变更：
+  - 基于当前收口范围生成系统总览、医生角色、药师角色三张 PlantUML 用例图
+  - 将库存预览、低库存提醒、药物入库、开药与角色边界明确到用例图中
+  - 新增用例图说明文档，补充导出命令示例
+- 备注：
+  - `docs/architecture.md` 与 `docs/frontend-scope.md` 已检查，本次无需改动
